@@ -1,48 +1,69 @@
 ---
 version: alpha
 name: Matbaa
-description: <BIR_CUMLE_URUN_TANIMI>
+description: Etsy print-on-demand hattının yerel onay paneli — tasarım provası, ilan metni ve marka kapısı kanıtını tek bakışta gösterip onay/ret alır.
+colors:
+  masa: "#17171a"
+  masa-yukseltilmis: "#212125"
+  cizgi: "#34343a"
+  metin: "#ecebe6"
+  metin-ikincil: "#a3a19a"
+  primary: "#e0483e"
+  onay-yesil: "#3fb46b"
+  uyari-sari: "#e2b23c"
+  odak: "#8fb3ff"
+typography:
+  govde:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: 15px
+    lineHeight: 1.5
+  etiket:
+    fontFamily: "ui-monospace, 'Cascadia Mono', Consolas, monospace"
+    fontSize: 12px
+    letterSpacing: 0.04em
+  baslik:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontSize: 20px
+    fontWeight: 650
+rounded:
+  kart: 10px
+  dugme: 8px
+spacing:
+  birim: 8px
+  kart-ic: 20px
 ---
 
 # Matbaa
 
-> Bu dosya Google DESIGN.md spec'ini (alpha) izler. **Kesin degerler frontmatter'da,
-> gerekce ve uygulama rehberligi Markdown'da.** Ayni token iki yerde yasamaz.
-> Doldurulduktan sonra dogrula:
->
-> ```bash
-> npx -p @google/design.md designmd lint DESIGN.md
-> npx -p @google/design.md designmd export --format css-tailwind DESIGN.md
-> ```
->
-> Frontmatter'a `colors`, `typography`, `rounded`, `spacing`, `components` bloklarini
-> ancak projede o sistemi tanimlayan gercek bir kaynak (token dosyasi, tema, Tailwind
-> config) varken ekle. Uydurma token adi acma. Detayli kurallar: `create-design-md` skill'i.
->
-> Bu blogu doldurduktan sonra sil.
-
 ## Overview
 
-Taban disiplin (sabit, tum projelerde ayni): `~/.claude/CLAUDE.md` icindeki Dark
-Glassmorphism kurallari — blur/border/kontrast/performans degerleri oradan gelir, burada
-tekrar edilmez. Bu dosya sadece **bu projeyi digerlerinden ayiran** katmani kaydeder.
+Tek kullanıcı (Scryne), haftada bir, yerelde (`127.0.0.1`) açılan bir onay paneli. İş: 30 tasarımlık kuyruğu 10 dakikada bitirmek.
+Bu yüzden ekran tek tasarıma odaklanır, klavye birinci sınıf yoldur (A onay, R ret, ← → gezinme).
 
-- **Mood:**
-- **Farklilastirici detay:**
+- **Mood:** baskı atölyesinin prova masası — nötr koyu zemin, kâğıt gibi duran prova kartları, düzeltme kalemi kırmızısı.
+- **Farklılaştırıcı detay:** tasarım her zaman gerçek kumaş renkleri üzerinde, yan yana prova olarak görünür (açık ve koyu tişört);
+  kullanıcı tasarımı değil, satılacak ürünü onaylar.
+- **Global estetikten bilinçli sapma:** dark glassmorphism burada kullanılmaz. Gradient mesh ve `backdrop-filter`, kumaş rengi
+  değerlendirmesini bozar; zemin nötr (`masa`) ve düz kalır.
 
 ## Colors
 
-(Accent paletin gerekcesi. Kesin degerler frontmatter'daki `colors` altinda.)
+`masa` hafif sıcak nötr koyu: kumaş renklerini (siyah, lacivert, krem) yanıltmayacak kadar renksiz. `primary` (prova kırmızısı) yalnız ret ve
+marka-kapısı uyarılarında; `onay-yesil` yalnız onay aksiyonunda. Kumaş renkleri tasarım değil veridir (`config/urunler.toml`).
 
 ## Typography
 
-(Tipografi eslesmesinin gerekcesi. Kesin degerler frontmatter'daki `typography` altinda.)
+Sistem fontu: panel çevrimdışı ve yerel, dış font yüklemesi yok. Kanıt ve sayılar (marka seri numarası, Jev olasılıkları, net kâr)
+`etiket` (monospace) ile; okunan metin `govde` ile.
 
 ## Components
 
-(Component bazli ozel kararlar — bu projede nav nasil duruyor, kart stili vb.
-Her cumle bir implementasyon karari degistirmeli; YAML'i tekrar eden prose yazma.)
+- **Prova kartı:** tasarım PNG'si, kumaş renginde dolu bir tişört silüetinin göğsüne bindirilir; açık ve koyu prova yan yana.
+- **Kanıt şeridi:** IP kapısı sonucu (USPTO adayları, benzer markalar, Jev olasılıkları) — onay kararından önce görünür, gizlenmez.
+- **Aksiyon çubuğu:** ekranın altında sabit; Onayla / Reddet; ret nedeni hızlı seçimle (okunmuyor, espri zayıf, marka şüphesi, tekrar).
 
 ## Do's and Don'ts
 
-(Sadece acikca kararlastirilmis yasaklar. "Iyi olsun" tipi tavsiye yazma.)
+- Kumaş provasını küçültüp kenara itme; ekranın en büyük öğesi odur.
+- Onay butonu klavye kısayolu olmadan eklenmez.
+- Toplu "hepsini onayla" yok: her tasarım tek tek görülür (marka kapısı insan gözünü de ister, K-13).

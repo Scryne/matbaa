@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matbaa — Onay masası</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317171a'/%3E%3Cpath d='M9 22V10h4l3 6 3-6h4v12' fill='none' stroke='%23e0483e' stroke-width='3'/%3E%3C/svg%3E">
+<style>
+  /* Token'lar DESIGN.md frontmatter'ından; değer değişirse orada değişir. */
+  :root {
+    --masa: #17171a; --masa-y: #212125; --cizgi: #34343a;
+    --metin: #ecebe6; --metin-2: #a3a19a;
+    --primary: #e0483e; --onay: #3fb46b; --uyari: #e2b23c; --odak: #8fb3ff;
+    --govde: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --r-kart: 10px; --r-dugme: 8px; --b: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--masa); color: var(--metin); font: 15px/1.5 var(--govde); }
+  body { min-height: 100dvh; display: flex; flex-direction: column; }
+  :focus-visible { outline: 2px solid var(--odak); outline-offset: 2px; }
+  header { display: flex; align-items: baseline; gap: calc(var(--b) * 2); padding: calc(var(--b) * 2) calc(var(--b) * 3); border-bottom: 1px solid var(--cizgi); flex-wrap: wrap; }
+  header h1 { font-size: 20px; font-weight: 650; margin: 0; }
+  .etiket { font: 12px/1.4 var(--mono); letter-spacing: .04em; color: var(--metin-2); }
+  main { flex: 1; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: calc(var(--b) * 3); padding: calc(var(--b) * 3); padding-bottom: 120px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: var(--b) 16px 140px; } }
+  .provalar { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--b) * 2); align-content: start; }
+  .prova { background: var(--masa-y); border: 1px solid var(--cizgi); border-radius: var(--r-kart); padding: calc(var(--b) * 2); }
+  .tisort { position: relative; width: 100%; aspect-ratio: 400 / 440; }
+  .tisort svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tisort img { position: absolute; left: 31.25%; width: 37.5%; top: 21%; height: auto; image-rendering: auto; }
+  .renkler { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--b); }
+  .renk { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--cizgi); cursor: pointer; padding: 0; }
+  .renk[aria-pressed="true"] { border-color: var(--metin); box-shadow: 0 0 0 2px var(--masa-y), 0 0 0 4px var(--metin-2); }
+  .bilgi { display: flex; flex-direction: column; gap: calc(var(--b) * 2); min-width: 0; }
+  .kart { background: var(--masa-y); border: 1px solid var(--cizgi); border-radius: var(--r-kart); padding: 20px; }
+  .slogan { font-size: 22px; font-weight: 650; line-height: 1.25; margin: 4px 0 0; text-wrap: balance; }
+  .kanit .yok { color: var(--onay); }
+  .kanit .var { color: var(--uyari); }
+  .cip { display: inline-block; font: 12px/1.6 var(--mono); padding: 1px 8px; margin: 2px 4px 2px 0; border: 1px solid var(--cizgi); border-radius: 99px; color: var(--metin-2); }
+  .sekmeler { display: flex; gap: 4px; margin-bottom: var(--b); }
+  .sekme { background: none; border: 1px solid var(--cizgi); color: var(--metin-2); border-radius: var(--r-dugme); padding: 4px 12px; cursor: pointer; font: inherit; font-size: 13px; }
+  .sekme[aria-selected="true"] { color: var(--metin); border-color: var(--metin-2); background: var(--masa); }
+  .baslik-ilan { font-weight: 600; margin: 0 0 var(--b); }
+  details summary { cursor: pointer; color: var(--metin-2); font-size: 13px; }
+  details pre { white-space: pre-wrap; font: 13px/1.5 var(--govde); color: var(--metin-2); }
+  .para { font: 13px var(--mono); }
+  .cubuk { position: fixed; left: 0; right: 0; bottom: 0; background: var(--masa-y); border-top: 1px solid var(--cizgi); padding: calc(var(--b) * 1.5) calc(var(--b) * 3); display: flex; gap: var(--b); align-items: center; flex-wrap: wrap; z-index: 10; }
+  .cubuk .bosluk { flex: 1; }
+  button.ana { font: 600 15px var(--govde); border-radius: var(--r-dugme); padding: 10px 18px; cursor: pointer; border: 1px solid transparent; min-height: 44px; }
+  .onayla { background: var(--onay); color: #0d1f13; }
+  .reddet { background: transparent; color: var(--primary); border-color: var(--primary) !important; }
+  .ikincil { background: transparent; color: var(--metin-2); border-color: var(--cizgi) !important; }
+  kbd { font: 11px var(--mono); border: 1px solid var(--cizgi); border-radius: 4px; padding: 0 4px; margin-left: 6px; opacity: .8; }
+  .nedenler { display: none; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .nedenler.acik { display: flex; }
+  .neden { background: var(--masa); color: var(--metin); border: 1px solid var(--primary); border-radius: 99px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px; }
+  .bos { grid-column: 1 / -1; text-align: center; padding: 15vh 16px; color: var(--metin-2); }
+  .bildirim { position: fixed; top: 16px; right: 16px; background: var(--masa-y); border: 1px solid var(--cizgi); border-radius: var(--r-dugme); padding: 8px 14px; font-size: 13px; opacity: 0; transition: opacity .2s; z-index: 20; }
+  .bildirim.gorunur { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .bildirim { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Onay masası</h1>
+  <span class="etiket" id="ozet">yükleniyor…</span>
+</header>
+<main id="ana" aria-live="polite"></main>
+<div class="cubuk" role="toolbar" aria-label="Karar">
+  <button class="ana ikincil" id="onceki" aria-label="Önceki tasarım">← <kbd>←</kbd></button>
+  <span class="etiket" id="sira"></span>
+  <button class="ana ikincil" id="sonraki" aria-label="Sonraki tasarım">→ <kbd>→</kbd></button>
+  <span class="bosluk"></span>
+  <button class="ana ikincil" id="geri" hidden>Son onayı geri al <kbd>U</kbd></button>
+  <button class="ana reddet" id="reddet">Reddet <kbd>R</kbd></button>
+  <button class="ana onayla" id="onayla">Onayla <kbd>A</kbd></button>
+  <div class="nedenler" id="nedenler" role="group" aria-label="Ret nedeni"></div>
+</div>
+<div class="bildirim" id="bildirim" role="status"></div>
+
+<script>
+const TISORT = "M120 22 Q200 58 280 22 L382 74 L346 158 L308 138 L308 424 L92 424 L92 138 L54 158 L18 74 Z";
+const YAKA = "M152 30 Q200 70 248 30";
+let veri = null, i = 0, sonOnay = null;
+const secili = { acik: null, koyu: null };  // seçilen kumaş renkleri
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function bildir(m) { const b = $("#bildirim"); b.textContent = m; b.classList.add("gorunur"); clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove("gorunur"), 1800); }
+
+async function yukle() {
+  veri = await (await fetch("/api/kuyruk")).json();
+  const r = veri.renkler.tisort;
+  secili.acik ??= r.find(x => x.murekkep === "koyu");
+  secili.koyu ??= r.find(x => x.murekkep === "acik");
+  i = Math.min(i, Math.max(veri.tasarimlar.length - 1, 0));
+  ciz();
+}
+
+function tisort(t, renk, murekkep, taraf) {
+  const renkler = veri.renkler.tisort.filter(x => x.murekkep === murekkep);
+  return `<figure class="prova" style="margin:0">
+    <div class="tisort">
+      <svg viewBox="0 0 400 440" aria-hidden="true">
+        <defs><linearGradient id="g${taraf}" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".18"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></linearGradient></defs>
+        <path d="${TISORT}" fill="${renk.hex}" stroke="rgba(0,0,0,.25)"/>
+        <path d="${TISORT}" fill="url(#g${taraf})"/>
+        <path d="${YAKA}" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+      </svg>
+      <img src="/onizleme/${t.id}/${murekkep}" alt="${esc(t.satirlar.join(" / "))} — ${esc(renk.ad)} tişört provası">
+    </div>
+    <figcaption class="etiket" style="margin-top:6px">${esc(renk.ad)} · <a href="/tam/${t.id}/${murekkep}" target="_blank" style="color:var(--metin-2)">baskı dosyası</a></figcaption>
+    <div class="renkler" role="group" aria-label="${taraf === "acik" ? "Açık" : "Koyu"} kumaş rengi">
+      ${renkler.map(x => `<button class="renk" style="background:${x.hex}" aria-label="${esc(x.ad)}" aria-pressed="${x.ad === renk.ad}" data-taraf="${taraf}" data-ad="${esc(x.ad)}"></button>`).join("")}
+    </div>
+  </figure>`;
+}
+
+function kanit(k) {
+  if (!k || !Object.keys(k).length) return `<p class="etiket">kanıt kaydı yok</p>`;
+  const jev = Object.entries(k.jev || {}).map(([a, v]) => `<span class="cip">${esc(a)} ${v.toFixed(2)}</span>`).join("");
+  const benzer = (k.benzer_markalar || []).map(m => `<span class="cip">${esc(m)}</span>`).join("");
+  return `<div class="kanit">
+    <p class="etiket" style="margin:0">USPTO kesin eşleşme: <span class="yok">yok</span>${k.kaynak ? ` · Jev kaynak: ${esc(k.kaynak[0])} ${k.kaynak[1].toFixed(2)}` : ""}</p>
+    ${benzer ? `<p class="etiket var" style="margin:6px 0 0">tek kelime farklı markalar (Jev "ünlü değil" dedi):</p><div>${benzer}</div>` : ""}
+    ${jev ? `<p class="etiket var" style="margin:6px 0 0">Jev ≥ 0,2 sinyaller:</p><div>${jev}</div>` : ""}
+  </div>`;
+}
+
+let aktifUrun = "tisort";
+function ilanlar(t) {
+  const urunler = Object.keys(t.ilanlar);
+  if (!urunler.includes(aktifUrun)) aktifUrun = urunler[0];
+  const il = t.ilanlar[aktifUrun];
+  return `<div class="sekmeler" role="tablist">${urunler.map(u => `<button class="sekme" role="tab" aria-selected="${u === aktifUrun}" data-urun="${u}">${esc(veri.urun_adlari[u])}</button>`).join("")}</div>
+    <p class="baslik-ilan">${esc(il.baslik)}</p>
+    <div>${il.etiketler.map(e => `<span class="cip">${esc(e)}</span>`).join("")}</div>
+    <p class="para">$${il.fiyat.toFixed(2)} + $${il.kargo.toFixed(2)} kargo · beklenen net ≈ $${il.net.toFixed(2)}</p>
+    <details><summary>Açıklama</summary><pre>${esc(il.aciklama)}</pre></details>`;
+}
+
+function ciz() {
+  const o = veri.ozet;
+  $("#ozet").textContent = `kuyruk ${veri.tasarimlar.length} · onaylı ${o.onaylandi || 0} · yayında ${o.yayinda || 0} · ret ${o.ret || 0}`;
+  const ana = $("#ana");
+  if (!veri.tasarimlar.length) {
+    ana.innerHTML = `<p class="bos">Kuyruk boş. Yeni tasarım için: <code>uv run matbaa uret --nis …</code> ve <code>uv run matbaa metin</code>.</p>`;
+    $("#sira").textContent = ""; return;
+  }
+  const t = veri.tasarimlar[i];
+  $("#sira").textContent = `${i + 1} / ${veri.tasarimlar.length}`;
+  ana.innerHTML = `
+    <section class="provalar" aria-label="Kumaş provaları">
+      ${tisort(t, secili.acik, "koyu", "acik")}
+      ${tisort(t, secili.koyu, "acik", "koyu")}
+    </section>
+    <section class="bilgi">
+      <div class="kart">
+        <span class="etiket">#${t.id} · ${esc(t.nis)} · ${esc(t.sablon)} · ${esc(t.fontlar[0].replace("-Regular.ttf", ""))}</span>
+        <p class="slogan">${t.satirlar.map(esc).join("<br>")}</p>
+      </div>
+      <div class="kart">${kanit(t.kanit)}</div>
+      <div class="kart">${ilanlar(t)}</div>
+    </section>`;
+  $("#nedenler").innerHTML = veri.ret_nedenleri.map((n, k) => `<button class="neden" data-neden="${esc(n)}">${k + 1}. ${esc(n)}</button>`).join("");
+}
+
+async function karar(k, neden = "") {
+  const t = veri.tasarimlar[i];
+  if (!t) return;
+  const r = await fetch(`/api/karar/${t.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ karar: k, neden }) });
+  if (!r.ok) { bildir(`Kaydedilemedi: ${(await r.json()).detail || r.status}. Sayfayı yenile.`); return; }
+  sonOnay = k === "onay" ? t.id : null;
+  $("#geri").hidden = !sonOnay;
+  $("#nedenler").classList.remove("acik");
+  bildir(k === "onay" ? `#${t.id} onaylandı` : `#${t.id} reddedildi: ${neden}`);
+  await yukle();
+}
+
+async function geriAl() {
+  if (!sonOnay) return;
+  const r = await fetch(`/api/geri-al/${sonOnay}`, { method: "POST" });
+  bildir(r.ok ? `#${sonOnay} yeniden kuyrukta` : "Geri alınamadı: tasarım yayına girmiş olabilir.");
+  sonOnay = null; $("#geri").hidden = true; await yukle();
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "onayla") karar("onay");
+  else if (b.id === "reddet") $("#nedenler").classList.toggle("acik");
+  else if (b.id === "onceki") { i = Math.max(0, i - 1); ciz(); }
+  else if (b.id === "sonraki") { i = Math.min(veri.tasarimlar.length - 1, i + 1); ciz(); }
+  else if (b.id === "geri") geriAl();
+  else if (b.dataset.neden) karar("ret", b.dataset.neden);
+  else if (b.dataset.urun) { aktifUrun = b.dataset.urun; ciz(); }
+  else if (b.dataset.taraf) { secili[b.dataset.taraf] = veri.renkler.tisort.find(x => x.ad === b.dataset.ad); ciz(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
+  const acik = $("#nedenler").classList.contains("acik");
+  if (acik && /^[1-9]$/.test(e.key)) { const n = veri.ret_nedenleri[+e.key - 1]; if (n) karar("ret", n); return; }
+  if (e.key === "a" || e.key === "A") karar("onay");
+  else if (e.key === "r" || e.key === "R") $("#nedenler").classList.toggle("acik");
+  else if (e.key === "Escape") $("#nedenler").classList.remove("acik");
+  else if (e.key === "u" || e.key === "U") geriAl();
+  else if (e.key === "ArrowLeft") { i = Math.max(0, i - 1); ciz(); }
+  else if (e.key === "ArrowRight") { i = Math.min(veri.tasarimlar.length - 1, i + 1); ciz(); }
+});
+yukle();
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+# Ürün kataloğu (K-11). Maliyetler Printify'dan tahmin (araştırma 02, 06); Faz 6'da katalog API'sinden gerçek değerle güncellenir.
+# Renk adları Printify varyant adlarıdır; "murekkep" o renkte hangi baskı dosyasının kullanılacağını söyler.
+
+[tisort]
+ad = "Comfort Colors 1717 Garment-Dyed Tee"
+blank = "Comfort Colors 1717"
+etsy_turu = "T-shirt"
+fiyat = 28.99
+kargo = 4.99
+buyuk_beden_ek = { "2XL" = 2.00, "3XL" = 3.00 }
+bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
+tahmini_maliyet = 12.65
+tahmini_abd_kargo = 4.29
+renkler = [
+  { ad = "White", murekkep = "koyu", hex = "#ffffff" },
+  { ad = "Ivory", murekkep = "koyu", hex = "#f0e8d6" },
+  { ad = "Butter", murekkep = "koyu", hex = "#f3dfa2" },
+  { ad = "Sage", murekkep = "koyu", hex = "#a8b49a" },
+  { ad = "Black", murekkep = "acik", hex = "#1b1b1b" },
+  { ad = "True Navy", murekkep = "acik", hex = "#1f2a44" },
+  { ad = "Pepper", murekkep = "acik", hex = "#4a4a48" },
+]
+detay = "Garment-dyed, heavyweight 100% ring-spun cotton (6.1 oz) with a soft, lived-in feel and relaxed fit."
+
+[sweatshirt]
+ad = "Gildan 18000 Crewneck Sweatshirt"
+blank = "Gildan 18000"
+etsy_turu = "Sweatshirt"
+fiyat = 42.99
+kargo = 5.99
+buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 4.00 }
+bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
+tahmini_maliyet = 17.87
+tahmini_abd_kargo = 8.79
+renkler = [
+  { ad = "White", murekkep = "koyu", hex = "#ffffff" },
+  { ad = "Sand", murekkep = "koyu", hex = "#d9c7a6" },
+  { ad = "Light Pink", murekkep = "koyu", hex = "#f2c9cf" },
+  { ad = "Black", murekkep = "acik", hex = "#1b1b1b" },
+  { ad = "Navy", murekkep = "acik", hex = "#1f2a44" },
+  { ad = "Forest Green", murekkep = "acik", hex = "#2f4a3a" },
+  { ad = "Maroon", murekkep = "acik", hex = "#5a2330" },
+]
+detay = "Classic crewneck in a 50/50 cotton-poly blend, soft fleece inside, ribbed cuffs and waistband."
+
+[hoodie]
+ad = "Gildan 18500 Hooded Sweatshirt"
+blank = "Gildan 18500"
+etsy_turu = "Hoodie"
+fiyat = 49.99
+kargo = 5.99
+buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 4.00 }
+bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
+tahmini_maliyet = 23.11
+tahmini_abd_kargo = 8.79
+renkler = [
+  { ad = "White", murekkep = "koyu", hex = "#ffffff" },
+  { ad = "Sand", murekkep = "koyu", hex = "#d9c7a6" },
+  { ad = "Black", murekkep = "acik", hex = "#1b1b1b" },
+  { ad = "Navy", murekkep = "acik", hex = "#1f2a44" },
+  { ad = "Dark Heather", murekkep = "acik", hex = "#3d3f43" },
+]
+detay = "Cozy 50/50 cotton-poly hoodie with a double-lined hood, front pouch pocket and soft fleece lining."

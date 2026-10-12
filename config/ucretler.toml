@@ -1,0 +1,12 @@
+# Etsy ücretleri, Türkiye merkezli satıcı. Kaynak: Etsy birincil sayfaları, 2026-10-13 (docs/spike/S7). Değişince burası güncellenir.
+listeleme_usd = 0.20          # satış başına yenileme dahil
+islem_orani = 0.065           # ürün + kargo
+odeme_orani = 0.065           # toplam tutar (ABD satış vergisi dahil sayılır, ihtiyatlı)
+odeme_sabit_try = 14.0
+rof_orani = 0.0167            # regulatory operating fee, ürün + kargo
+kur_donusum_orani = 0.025     # ilan USD, hesap TRY ise
+ucretlere_kdv = 0.20          # Etsy ücretlerine KDV; TR için doğrulanmadı → ihtiyatlı
+offsite_orani = 0.15          # <$10k/yıl; atfedilen siparişte
+offsite_payi_tahmini = 0.15   # siparişlerin ne kadarının offsite reklamdan geleceği (tahmin; gerçek veriyle güncellenir)
+abd_satis_vergisi_ort = 0.07
+try_usd = 47.7                # 14 TRY'nin USD karşılığı için; ayda bir güncellenir

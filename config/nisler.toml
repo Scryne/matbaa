@@ -8,6 +8,7 @@ ton = "warm, dad-joke humor, self-deprecating about fish stories, patience, earl
 jargon = ["cast", "reel", "tackle box", "lure", "bait", "bobber", "hook", "line", "catch and release", "the one that got away", "fishing hole", "boat", "dock", "lake", "pond", "early bird", "limit"]
 roller = ["Dad", "Grandpa", "Papa", "Pop", "Pawpaw", "Fishing Buddy"]
 kacin = ["famous brand or store names (Bass Pro, Yeti, Stanley, Cabela's)", "sports teams", "alcohol-centered jokes", "crude or sexual innuendo", "song lyrics or movie lines", "'Reel Cool' (trademarked)", "'Born to fish forced to work' (trademarked)", "'Hook line and sinker' (trademarked)"]
+yedek_etiketler = ["fishing gift", "fisherman gift", "gift for dad", "grandpa gift", "fishing lover gift", "angler gift", "lake life shirt", "fathers day gift", "gift for grandpa", "outdoorsman gift", "fishing apparel", "fishing papa gift", "retirement gift"]
 ornek_ton = ["Mostly Fishing, Occasionally Working", "Professional Fish Whisperer", "Patience Level: Waiting For A Bite"]
 
 [pickleball]
@@ -17,6 +18,7 @@ ton = "playful, competitive-but-friendly, club culture, retirement energy, obses
 jargon = ["dink", "kitchen", "non-volley zone", "third shot drop", "paddle", "lob", "erne", "volley", "rally", "serve", "partner", "court", "drop shot", "banger", "open play"]
 roller = ["Grandma", "Grandpa", "Mom", "Dad", "Club Member", "Partner"]
 kacin = ["brand names (Selkirk, Joola, Franklin)", "league or tournament names (PPA, MLP, USA Pickleball)", "celebrity names", "song lyrics or movie lines", "'Dink Different' (trademarked)", "'I can't I have pickleball' (trademarked)", "'Pickleball is my therapy' (similar trademark exists)"]
+yedek_etiketler = ["pickleball gift", "pickleball player", "pickleball lover", "pickleball apparel", "gift for her", "gift for him", "retirement gift", "sports mom gift", "paddle sports", "pickleball team", "dink shot", "court life", "pickleball grandma"]
 ornek_ton = ["Kitchen Rules Apply", "Will Dink For Snacks", "Third Shot Drop Specialist"]
 
 [knitting]
@@ -26,4 +28,5 @@ ton = "cozy, witty, yarn puns, stash humor, WIP (work in progress) jokes, relaxi
 jargon = ["yarn", "stash", "skein", "purl", "knit", "stitch", "crochet", "hook", "row", "WIP", "frog", "cast on", "bind off", "gauge", "granny square", "needles", "pattern"]
 roller = ["Grandma", "Mom", "Auntie", "Maker", "Crafter"]
 kacin = ["yarn or craft brand names (Lion Brand, Red Heart, Michaels, Hobby Lobby)", "movie or TV parodies", "song or band parodies (e.g. Purl Jam)", "celebrity names", "crude innuendo"]
+yedek_etiketler = ["knitting gift", "crochet gift", "knitter gift", "crocheter gift", "yarn lover gift", "gift for knitter", "craft lover gift", "knitting apparel", "crochet lover", "gift for grandma", "yarn addict", "maker gift", "fiber artist gift"]
 ornek_ton = ["One More Row Then Bed", "My Stash Has A Stash", "Professional Yarn Collector"]

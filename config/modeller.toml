@@ -4,3 +4,7 @@
 # "latest": sabit sürüm API'den kalkınca sessizce ölmesin (Yanki dersi). Çözülen sürüm her kararla kayda yazılır.
 model = "jev-latest"
 zaman_asimi_sn = 30
+
+[claude]
+# Başsız `claude -p` (K-14): ifade ve ilan metni. Takma ad; Claude Code çözümler.
+model = "sonnet"

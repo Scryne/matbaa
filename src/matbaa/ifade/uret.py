@@ -6,12 +6,11 @@
 
 from __future__ import annotations
 
-import json
-import subprocess
 import tomllib
 from dataclasses import dataclass
 from functools import cache
 
+from matbaa import llm
 from matbaa.ayar import CONFIG
 
 MAKS_SATIR_KARAKTER = 18  # şablonlarda büyük satırın okunur kalması için
@@ -95,30 +94,9 @@ def istem(nis: str, adet: int, kacinilacak: list[str]) -> str:
     return "\n".join(satirlar)
 
 
-def claude(istem_metni: str, model: str = "sonnet", zaman_asimi: int = 180) -> dict:
-    komut = [
-        "claude", "-p", istem_metni,
-        "--model", model,
-        "--output-format", "json",
-        "--system-prompt", SISTEM,
-        "--tools", "",
-        "--json-schema", json.dumps(SEMA),
-        "--setting-sources", "",
-    ]  # fmt: skip
-    # Windows'ta alt süreç çıktısı cp1254 gelebilir: bayt al, utf-8 çöz (vault: windows-altsurec-kodlama-tuzagi).
-    p = subprocess.run(komut, capture_output=True, timeout=zaman_asimi, check=False)
-    if p.returncode != 0:
-        raise RuntimeError(f"claude -p hata {p.returncode}: {p.stderr.decode('utf-8', 'replace')[:500]}")
-    cikti = json.loads(p.stdout.decode("utf-8"))
-    sonuc = cikti.get("structured_output")
-    if not isinstance(sonuc, dict):
-        raise RuntimeError(f"yapılandırılmış çıktı yok: {str(cikti.get('result'))[:300]}")
-    return sonuc
-
-
 def uret(nis: str, adet: int = 15, kacinilacak: list[str] | None = None) -> tuple[list[Aday], list[tuple[Aday, str]]]:
     """(geçerli adaylar, [(biçim hatalı aday, neden)])."""
-    ham = claude(istem(nis, adet, kacinilacak or []))
+    ham = llm.yapilandirilmis(istem(nis, adet, kacinilacak or []), SISTEM, SEMA)
     gecerli, hatali = [], []
     for s in ham.get("slogans", []):
         a = Aday(

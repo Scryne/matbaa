@@ -21,12 +21,19 @@ GECISLER: dict[str, set[str]] = {
     "kalite_ok": {"metin_ok", "ret"},
     "metin_ok": {"onay_bekliyor", "ret"},
     "onay_bekliyor": {"onaylandi", "ret", "aday"},  # "aday": Scryne düzeltme istedi, yeniden üretilir
-    "onaylandi": {"printify", "ret"},
-    "printify": {"etsy_taslak", "ret"},
-    "etsy_taslak": {"aktif", "ret"},
-    "aktif": {"kaldirildi"},
+    "onaylandi": {"yayinda", "ret", "onay_bekliyor"},  # "onay_bekliyor": yayından önce onay geri alındı
+    "yayinda": {"kaldirildi"},  # en az bir ürünü Etsy'de aktif
     "kaldirildi": set(),
     "ret": set(),
+}
+# Bir tasarım birden çok ürüne (tişört, sweatshirt, hoodie) dönüşür; yayın durumu ürün başına.
+URUN_GECISLERI: dict[str, set[str]] = {
+    "bekliyor": {"printify", "hata"},
+    "printify": {"etsy_taslak", "hata"},
+    "etsy_taslak": {"aktif", "hata"},
+    "aktif": {"kaldirildi"},
+    "hata": {"bekliyor"},
+    "kaldirildi": set(),
 }
 
 SEMA = """
@@ -53,18 +60,24 @@ CREATE TABLE IF NOT EXISTS tasarim (
     ret_nedeni TEXT
 );
 CREATE TABLE IF NOT EXISTS ilan (
-    tasarim_id INTEGER PRIMARY KEY REFERENCES tasarim(id),
+    tasarim_id INTEGER NOT NULL REFERENCES tasarim(id),
+    urun TEXT NOT NULL,               -- config/urunler.toml anahtarı
     baslik TEXT NOT NULL,
     etiketler TEXT NOT NULL,          -- JSON, 13 adet
     aciklama TEXT NOT NULL,
-    oznitelikler TEXT,                -- JSON
-    fiyatlar TEXT                     -- JSON {urun: fiyat}
+    alt_metin TEXT,
+    fiyat REAL, kargo REAL,
+    PRIMARY KEY (tasarim_id, urun)
 );
 CREATE TABLE IF NOT EXISTS urun (
-    tasarim_id INTEGER PRIMARY KEY REFERENCES tasarim(id),
+    tasarim_id INTEGER NOT NULL REFERENCES tasarim(id),
+    urun TEXT NOT NULL,
+    durum TEXT NOT NULL DEFAULT 'bekliyor',
     printify_id TEXT,
     etsy_listing_id TEXT,
-    yayin_zamani TEXT
+    hata TEXT,
+    guncelleme TEXT,
+    PRIMARY KEY (tasarim_id, urun)
 );
 CREATE TABLE IF NOT EXISTS siparis (
     etsy_receipt_id TEXT PRIMARY KEY,
@@ -94,11 +107,17 @@ def simdi() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
-def baglan(yol: Path | str = DB) -> sqlite3.Connection:
-    c = sqlite3.connect(yol)
+def baglan(yol: Path | str | None = None) -> sqlite3.Connection:
+    c = sqlite3.connect(yol or DB)  # DB çalışma anında okunur: testler geçici veritabanına yönlendirebilir
     c.row_factory = sqlite3.Row
     c.execute("PRAGMA foreign_keys = ON")
     c.executescript(SEMA)
+    # Sonradan eklenen sütunlar (eski veritabanlarına uygulanır).
+    for tablo, sutun in (("ifade", "yapi TEXT"),):
+        try:
+            c.execute(f"ALTER TABLE {tablo} ADD COLUMN {sutun}")
+        except sqlite3.OperationalError:
+            pass
     return c
 
 
@@ -111,12 +130,14 @@ def olay(
     )
 
 
-def ifade_ekle(c: sqlite3.Connection, nis: str, satirlar: list[str], kaynak: str = "claude") -> int | None:
+def ifade_ekle(
+    c: sqlite3.Connection, nis: str, satirlar: list[str], kaynak: str = "claude", yapi: dict | None = None
+) -> int | None:
     """Aynı niş + satırlar ikinci kez eklenmez (None döner): aynı ifadeyi tekrar tekrar üretmeyi engeller."""
     try:
         cur = c.execute(
-            "INSERT INTO ifade (nis, satirlar, kaynak, olusturma) VALUES (?, ?, ?, ?)",
-            (nis, json.dumps(satirlar, ensure_ascii=False), kaynak, simdi()),
+            "INSERT INTO ifade (nis, satirlar, kaynak, olusturma, yapi) VALUES (?, ?, ?, ?, ?)",
+            (nis, json.dumps(satirlar, ensure_ascii=False), kaynak, simdi(), json.dumps(yapi or {}, ensure_ascii=False)),
         )
     except sqlite3.IntegrityError:
         return None
@@ -156,6 +177,20 @@ def gecis(c: sqlite3.Connection, tasarim_id: int, yeni: str, aciklama: str = "")
         (yeni, simdi(), aciklama if yeni == "ret" else None, tasarim_id),
     )
     olay(c, "tasarim", tasarim_id, eski, yeni, aciklama)
+
+
+def urun_gecis(c: sqlite3.Connection, tasarim_id: int, urun: str, yeni: str, aciklama: str = "", **alanlar: str) -> None:
+    satir = c.execute("SELECT durum FROM urun WHERE tasarim_id = ? AND urun = ?", (tasarim_id, urun)).fetchone()
+    if satir is None:
+        raise KeyError((tasarim_id, urun))
+    if yeni not in URUN_GECISLERI.get(satir[0], set()):
+        raise GecersizGecis(f"ürün {tasarim_id}/{urun}: {satir[0]} → {yeni} izinli değil")
+    ek = "".join(f", {k} = ?" for k in alanlar)
+    c.execute(
+        f"UPDATE urun SET durum = ?, guncelleme = ?, hata = ?{ek} WHERE tasarim_id = ? AND urun = ?",
+        (yeni, simdi(), aciklama if yeni == "hata" else None, *alanlar.values(), tasarim_id, urun),
+    )
+    olay(c, "urun", tasarim_id, satir[0], f"{urun}:{yeni}", aciklama)
 
 
 def durumdakiler(c: sqlite3.Connection, durum: str) -> list[sqlite3.Row]:

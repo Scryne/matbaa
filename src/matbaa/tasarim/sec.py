@@ -16,8 +16,17 @@ from . import kapilar, render
 from .sablonlar import Cizim, Yazi, dengeli_bol, kavis, rozet, yigin
 
 KOYU_MUREKKEP, ACIK_MUREKKEP = "#1d1d1f", "#f3ead8"
-ACIK_KUMAS = ["#ffffff", "#efe6d2", "#c9d6c3", "#d9c7b0"]  # beyaz, ivory, sage, sand (Comfort Colors tonları)
-KOYU_KUMAS = ["#141414", "#1f2a44", "#2f4a3a", "#5a2e2e"]  # siyah, lacivert, orman, bordo
+
+
+def _kumaslar(murekkep: str) -> list[str]:
+    """Katalogdaki, bu mürekkeple basılacak tüm kumaş renkleri: kontrast kapısı satılacak her renge karşı ölçülür."""
+    from matbaa.fiyat import urunler
+
+    return sorted({r["hex"] for u in urunler().values() for r in u["renkler"] if r["murekkep"] == murekkep})
+
+
+ACIK_KUMAS = _kumaslar("koyu")  # koyu mürekkep → açık kumaşlar
+KOYU_KUMAS = _kumaslar("acik")
 CESITLILIK_PENCERE = 5
 
 ANA_FONTLAR = [

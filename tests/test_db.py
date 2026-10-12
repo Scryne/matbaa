@@ -35,11 +35,23 @@ def test_temiz_olmayan_ifadeden_tasarim_dogmaz(c, karar):
 
 def test_mutlu_yol_ve_olay_gunlugu(c):
     t = db.tasarim_ekle(c, _temiz_ifade(c), "kavis", ["Anton-Regular.ttf"])
-    for d in ("kalite_ok", "metin_ok", "onay_bekliyor", "onaylandi", "printify", "etsy_taslak", "aktif"):
+    for d in ("kalite_ok", "metin_ok", "onay_bekliyor", "onaylandi", "yayinda"):
         db.gecis(c, t, d)
-    assert c.execute("SELECT durum FROM tasarim WHERE id = ?", (t,)).fetchone()[0] == "aktif"
+    assert c.execute("SELECT durum FROM tasarim WHERE id = ?", (t,)).fetchone()[0] == "yayinda"
     yeniler = [r[0] for r in c.execute("SELECT yeni FROM olay WHERE varlik = 'tasarim' ORDER BY id")]
-    assert yeniler == ["aday", "kalite_ok", "metin_ok", "onay_bekliyor", "onaylandi", "printify", "etsy_taslak", "aktif"]
+    assert yeniler == ["aday", "kalite_ok", "metin_ok", "onay_bekliyor", "onaylandi", "yayinda"]
+
+
+def test_urun_durumu_ayri_izlenir(c):
+    t = db.tasarim_ekle(c, _temiz_ifade(c), "kavis", [])
+    c.execute("INSERT INTO urun (tasarim_id, urun) VALUES (?, 'tisort'), (?, 'hoodie')", (t, t))
+    db.urun_gecis(c, t, "tisort", "printify", printify_id="p1")
+    db.urun_gecis(c, t, "hoodie", "hata", "429")
+    r = dict(c.execute("SELECT urun, durum FROM urun WHERE tasarim_id = ?", (t,)).fetchall())
+    assert r == {"tisort": "printify", "hoodie": "hata"}
+    assert c.execute("SELECT printify_id FROM urun WHERE urun = 'tisort'").fetchone()[0] == "p1"
+    with pytest.raises(db.GecersizGecis):
+        db.urun_gecis(c, t, "tisort", "aktif")  # Etsy taslağı atlanamaz
 
 
 def test_onaysiz_yayin_yok(c):
@@ -47,7 +59,7 @@ def test_onaysiz_yayin_yok(c):
     db.gecis(c, t, "kalite_ok")
     db.gecis(c, t, "metin_ok")
     with pytest.raises(db.GecersizGecis):
-        db.gecis(c, t, "printify")  # onay atlanamaz
+        db.gecis(c, t, "yayinda")  # onay atlanamaz
 
 
 def test_ret_son_durumdur_ve_neden_saklanir(c):
