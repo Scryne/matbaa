@@ -64,14 +64,14 @@ def _yol(satir: Satir, olcek: float, x_merkez: float, y_ust: float, ek: str = ""
 def yigin(satirlar: list[Yazi], bosluk: float = 0.14) -> Cizim:
     """Satırlar alt alta, her biri kendi genişlik oranına ölçeklenir (klasik blok tişört)."""
     olculer = [font(y.font).satir(y.metin, y.harf_araligi) for y in satirlar]
-    olcekler = [ICERIK_G * y.oran / s.genislik for y, s in zip(satirlar, olculer)]
-    yukseklikler = [s.yukseklik * k for s, k in zip(olculer, olcekler)]
+    olcekler = [ICERIK_G * y.oran / s.genislik for y, s in zip(satirlar, olculer, strict=True)]
+    yukseklikler = [s.yukseklik * k for s, k in zip(olculer, olcekler, strict=True)]
     ara = bosluk * sum(yukseklikler) / len(yukseklikler)
     toplam = sum(yukseklikler) + ara * (len(satirlar) - 1)
     kucult = min(1.0, ICERIK_Y_MAKS / toplam)
     c = Cizim()
     y = UST_PAY
-    for s, k in zip(olculer, olcekler):
+    for s, k in zip(olculer, olcekler, strict=True):
         parca, h = _yol(s, k * kucult, TUVAL_G / 2, y)
         c.yazi(parca, h, s.metin)
         y += h + ara * kucult

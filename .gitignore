@@ -26,3 +26,5 @@ __pycache__/
 
 calisma/
 veri/
+*.db
+*.db-journal

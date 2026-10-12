@@ -81,7 +81,7 @@ class Font:
         parcalar: list[str] = []
         glifler: list[Glif] = []
         sinir = BoundsPen(self.glifler)
-        for bilgi, konum in zip(tampon.glyph_infos, tampon.glyph_positions):
+        for bilgi, konum in zip(tampon.glyph_infos, tampon.glyph_positions, strict=True):
             if bilgi.codepoint == 0:
                 karakter = metin[bilgi.cluster] if bilgi.cluster < len(metin) else "?"
                 raise EksikGlif(f"{self.dosya.name}: {karakter!r} için glif yok")
