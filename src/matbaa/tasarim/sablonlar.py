@@ -26,6 +26,7 @@ class Yazi:
     harf_araligi: float = 0.0
     oran: float = 1.0  # içerik genişliğinin kesri
     kucuk: bool = False  # ikincil satır (üst/alt); yükseklik sınırı yalnız ana satırlara uygulanır
+    vurgu: bool = False  # ana satır ikinci renkte (küçük satırlar zaten vurgu rengindedir)
 
 
 @dataclass
@@ -37,19 +38,22 @@ class Cizim:
     alt: float = 0.0  # kullanılan en alt y
     en_kucuk_yazi: float = float("inf")  # en kısa yazı öğesinin yüksekliği, px
     okunacak: list[str] = field(default_factory=list)  # OCR kapısının araması gereken düz satırlar
+    vurgu_parcalar: list[str] = field(default_factory=list)  # ikinci renkte basılacak öğeler (küçük satır, yay, çizgi)
 
-    def yazi(self, parca: str, yukseklik: float, metin: str | None = None) -> None:
+    def yazi(self, parca: str, yukseklik: float, metin: str | None = None, vurgu: bool = False) -> None:
         """`metin` verilmezse öğe OCR kapısına girmez (kavisli yazı: geometrisi çakışmayı zaten önler)."""
-        self.parcalar.append(parca)
+        (self.vurgu_parcalar if vurgu else self.parcalar).append(parca)
         self.en_kucuk_yazi = min(self.en_kucuk_yazi, yukseklik)
         if metin:
             self.okunacak.append(metin)
 
-    def svg(self, murekkep: str) -> str:
+    def svg(self, murekkep: str, vurgu: str | None = None) -> str:
+        """`vurgu` verilmezse tasarım tek renk basılır (vurgu öğeleri de ana mürekkeple)."""
         defs = f"<defs>{''.join(self.tanimlar)}</defs>" if self.tanimlar else ""
+        ikinci = f'<g fill="{vurgu or murekkep}">{"".join(self.vurgu_parcalar)}</g>' if self.vurgu_parcalar else ""
         return (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{TUVAL_G}" height="{TUVAL_Y}" '
-            f'viewBox="0 0 {TUVAL_G} {TUVAL_Y}">{defs}<g fill="{murekkep}">{"".join(self.parcalar)}</g></svg>'
+            f'viewBox="0 0 {TUVAL_G} {TUVAL_Y}">{defs}<g fill="{murekkep}">{"".join(self.parcalar)}</g>{ikinci}</svg>'
         )
 
 
@@ -83,9 +87,9 @@ def yigin(satirlar: list[Yazi], bosluk: float = 0.14) -> Cizim:
     kucult = min(1.0, ICERIK_Y_MAKS / toplam)
     c = Cizim()
     y = UST_PAY
-    for s, k in zip(olculer, olcekler, strict=True):
+    for yz, s, k in zip(satirlar, olculer, olcekler, strict=True):
         parca, h = _yol(s, k * kucult, TUVAL_G / 2, y)
-        c.yazi(parca, h, s.metin)
+        c.yazi(parca, h, s.metin, vurgu=yz.kucuk or yz.vurgu)
         y += h + ara * kucult
     c.alt = y - ara * kucult
     return c
@@ -174,7 +178,7 @@ def kavis(ust: Yazi, orta: Yazi, alt: Yazi | None = None, yay_derece: float = 70
     cy = UST_PAY + r + buyuk
     c = Cizim()
     for parca in _kavisli(su, olcek_u, TUVAL_G / 2, cy, r):
-        c.yazi(parca, buyuk)
+        c.yazi(parca, buyuk, vurgu=True)
     # Uç glifin dış üst köşesi yay ucundan biraz aşağı sarkar; taban noktası ile güvenli pay.
     y_uc = cy - r * math.cos(yay / 2) + buyuk * math.sin(yay / 2) * 0.35
     orta_ust = y_uc + buyuk * 0.35
@@ -187,7 +191,7 @@ def kavis(ust: Yazi, orta: Yazi, alt: Yazi | None = None, yay_derece: float = 70
         sa = font(alt.font).satir(alt.metin, alt.harf_araligi)
         olcek_a = _kucuk(sa, h * 0.32, ICERIK_G * 0.7 * alt.oran)
         parca, h2 = _yol(sa, olcek_a, TUVAL_G / 2, c.alt + 0.18 * h)
-        c.yazi(parca, h2, sa.metin)
+        c.yazi(parca, h2, sa.metin, vurgu=True)
         c.alt += 0.18 * h + h2
     return c
 
@@ -201,7 +205,7 @@ def rozet(ust: Yazi, orta: Yazi, alt: Yazi | None = None) -> Cizim:
     olcek_u = _kucuk(su, h_o * 0.2, ICERIK_G * 0.5)
     c = Cizim()
     parca, h_u = _yol(su, olcek_u, TUVAL_G / 2, UST_PAY)
-    c.yazi(parca, h_u, su.metin)
+    c.yazi(parca, h_u, su.metin, vurgu=True)
     # Yan çizgiler: kalınlık baskı alt sınırının (~1 mm = 12 px) epey üstünde.
     kalinlik = max(28.0, h_u * 0.09)
     yazi_g = su.genislik * olcek_u
@@ -213,7 +217,7 @@ def rozet(ust: Yazi, orta: Yazi, alt: Yazi | None = None) -> Cizim:
         (TUVAL_G / 2 + yazi_g / 2 + bosluk, sag),
     ):
         if x1 - x0 > kalinlik * 4:
-            c.parcalar.append(
+            c.vurgu_parcalar.append(
                 f'<rect x="{x0:.1f}" y="{y_cizgi:.1f}" width="{x1 - x0:.1f}" height="{kalinlik:.1f}" rx="{kalinlik / 2:.1f}"/>'
             )
     y = UST_PAY + h_u + h_u * 0.55
@@ -224,7 +228,7 @@ def rozet(ust: Yazi, orta: Yazi, alt: Yazi | None = None) -> Cizim:
         sa = font(alt.font).satir(alt.metin, alt.harf_araligi)
         olcek_a = _kucuk(sa, h_o * 0.2, ICERIK_G * 0.92 * alt.oran)
         parca, h_a = _yol(sa, olcek_a, TUVAL_G / 2, c.alt + h_u * 0.55)
-        c.yazi(parca, h_a, sa.metin)
+        c.yazi(parca, h_a, sa.metin, vurgu=True)
         c.alt += h_u * 0.55 + h_a
     return c
 

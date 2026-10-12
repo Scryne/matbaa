@@ -99,6 +99,7 @@ def denetle(
     kumaslar: list[str],
     beklenen: list[str] | None = None,
     en_kucuk_yazi: float | None = None,
+    vurgu: str | None = None,
 ) -> list[Sonuc]:
     a = np.asarray(img.getchannel("A"))
     sonuc = [
@@ -142,9 +143,10 @@ def denetle(
     kutu = (xs.max() - xs.min() + 1) * (ys.max() - ys.min() + 1)
     sonuc.append(Sonuc("murekkep_orani", True, govde.sum() / kutu, "bilgi"))
 
-    for k in kumaslar:
-        oran_k = kontrast(murekkep, k)
-        sonuc.append(Sonuc(f"kontrast {k}", oran_k >= KONTRAST_MIN, oran_k, f">= {KONTRAST_MIN}"))
+    for renk in [murekkep, *([vurgu] if vurgu else [])]:
+        for k in kumaslar:
+            oran_k = kontrast(renk, k)
+            sonuc.append(Sonuc(f"kontrast {renk}/{k}", oran_k >= KONTRAST_MIN, oran_k, f">= {KONTRAST_MIN}"))
     if en_kucuk_yazi is not None:
         sonuc.append(
             Sonuc(

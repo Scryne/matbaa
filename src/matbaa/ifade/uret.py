@@ -15,7 +15,8 @@ from matbaa import llm
 from matbaa.ayar import CONFIG
 
 MAKS_SATIR_KARAKTER = 18  # şablonlarda büyük satırın okunur kalması için
-MAKS_KELIME = 9
+MAKS_KELIME = 12  # toplam (küçük satırlar dahil)
+MAKS_ANA_KELIME = 8  # büyük yazılan ana mesaj
 
 SEMA = {
     "type": "object",
@@ -63,6 +64,8 @@ class Aday:
             return f"ana satır > {MAKS_SATIR_KARAKTER} karakter"
         if len(self.ust) > 22 or len(self.alt) > 30:
             return "küçük satır uzun"
+        if sum(len(s.split()) for s in self.ana) > MAKS_ANA_KELIME:
+            return f"ana mesaj > {MAKS_ANA_KELIME} kelime"
         if sum(len(s.split()) for s in self.satirlar) > MAKS_KELIME:
             return f"> {MAKS_KELIME} kelime"
         return None
@@ -105,7 +108,7 @@ def istem(nis: str, adet: int, kacinilacak: list[str], gun: date | None = None) 
         f"Write {adet} different slogans. Rules:",
         f"- 'main' is the big text: 1 to 3 short lines, each at most {MAKS_SATIR_KARAKTER} characters.",
         "- 'top' and 'bottom' are optional small lines (use empty string when not needed); a year like 'EST. 2026' or a role works there.",
-        f"- At most {MAKS_KELIME} words in total. Clear at a glance from across a room.",
+        f"- The big 'main' text has at most {MAKS_ANA_KELIME} words; at most {MAKS_KELIME} words in total. Clear at a glance from across a room.",
         "- Vary structure and angle: role jokes, hobby obsession, insider jargon, gentle self-roast, gift-for-someone framing.",
     ]
     for m in aktif_mevsimler(nis, gun):

@@ -35,6 +35,56 @@ def _son_ciftler(c) -> list[tuple[str, str]]:
     return [(s, json.loads(f)[0 if s == "yigin" else 1]) for s, f in reversed(r)]
 
 
+def _dosyalari_yaz(c, t: int, secim) -> None:
+    klasor = URETIM / f"{t:05d}"
+    klasor.mkdir(parents=True, exist_ok=True)
+    dosyalar = {}
+    vurgu = sec.PALETLER[secim.palet]
+    for etiket, img, murekkep, v in (
+        ("koyu", secim.koyu, sec.KOYU_MUREKKEP, vurgu[0] if vurgu else None),
+        ("acik", secim.acik, sec.ACIK_MUREKKEP, vurgu[1] if vurgu else None),
+    ):
+        (klasor / f"{etiket}.svg").write_text(secim.cizim.svg(murekkep, v), encoding="utf-8")
+        dosyalar[f"{etiket}_png"] = str(render.kaydet(img, klasor / f"{etiket}.png").relative_to(KOK))
+        dosyalar[f"{etiket}_svg"] = str((klasor / f"{etiket}.svg").relative_to(KOK))
+    c.execute(
+        "UPDATE tasarim SET dosyalar = ?, kalite = ?, sablon = ?, fontlar = ? WHERE id = ?",
+        (json.dumps(dosyalar), json.dumps(secim.kalite), secim.sablon, json.dumps(secim.fontlar), t),
+    )
+
+
+def _yapi(satir) -> dict:
+    """İfadenin üst/ana/alt yapısı; eski kayıtlarda yoksa satırlardan kestirilir (küçük harfli son satır = alt)."""
+    y = json.loads(satir["yapi"] or "{}")
+    if y.get("ana"):
+        return y
+    s = json.loads(satir["satirlar"])
+    alt = s[-1] if len(s) > 2 and s[-1] != s[-1].upper() else ""
+    govde = [x for x in s if x != alt] if alt else s
+    return {"ust": "", "ana": govde, "alt": alt}
+
+
+def yeniden_ciz(c=None, yazdir=print) -> dict:
+    """Onaylanmamış tasarımları güncel motorla yeniden çizer (palet, yerleşim iyileşince). Onaylı/yayındakine dokunmaz."""
+    c = c or db.baglan()
+    sayac = {"cizildi": 0, "ret": 0}
+    for r in c.execute(
+        """SELECT t.id, t.ifade_id, i.yapi, i.satirlar FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
+           WHERE t.durum IN ('kalite_ok', 'metin_ok', 'onay_bekliyor') ORDER BY t.id"""
+    ).fetchall():
+        y = _yapi(r)
+        secim, nedenler = sec.sec(y["ust"], y["ana"], y["alt"], _son_ciftler(c), tohum=r["ifade_id"])
+        if secim is None:
+            db.gecis(c, r["id"], "ret", f"yeniden çizim kapılardan geçmedi: {nedenler[-1][:200] if nedenler else ''}")
+            sayac["ret"] += 1
+        else:
+            _dosyalari_yaz(c, r["id"], secim)
+            db.olay(c, "tasarim", r["id"], None, "yeniden_cizildi", f"{secim.sablon} palet={secim.palet}")
+            sayac["cizildi"] += 1
+        c.commit()
+    return sayac
+
+
 def uret(nis: str, adet: int, c=None, yazdir=print) -> dict:
     c = c or db.baglan()
     sayac = {"uretilen": 0, "bicim_hatali": 0, "tekrar": 0, "ip_ret": 0, "ip_insan": 0, "kalite_ret": 0, "tasarim": 0}
@@ -58,15 +108,8 @@ def uret(nis: str, adet: int, c=None, yazdir=print) -> dict:
             yazdir(f"  kalite ret: {' / '.join(a.satirlar)} — {nedenler[-1][:120] if nedenler else ''}")
             continue
         t = db.tasarim_ekle(c, ifade_id, secim.sablon, secim.fontlar)
-        klasor = URETIM / f"{t:05d}"
-        klasor.mkdir(parents=True, exist_ok=True)
-        dosyalar = {}
-        for etiket, img, murekkep in (("koyu", secim.koyu, sec.KOYU_MUREKKEP), ("acik", secim.acik, sec.ACIK_MUREKKEP)):
-            (klasor / f"{etiket}.svg").write_text(secim.cizim.svg(murekkep), encoding="utf-8")
-            dosyalar[f"{etiket}_png"] = str(render.kaydet(img, klasor / f"{etiket}.png").relative_to(KOK))
-            dosyalar[f"{etiket}_svg"] = str((klasor / f"{etiket}.svg").relative_to(KOK))
-        c.execute("UPDATE tasarim SET dosyalar = ?, kalite = ? WHERE id = ?", (json.dumps(dosyalar), json.dumps(secim.kalite), t))
-        db.gecis(c, t, "kalite_ok", f"{secim.sablon} {secim.fontlar}")
+        _dosyalari_yaz(c, t, secim)
+        db.gecis(c, t, "kalite_ok", f"{secim.sablon} {secim.fontlar} palet={secim.palet}")
         c.commit()
         sayac["tasarim"] += 1
         yazdir(f"  tasarım {t}: {' / '.join(a.satirlar)} [{secim.sablon}, {secim.fontlar[0]}]")
@@ -145,6 +188,8 @@ def metin(c=None, sinir: int = 50, yazdir=print) -> dict:
 
 
 USPTO_TAZELIK_GUN = 35
+KUYRUK_TABAN = 20  # onay + yayın bekleyen en az tasarım
+KUYRUK_GUN = 14  # kuyruk, günlük yayın sınırının bu kadar gününü karşılasın
 
 
 def uspto_tazelik() -> int:
@@ -170,6 +215,15 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
         runpy.run_path(str(KOK / "scripts" / "uspto_guncelle.py"), run_name="__main__")
         marka.dizin.cache_clear()
     c = db.baglan()
+    from matbaa import yayin
+
+    kuyruk = c.execute(
+        "SELECT count(*) FROM tasarim WHERE durum IN ('kalite_ok', 'metin_ok', 'onay_bekliyor', 'onaylandi')"
+    ).fetchone()[0]
+    hedef = max(KUYRUK_TABAN, yayin.gunluk_sinir(c) * KUYRUK_GUN)
+    if kuyruk >= hedef:
+        nis_sayisi = 0  # üretim talebe bağlı: kuyruk yayın kapasitesini aşıyorsa Claude kullanımı boşa gitmez
+        yazdir(f"kuyruk {kuyruk} ≥ hedef {hedef}: bugün yeni üretim yok")
     # Kuyrukta en az tasarımı olan nişler önce: büyüme nişler arasında dengeli olsun.
     sayim = dict(
         c.execute(
@@ -219,6 +273,7 @@ def main(argv: list[str] | None = None) -> None:
     g = alt.add_parser("gunluk", help="günlük koşu: üretim → metin → yayın (Windows görevi bunu çağırır)")
     g.add_argument("--nis-sayisi", type=int, default=2)
     g.add_argument("--adet", type=int, default=12)
+    alt.add_parser("yeniden-ciz", help="onaylanmamış tasarımları güncel motorla yeniden çiz")
     alt.add_parser("printify-kesif", help="Printify kataloğunda blueprint ve sağlayıcı adayları")
     alt.add_parser("yayinla", help="onaylı tasarımları Printify'a (ısınma eğrisi sınırıyla)")
     alt.add_parser("etsy-esle", help="Printify'ın açtığı Etsy ilanlarına üretim ortağı + aktifleştirme")
@@ -231,6 +286,8 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(metin(sinir=a.sinir), ensure_ascii=False))
     elif a.komut == "gunluk":
         print(json.dumps(gunluk(a.nis_sayisi, a.adet), ensure_ascii=False, indent=1, default=str))
+    elif a.komut == "yeniden-ciz":
+        print(json.dumps(yeniden_ciz(), ensure_ascii=False))
     elif a.komut in ("printify-kesif", "yayinla", "etsy-esle"):
         from matbaa import yayin
         from matbaa.ayar import env_yukle
