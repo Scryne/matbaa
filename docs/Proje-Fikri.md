@@ -75,7 +75,7 @@ Gerçekçi hedef "hiç ellemeden" değil, **kurulumdan sonra günde ~10 dakika i
 | S4 | Etsy Seller App kaydı; API ile `production_partner_ids` + aktifleştirme; Printify publish → Etsy akışı | Aria (anahtar Scryne'ın hesabından) |
 | S5 | Tasarım hattı: 10 tasarım, otomatik kapılar, maliyet/tasarım | Aria |
 | S6 | IP/risk kapısı: kural tabanlı liste mi, Jev mi (global kural: önce `ts.py` spike'ı) | Aria |
-| S7 | Etsy'nin birincil sayfaları (ücret, AI beyanı, Creativity Standards) — araştırmada 403 verdi | Aria (tarayıcıdan) |
+| S7 | ✅ 2026-10-13 Etsy'nin birincil sayfaları doğrulandı: TR %6,5+14 TRY, ROF %1,67, AI beyanı açıklamada, POD = Designed by + üretim ortağı → `docs/spike/S7-etsy-birincil-kaynak.md` | Aria |
 
 ## Açık sorular
 - Niş seçimi için kullanılabilir veri kaynağı: Google Trends API (alpha başvurusu), Pinterest Trends, Etsy'nin kendi arama sayfası (scraping yasak) — S5 öncesi.
