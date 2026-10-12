@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import tomllib
 from dataclasses import dataclass
+from datetime import date
 from functools import cache
 
 from matbaa import llm
@@ -68,11 +69,29 @@ class Aday:
 
 
 @cache
+def takvim() -> dict:
+    return tomllib.loads((CONFIG / "takvim.toml").read_text(encoding="utf-8"))
+
+
+def aktif_mevsimler(nis: str, gun: date | None = None) -> list[dict]:
+    """Bugün açık mevsim pencereleri (yıl dönümünü aşan pencere dahil: 12-01 → 02-07)."""
+    g = (gun or date.today()).strftime("%m-%d")
+    sonuc = []
+    for m in takvim().values():
+        if m.get("nisler") and nis not in m["nisler"]:
+            continue
+        acik = m["bas"] <= g <= m["son"] if m["bas"] <= m["son"] else (g >= m["bas"] or g <= m["son"])
+        if acik:
+            sonuc.append(m)
+    return sonuc
+
+
+@cache
 def nisler() -> dict:
     return tomllib.loads((CONFIG / "nisler.toml").read_text(encoding="utf-8"))
 
 
-def istem(nis: str, adet: int, kacinilacak: list[str]) -> str:
+def istem(nis: str, adet: int, kacinilacak: list[str], gun: date | None = None) -> str:
     k = nisler()[nis]
     satirlar = [
         f"Niche: {k['ad']}",
@@ -89,6 +108,11 @@ def istem(nis: str, adet: int, kacinilacak: list[str]) -> str:
         f"- At most {MAKS_KELIME} words in total. Clear at a glance from across a room.",
         "- Vary structure and angle: role jokes, hobby obsession, insider jargon, gentle self-roast, gift-for-someone framing.",
     ]
+    for m in aktif_mevsimler(nis, gun):
+        n = max(1, round(adet * m["pay"]))
+        satirlar.append(
+            f"- Make about {n} of them gift slogans for the upcoming {m['ad']}, still clearly for this niche's buyer."
+        )
     if kacinilacak:
         satirlar.append("- Do not repeat or closely echo these earlier or rejected slogans: " + " | ".join(kacinilacak[:80]))
     return "\n".join(satirlar)

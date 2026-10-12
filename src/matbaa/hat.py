@@ -144,6 +144,60 @@ def metin(c=None, sinir: int = 50, yazdir=print) -> dict:
     return sayac
 
 
+USPTO_TAZELIK_GUN = 35
+
+
+def uspto_tazelik() -> int:
+    """Marka verisinin yaşı (gün); dosya yoksa çok büyük döner."""
+    import time
+
+    dosya = marka.DOSYA
+    return int((time.time() - dosya.stat().st_mtime) / 86400) if dosya.exists() else 10**6
+
+
+def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
+    """Günlük koşu (Windows görevi): marka verisi tazeliği → üretim → ilan metni → (anahtar varsa) yayın + Etsy eşleme."""
+    import os
+
+    from matbaa.ayar import env_yukle
+
+    env_yukle()
+    rapor: dict = {}
+    if uspto_tazelik() > USPTO_TAZELIK_GUN:
+        yazdir(f"USPTO verisi {uspto_tazelik()} günlük: yenileniyor (K-13)")
+        import runpy
+
+        runpy.run_path(str(KOK / "scripts" / "uspto_guncelle.py"), run_name="__main__")
+        marka.dizin.cache_clear()
+    c = db.baglan()
+    # Kuyrukta en az tasarımı olan nişler önce: büyüme nişler arasında dengeli olsun.
+    sayim = dict(
+        c.execute(
+            """SELECT i.nis, count(*) FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
+               WHERE t.durum IN ('kalite_ok', 'metin_ok', 'onay_bekliyor', 'onaylandi') GROUP BY i.nis"""
+        ).fetchall()
+    )
+    secilen = sorted(ifade_uret.nisler(), key=lambda n: sayim.get(n, 0))[:nis_sayisi]
+    for n in secilen:
+        yazdir(f"== {n}")
+        rapor[f"uret_{n}"] = uret(n, adet, c, yazdir)
+    rapor["metin"] = metin(c, yazdir=yazdir)
+    if os.environ.get("PRINTIFY_TOKEN") and os.environ.get("PRINTIFY_SHOP_ID"):
+        from matbaa import yayin
+        from matbaa.entegrasyon.printify import Printify
+
+        p = Printify()
+        rapor["yayin"] = yayin.yayinla(c, p, yazdir)
+        if os.environ.get("ETSY_KEYSTRING"):
+            from matbaa.entegrasyon.etsy import Etsy
+
+            rapor["etsy"] = yayin.etsy_esle(c, p, Etsy(), yazdir)
+    else:
+        rapor["yayin"] = "Printify anahtarı yok (Faz 0): yayın atlandı"
+    rapor["durum"] = durum(c)
+    return rapor
+
+
 def durum(c=None) -> dict:
     c = c or db.baglan()
     return dict(c.execute("SELECT durum, count(*) FROM tasarim GROUP BY durum").fetchall()) | {
@@ -162,6 +216,12 @@ def main(argv: list[str] | None = None) -> None:
     m = alt.add_parser("metin", help="kalite_ok tasarımlara ilan metni → onay kuyruğu")
     m.add_argument("--sinir", type=int, default=50)
     alt.add_parser("durum", help="kuyruk özeti")
+    g = alt.add_parser("gunluk", help="günlük koşu: üretim → metin → yayın (Windows görevi bunu çağırır)")
+    g.add_argument("--nis-sayisi", type=int, default=2)
+    g.add_argument("--adet", type=int, default=12)
+    alt.add_parser("printify-kesif", help="Printify kataloğunda blueprint ve sağlayıcı adayları")
+    alt.add_parser("yayinla", help="onaylı tasarımları Printify'a (ısınma eğrisi sınırıyla)")
+    alt.add_parser("etsy-esle", help="Printify'ın açtığı Etsy ilanlarına üretim ortağı + aktifleştirme")
     pn = alt.add_parser("panel", help="yerel onay paneli (127.0.0.1)")
     pn.add_argument("--port", type=int, default=8766)
     a = p.parse_args(argv)
@@ -169,6 +229,23 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(uret(a.nis, a.adet), ensure_ascii=False))
     elif a.komut == "metin":
         print(json.dumps(metin(sinir=a.sinir), ensure_ascii=False))
+    elif a.komut == "gunluk":
+        print(json.dumps(gunluk(a.nis_sayisi, a.adet), ensure_ascii=False, indent=1, default=str))
+    elif a.komut in ("printify-kesif", "yayinla", "etsy-esle"):
+        from matbaa import yayin
+        from matbaa.ayar import env_yukle
+        from matbaa.entegrasyon.printify import Printify
+
+        env_yukle()
+        p = Printify()
+        if a.komut == "printify-kesif":
+            print(json.dumps({"dukkanlar": p.dukkanlar(), "katalog": yayin.printify_kesif(p)}, ensure_ascii=False, indent=1))
+        elif a.komut == "yayinla":
+            print(json.dumps(yayin.yayinla(db.baglan(), p), ensure_ascii=False))
+        else:
+            from matbaa.entegrasyon.etsy import Etsy
+
+            print(json.dumps(yayin.etsy_esle(db.baglan(), p, Etsy()), ensure_ascii=False))
     elif a.komut == "panel":
         from matbaa.panel.app import calistir
 

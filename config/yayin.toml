@@ -1,0 +1,13 @@
+# Yayın ısınma eğrisi: yeni Etsy mağazasında ani toplu ilan ödeme bekletmesi ve askı riskini artırır (araştırma 01, S7).
+# Satırlar: [başlangıç günü, bitiş günü, günlük en çok TASARIM]. Her tasarım urunler.toml'daki her ürüne dönüşür (şu an 3 ilan).
+isinma = [[0, 7, 1], [7, 21, 2], [21, 45, 4], [45, 90, 6], [90, 100000, 8]]
+# Star Seller olduktan sonra elle yükseltilebilir; mağaza yaşı ilk yayın gününden sayılır.
+
+[printify]
+# Kataloğu ilk bağlantıda eşleyip doldurmak için: `uv run matbaa printify-kesif`. Sağlayıcı numuneyle seçilip kilitlenir (K-2).
+tisort = { blueprint_ara = "Comfort Colors 1717", blueprint_id = 0, saglayici_id = 0 }
+sweatshirt = { blueprint_ara = "Gildan 18000", blueprint_id = 0, saglayici_id = 0 }
+hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 0, saglayici_id = 0 }
+
+[etsy]
+uretim_ortagi_id = 0   # etsy_yetki.py çıktısındaki Printify ortağının kimliği

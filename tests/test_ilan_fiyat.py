@@ -49,3 +49,16 @@ def test_fiyat_kirilimi_tutarli():
 def test_tum_urunler_karli():
     for u in fiyat.urunler():
         assert fiyat.urun_hesap(u).net > 5, u
+
+
+def test_mevsim_pencereleri_yil_donumu_ve_nis_filtresi():
+    from datetime import date
+
+    from matbaa.ifade.uret import aktif_mevsimler
+
+    adlar = lambda nis, g: {m["ad"].split(" ")[0] for m in aktif_mevsimler(nis, g)}  # noqa: E731
+    assert "Valentine's" in adlar("fishing", date(2027, 1, 10))  # 12-01 → 02-07 yıl dönümünü aşar
+    assert "Valentine's" in adlar("fishing", date(2026, 12, 15))
+    assert "Graduation" in adlar("senior_mom", date(2027, 4, 20))
+    assert "Graduation" not in adlar("fishing", date(2027, 4, 20))  # niş filtresi
+    assert adlar("fishing", date(2027, 7, 20)) == set()

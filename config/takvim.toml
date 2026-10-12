@@ -1,0 +1,40 @@
+# Mevsim pencereleri: bu tarih aralığında üretilen sloganların bir kısmı o özel güne yönelir (ay-gün, her yıl tekrar).
+# Etsy alıcısı 6–12 hafta önce arar (araştırma 04); pencere o yüzden günden erken açılır.
+[christmas]
+ad = "Christmas / holiday gift"
+bas = "09-01"
+son = "12-12"
+pay = 0.35
+
+[valentines]
+ad = "Valentine's Day (February 14)"
+bas = "12-01"
+son = "02-07"
+pay = 0.35
+
+[st_patricks]
+ad = "St. Patrick's Day (March 17)"
+bas = "01-20"
+son = "03-10"
+pay = 0.25
+
+[mothers_day]
+ad = "Mother's Day (second Sunday of May)"
+bas = "03-01"
+son = "05-05"
+pay = 0.4
+nisler = ["knitting", "aunt", "pickleball", "running", "senior_mom"]
+
+[graduation]
+ad = "Graduation season"
+bas = "02-15"
+son = "06-15"
+pay = 0.4
+nisler = ["senior_mom"]
+
+[fathers_day]
+ad = "Father's Day (third Sunday of June)"
+bas = "04-15"
+son = "06-12"
+pay = 0.4
+nisler = ["fishing", "pickleball", "running", "milestone"]

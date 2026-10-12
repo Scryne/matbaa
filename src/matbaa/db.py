@@ -32,7 +32,7 @@ URUN_GECISLERI: dict[str, set[str]] = {
     "printify": {"etsy_taslak", "hata"},
     "etsy_taslak": {"aktif", "hata"},
     "aktif": {"kaldirildi"},
-    "hata": {"bekliyor"},
+    "hata": {"bekliyor", "printify", "etsy_taslak"},  # Printify ürünü varsa yalnız Etsy adımı yeniden denenir (mükerrer ürün yok)
     "kaldirildi": set(),
 }
 

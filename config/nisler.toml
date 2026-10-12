@@ -30,3 +30,43 @@ roller = ["Grandma", "Mom", "Auntie", "Maker", "Crafter"]
 kacin = ["yarn or craft brand names (Lion Brand, Red Heart, Michaels, Hobby Lobby)", "movie or TV parodies", "song or band parodies (e.g. Purl Jam)", "celebrity names", "crude innuendo"]
 yedek_etiketler = ["knitting gift", "crochet gift", "knitter gift", "crocheter gift", "yarn lover gift", "gift for knitter", "craft lover gift", "knitting apparel", "crochet lover", "gift for grandma", "yarn addict", "maker gift", "fiber artist gift"]
 ornek_ton = ["One More Row Then Bed", "My Stash Has A Stash", "Professional Yarn Collector"]
+
+[running]
+ad = "Runners (casual and marathon)"
+alici = "American recreational runners 25-65, run club members, people training for a 5K, half or full marathon; gifts from family after a race."
+ton = "self-aware humor about early alarms, slow paces, race-day nerves, snacks and medals, sore legs, run club friendship"
+jargon = ["mile", "pace", "5K", "10K", "half marathon", "marathon", "PR", "long run", "taper", "run club", "finish line", "chafing", "bib", "splits", "carb load"]
+roller = ["Mom", "Dad", "Run Club", "Coach", "Runner"]
+kacin = ["race or event names (Boston Marathon, NYC Marathon, Ironman)", "shoe or watch brands (Nike, Hoka, Garmin)", "'Run Club' alone as the main text (many marks exist)", "song lyrics or movie lines", "crude innuendo"]
+yedek_etiketler = ["running gift", "runner gift", "marathon gift", "half marathon gift", "gift for runner", "running apparel", "5k gift", "race day shirt", "jogging gift", "running mom gift", "running dad gift", "trail runner gift", "fitness gift"]
+ornek_ton = ["Slow Runners Club Member", "I Run For The Snacks", "Pace: Conversational"]
+
+[aunt]
+ad = "Aunts and family roles"
+alici = "American nieces, nephews, siblings and parents buying for an aunt (or the aunt for herself); birthdays, Christmas, Mother's Day, pregnancy announcements."
+ton = "warm, playful, 'fun aunt' pride, spoiling the kids, gentle sibling teasing, family love"
+jargon = ["auntie", "aunt", "niece", "nephew", "spoil", "favorite", "fun aunt", "cool aunt", "aunt life", "sister", "family"]
+roller = ["Auntie", "Aunt", "Tia", "Sister", "Godmother"]
+kacin = ["'Cool Aunt' or 'Aunt Life' as the whole text (marks likely)", "brand names", "celebrity names", "song lyrics or movie lines", "alcohol-centered jokes"]
+yedek_etiketler = ["aunt gift", "auntie shirt", "gift for aunt", "new aunt gift", "aunt birthday gift", "favorite aunt", "aunt to be gift", "promoted to aunt", "auntie gift", "aunt christmas gift", "best aunt gift", "aunt sweatshirt", "niece nephew gift"]
+ornek_ton = ["Professional Spoiler Of Nieces", "Auntie By Day, Snack Dealer By Night", "Officially The Favorite"]
+
+[milestone]
+ad = "Milestone birthdays (40th, 50th, 60th, 70th)"
+alici = "American adults buying for someone turning 40, 50, 60 or 70 (or for themselves); birthday parties, surprise gifts, group shirts."
+ton = "affectionate aging jokes, vintage and limited-edition framing, 'still got it', original parts, classic model"
+jargon = ["vintage", "limited edition", "classic", "original parts", "aged to perfection", "legend", "birthday", "est.", "decades", "milestone"]
+roller = ["Dad", "Mom", "Grandpa", "Grandma", "Birthday Queen", "Birthday King"]
+kacin = ["'Vintage 19XX Limited Edition' word for word (very common, marks exist)", "beer, wine or liquor jokes", "brand or car brand names", "song lyrics or movie lines", "crude innuendo"]
+yedek_etiketler = ["50th birthday gift", "40th birthday gift", "60th birthday gift", "70th birthday gift", "birthday shirt", "birthday gift idea", "milestone birthday", "funny birthday tee", "birthday party shirt", "gift for dad", "gift for mom", "turning 50 gift", "over the hill gift"]
+ornek_ton = ["Fifty And Still Fabulous-ish", "Classic Model, Original Parts", "Certified Antique Since 1976"]
+
+[senior_mom]
+ad = "Senior parents (graduation class of 2027)"
+alici = "American moms and dads of high school and college seniors graduating in 2027; senior night, graduation day, family group shirts. Peak Jan-Aug."
+ton = "proud, sentimental-but-funny, tissues and tuition, 'raised a graduate', last first day, cheering loudest"
+jargon = ["senior", "class of 2027", "graduate", "grad", "senior night", "cap and gown", "diploma", "last first day", "tassel", "proud", "senior year"]
+roller = ["Senior Mom", "Senior Dad", "Grad Mom", "Proud Mom", "Proud Dad", "Grandma"]
+kacin = ["school names, mascots or team names", "'Proud Mom Of A 2027 Graduate' word for word (very common)", "brand names", "song lyrics or movie lines"]
+yedek_etiketler = ["senior mom shirt", "class of 2027", "graduation gift", "grad mom shirt", "senior mom gift", "graduation shirt", "proud mom shirt", "senior night shirt", "2027 graduate", "senior dad shirt", "grad family shirt", "graduation party", "senior year gift"]
+ornek_ton = ["Senior Mom: Running On Tissues And Coffee", "I Raised A Graduate (With Snacks)", "Loudest Cheer In The Stands"]

@@ -29,3 +29,4 @@ veri/
 *.db
 *.db-journal
 uretim/
+.etsy_token.json
