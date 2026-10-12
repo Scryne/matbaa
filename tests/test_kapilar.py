@@ -59,8 +59,10 @@ def test_ince_cizgi_kapisina_takilir(saglam):
 
 
 def test_kenara_dayanan_tasarim_kenar_payina_takilir(saglam):
+    # Sabit kaydırma değil: tasarımın gerçek sol sınırını tuvalin kenarına kadar taşı (yerleşim değişse de test anlamını korur).
+    sol = saglam[0].getchannel("A").getbbox()[0]
     bozuk = Image.new("RGBA", (TUVAL_G, TUVAL_Y))
-    bozuk.alpha_composite(saglam[0], (-200, 0))
+    bozuk.alpha_composite(saglam[0], (-sol + 10, 0))
     assert "kenar_payi" in _dusenler(bozuk)
 
 
