@@ -1,0 +1,29 @@
+# Niş kartları: ifade üreticisinin tek bilgi kaynağı. Seçim gerekçesi docs/arastirma/06 (K-12).
+# Metinler İngilizce: doğrudan istem olarak gider.
+
+[fishing]
+ad = "Fishing (dads & grandpas)"
+alici = "American buyers shopping for a dad, grandpa, or papa who loves fishing; gifts for Christmas, Father's Day, birthdays. Also anglers buying for themselves."
+ton = "warm, dad-joke humor, self-deprecating about fish stories, patience, early mornings, being outdoors with family"
+jargon = ["cast", "reel", "tackle box", "lure", "bait", "bobber", "hook", "line", "catch and release", "the one that got away", "fishing hole", "boat", "dock", "lake", "pond", "early bird", "limit"]
+roller = ["Dad", "Grandpa", "Papa", "Pop", "Pawpaw", "Fishing Buddy"]
+kacin = ["famous brand or store names (Bass Pro, Yeti, Stanley, Cabela's)", "sports teams", "alcohol-centered jokes", "crude or sexual innuendo", "song lyrics or movie lines", "'Reel Cool' (trademarked)", "'Born to fish forced to work' (trademarked)", "'Hook line and sinker' (trademarked)"]
+ornek_ton = ["Mostly Fishing, Occasionally Working", "Professional Fish Whisperer", "Patience Level: Waiting For A Bite"]
+
+[pickleball]
+ad = "Pickleball players"
+alici = "American adults 30-70 who play pickleball socially; gifts for partners, parents, club friends; holiday and birthday gifts."
+ton = "playful, competitive-but-friendly, club culture, retirement energy, obsession with the game"
+jargon = ["dink", "kitchen", "non-volley zone", "third shot drop", "paddle", "lob", "erne", "volley", "rally", "serve", "partner", "court", "drop shot", "banger", "open play"]
+roller = ["Grandma", "Grandpa", "Mom", "Dad", "Club Member", "Partner"]
+kacin = ["brand names (Selkirk, Joola, Franklin)", "league or tournament names (PPA, MLP, USA Pickleball)", "celebrity names", "song lyrics or movie lines", "'Dink Different' (trademarked)", "'I can't I have pickleball' (trademarked)", "'Pickleball is my therapy' (similar trademark exists)"]
+ornek_ton = ["Kitchen Rules Apply", "Will Dink For Snacks", "Third Shot Drop Specialist"]
+
+[knitting]
+ad = "Knitting & crochet makers"
+alici = "American knitters and crocheters, mostly women 25-75, buying for themselves or receiving gifts from family; yarn-store and craft-circle culture."
+ton = "cozy, witty, yarn puns, stash humor, WIP (work in progress) jokes, relaxing hobby, friendship"
+jargon = ["yarn", "stash", "skein", "purl", "knit", "stitch", "crochet", "hook", "row", "WIP", "frog", "cast on", "bind off", "gauge", "granny square", "needles", "pattern"]
+roller = ["Grandma", "Mom", "Auntie", "Maker", "Crafter"]
+kacin = ["yarn or craft brand names (Lion Brand, Red Heart, Michaels, Hobby Lobby)", "movie or TV parodies", "song or band parodies (e.g. Purl Jam)", "celebrity names", "crude innuendo"]
+ornek_ton = ["One More Row Then Bed", "My Stash Has A Stash", "Professional Yarn Collector"]

@@ -47,9 +47,23 @@ def test_yaygin_kelime_markasi_reddetmez_aday_yapar(d):
     assert "PICKLEBALL" in s.adaylar
 
 
-def test_kucuk_parca_gundelik_marka_aday(d):
+def test_yalniz_baglactan_marka_sayilmaz(d):
     s = d.kontrol("Knitting Is In My Blood Forever")
-    assert s.temiz and "IN MY" in s.adaylar
+    assert s.temiz and "IN MY" not in s.adaylar
+
+
+def test_satir_tek_yaygin_kelime_marka_ise_dusurmez(d):
+    assert d.satir_kontrol("Mama").temiz  # "MAMA BEAR" var ama satır "MAMA": slogan düzeyinde bakılır
+    assert d.satir_kontrol("Pickleball").temiz
+
+
+def test_satirin_kendisi_cok_kelimeli_marka(d):
+    s = d.satir_kontrol("Mama Bear")
+    assert not s.temiz and s.reddet[0][1] == "satırın kendisi canlı marka"
+
+
+def test_satirda_uydurma_marka_kelimesi(d):
+    assert not d.satir_kontrol("Proud Boymom").temiz
 
 
 def test_tek_kelime_takasi_benzer_doner(d):

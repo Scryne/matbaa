@@ -92,6 +92,22 @@ class MarkaDizini:
                 bulunan.add(m)
         return sorted(bulunan)
 
+    def satir_kontrol(self, satir: str) -> Sonuc:
+        """Tasarımın tek bir satırı: yalnız kendisi çok kelimeli bir marka olan satır ya da uydurma kelime marka reddedilir.
+
+        "MOM", "CLUB", "WITH LOVE" gibi bir satır sloganın mesajı değildir; tam-eşleşme ve baskınlık kuralları sloganın
+        tamamına ve ana mesaja uygulanır (S7 sonrası Faz 3: satır düzeyi kural 11 temiz sloganı düşürdü).
+        """
+        s = Sonuc(satir)
+        n = normal(satir)
+        k = n.split()
+        if len(k) >= 2 and not set(k) <= DURAK and (n in self.cok_kelime or n.replace(" ", "") in self.bitisik):
+            s.reddet.append((n, "satırın kendisi canlı marka", self.cok_kelime.get(n) or self.bitisik[n.replace(" ", "")]))
+        for kelime in k:
+            if kelime in self.tam and kelime not in DURAK and zipf_frequency(kelime.lower(), "en") < UYDURMA_ESIK:
+                s.reddet.append((kelime, "uydurma tek kelime canlı marka", self.tam[kelime]))
+        return s
+
     def kontrol(self, ifade: str) -> Sonuc:
         s = Sonuc(ifade)
         n = normal(ifade)
@@ -99,7 +115,9 @@ class MarkaDizini:
         if not kelimeler:
             return s
         bitisik = n.replace(" ", "")
-        if n in self.tam:
+        if len(kelimeler) == 1 and zipf_frequency(n.lower(), "en") >= UYDURMA_ESIK and n in self.tam:
+            s.adaylar.append(n)  # tek yaygın kelimelik ifade ("KNIT"): bağlam kararı
+        elif n in self.tam:
             s.reddet.append((n, "ifadenin tamamı canlı marka", self.tam[n]))
         elif bitisik in self.bitisik:
             s.reddet.append((bitisik, "ifade bitişik yazılınca canlı marka", self.bitisik[bitisik]))
@@ -111,6 +129,8 @@ class MarkaDizini:
                     continue
                 if j - i >= 2:
                     seri = self.cok_kelime.get(parca) or self.bitisik.get(parca.replace(" ", ""))
+                    if seri and set(parca.split()) <= DURAK:
+                        continue  # "IS A", "IN THE": yalnız bağlaçtan oluşan marka mesaj taşımaz
                     if seri:
                         # "IN MY", "ONE MORE" gibi gündelik çiftler her ifadeyi kilitlemesin.
                         if (j - i) / len(kelimeler) >= BASKIN_ORAN:

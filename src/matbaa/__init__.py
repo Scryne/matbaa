@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from matbaa!")
+"""Matbaa: Etsy + Printify print-on-demand hattı."""

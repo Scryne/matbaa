@@ -25,6 +25,7 @@ class Yazi:
     font: str
     harf_araligi: float = 0.0
     oran: float = 1.0  # içerik genişliğinin kesri
+    kucuk: bool = False  # ikincil satır (üst/alt); yükseklik sınırı yalnız ana satırlara uygulanır
 
 
 @dataclass
@@ -61,10 +62,21 @@ def _yol(satir: Satir, olcek: float, x_merkez: float, y_ust: float, ek: str = ""
     )
 
 
+ANA_YUKSEKLIK_SINIRI = 1.5  # bir ana satır, ana satırların en kısasının bu katından yüksek olamaz
+
+
 def yigin(satirlar: list[Yazi], bosluk: float = 0.14) -> Cizim:
-    """Satırlar alt alta, her biri kendi genişlik oranına ölçeklenir (klasik blok tişört)."""
+    """Satırlar alt alta, her biri kendi genişlik oranına ölçeklenir (klasik blok tişört).
+
+    Tam genişliğe yayılan kısa satır devleşir ("MY", "WIP"); ana satırların yüksekliği en kısa ana satırın
+    `ANA_YUKSEKLIK_SINIRI` katıyla sınırlanır, aşan satır daralıp ortalanır (S5 sonrası pano: hiyerarşi kayboluyordu).
+    """
     olculer = [font(y.font).satir(y.metin, y.harf_araligi) for y in satirlar]
     olcekler = [ICERIK_G * y.oran / s.genislik for y, s in zip(satirlar, olculer, strict=True)]
+    ana = [s.yukseklik * k for y, s, k in zip(satirlar, olculer, olcekler, strict=True) if not y.kucuk]
+    if ana:
+        tavan = min(ana) * ANA_YUKSEKLIK_SINIRI
+        olcekler = [k if y.kucuk else min(k, tavan / s.yukseklik) for y, s, k in zip(satirlar, olculer, olcekler, strict=True)]
     yukseklikler = [s.yukseklik * k for s, k in zip(olculer, olcekler, strict=True)]
     ara = bosluk * sum(yukseklikler) / len(yukseklikler)
     toplam = sum(yukseklikler) + ara * (len(satirlar) - 1)
@@ -77,6 +89,50 @@ def yigin(satirlar: list[Yazi], bosluk: float = 0.14) -> Cizim:
         y += h + ara * kucult
     c.alt = y - ara * kucult
     return c
+
+
+def dengeli_bol(satirlar: list[str], dosya: str, harf_araligi: float = 0.0, maks_satir: int = 3) -> list[str]:
+    """Ana mesajı 1–3 satıra, genişlikler birbirine yakın ve anlam bütün kalacak şekilde böler.
+
+    Modelin satır sonları anlam taşır ("1. CAST / 2. WAIT / 3. REPEAT") ama orantıyı bozabilir
+    ("Catch and Release / MY / PATIENCE"). Modelin sonları tercih edilen kırılımdır; başka yerden kırmak cezalı.
+    Ceza: en geniş/en dar satır oranı; tek başına kalan kısa kelime; tek satırda aşırı yatay şerit.
+    """
+    kelimeler = " ".join(satirlar).split()
+    tercih, i = set(), 0
+    for satir in satirlar[:-1]:
+        i += len(satir.split())
+        tercih.add(i)
+    f = font(dosya)
+    en_iyi, en_iyi_puan = list(satirlar), float("inf")
+
+    def bolumler(bas: int, kalan: int):
+        if kalan == 1:
+            yield [len(kelimeler)]
+            return
+        for j in range(bas + 1, len(kelimeler) - kalan + 2):
+            for devam in bolumler(j, kalan - 1):
+                yield [j, *devam]
+
+    for n in range(1, min(maks_satir, len(kelimeler)) + 1):
+        for sinirlar in bolumler(0, n):
+            aday, bas = [], 0
+            for son in sinirlar:
+                aday.append(" ".join(kelimeler[bas:son]))
+                bas = son
+            olcu = [f.satir(x, harf_araligi) for x in aday]
+            g = [o.genislik for o in olcu]
+            puan = max(g) / min(g)
+            puan += sum(1.5 for x in aday if len(x.replace(" ", "")) <= 3 and n > 1)
+            puan += 0.8 * sum(1 for k in sinirlar[:-1] if k not in tercih)
+            puan += 0.4 * len(tercih - set(sinirlar))  # modelin satır sonunu kaldırmak da bedelli ("1. CAST 2. WAIT")
+            # Blok en-boy oranı: her satır tam genişliğe ölçeklenince toplam yükseklik; 2,6:1'den yatay blok pankart gibi durur.
+            blok_yukseklik = sum(o.yukseklik / o.genislik for o in olcu) * 1.12
+            puan += max(0.0, 1 / blok_yukseklik - 2.6) * 0.5
+            puan += 0.15 * n
+            if puan < en_iyi_puan:
+                en_iyi, en_iyi_puan = aday, puan
+    return en_iyi
 
 
 def _kavisli(satir: Satir, olcek: float, cx: float, cy: float, r: float) -> list[str]:

@@ -19,14 +19,19 @@ class Karar:
     kayit: list[dict] = field(default_factory=list)  # satır bazında ham sinyaller (sonradan kalibrasyon için)
 
 
-def denetle(satirlar: list[str], nis: str, anlamsal: bool = True) -> Karar:
+def denetle(satirlar: list[str], nis: str, anlamsal: bool = True, ana: list[str] | None = None) -> Karar:
+    """`satirlar`: tasarımdaki tüm satırlar; `ana`: büyük yazılan ana mesaj satırları (yoksa tümü).
+
+    Tam marka ve baskınlık kuralları sloganın tamamına ve ana mesaja uygulanır; tek satırlar yalnız kendisi
+    çok kelimeli marka ya da uydurma kelime marka ise düşürür.
+    """
     d = marka.dizin()
     k = Karar("temiz")
     tum = " ".join(satirlar)
-    for ifade in dict.fromkeys([*satirlar, tum]):
-        m = d.kontrol(ifade)
-        satir = {"ifade": ifade, "uspto_red": m.reddet, "adaylar": m.adaylar, "benzerler": m.benzerler}
-        k.kayit.append(satir)
+    kontroller = [(s, d.satir_kontrol(s)) for s in satirlar if len(satirlar) > 1]
+    kontroller += [(i, d.kontrol(i)) for i in dict.fromkeys([" ".join(ana or satirlar), tum])]
+    for ifade, m in kontroller:
+        k.kayit.append({"ifade": ifade, "uspto_red": m.reddet, "adaylar": m.adaylar, "benzerler": m.benzerler})
         if not m.temiz:
             k.karar = "ret"
             k.nedenler += [f"USPTO: {r[0]} ({r[1]}, seri {r[2]})" for r in m.reddet]
