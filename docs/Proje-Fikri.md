@@ -2,7 +2,7 @@
 proje: Matbaa
 created: 2026-10-13
 type: proje-fikri
-status: denetim
+status: onaylandi
 ---
 # Matbaa — Proje Fikri
 
