@@ -8,13 +8,17 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "duckdb>=1.5.6",
     "fonttools>=4.66.1",
+    "httpx2>=2.13",
     "numpy>=2.5.4",
     "pillow>=12.3.0",
     "rapidocr-onnxruntime>=1.4.4",
     "resvg-py>=0.5.0",
     "scipy>=1.18.1",
+    "typesafe-sdk>=0.7.3",
     "uharfbuzz>=0.56.3",
+    "wordfreq>=3.1.1",
 ]
 
 [project.scripts]
@@ -29,3 +33,13 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.17.0",
 ]
+
+[tool.ruff]
+line-length = 130
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

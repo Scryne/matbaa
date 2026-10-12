@@ -94,9 +94,7 @@ def main() -> None:
             (CIKTI / f"{ad}-{etiket}.svg").write_text(svg, encoding="utf-8")
             img = render.goruntu(svg)
             render.kaydet(img, CIKTI / f"{ad}-{etiket}.png")
-            sonuclar = kapilar.denetle(
-                img, murekkep, kumaslar, cizim.okunacak, cizim.en_kucuk_yazi
-            )
+            sonuclar = kapilar.denetle(img, murekkep, kumaslar, cizim.okunacak, cizim.en_kucuk_yazi)
             hatalar = [str(s) for s in sonuclar if not s.gecti]
             ozet.append(
                 (
@@ -104,11 +102,7 @@ def main() -> None:
                     etiket,
                     kapilar.gecti(sonuclar),
                     hatalar,
-                    [
-                        str(s)
-                        for s in sonuclar
-                        if s.kapi.split()[0] in ("en_kucuk_yazi", "okunurluk")
-                    ],
+                    [str(s) for s in sonuclar if s.kapi.split()[0] in ("en_kucuk_yazi", "okunurluk")],
                 )
             )
             satir.append(render.onizleme(img, kumaslar[0], 360))
@@ -123,8 +117,7 @@ def main() -> None:
     tuval.save(CIKTI / "pano.png")
     for ad, etiket, ok, hatalar, temel in ozet:
         print(
-            f"{'GEÇTİ' if ok else 'KALDI'} {ad}-{etiket} | {' | '.join(temel)}"
-            + (f" || {'; '.join(hatalar)}" if hatalar else "")
+            f"{'GEÇTİ' if ok else 'KALDI'} {ad}-{etiket} | {' | '.join(temel)}" + (f" || {'; '.join(hatalar)}" if hatalar else "")
         )
 
 

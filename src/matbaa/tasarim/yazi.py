@@ -63,9 +63,7 @@ class Font:
         self.upm = self.tt["head"].unitsPerEm
         self._hb = hb.Font(hb.Face(hb.Blob.from_file_path(str(dosya))))
         os2 = self.tt["OS/2"]
-        self.buyuk_harf = getattr(os2, "sCapHeight", 0) or int(
-            self.tt["hhea"].ascent * 0.7
-        )
+        self.buyuk_harf = getattr(os2, "sCapHeight", 0) or int(self.tt["hhea"].ascent * 0.7)
 
     def _cizim(self, ad: str, x: float) -> str:
         pen = SVGPathPen(self.glifler)

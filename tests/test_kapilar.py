@@ -29,14 +29,8 @@ def saglam() -> tuple[Image.Image, list[str], float]:
     return render.goruntu(c.svg(KOYU)), c.okunacak, c.en_kucuk_yazi
 
 
-def _dusenler(
-    img, murekkep=KOYU, kumaslar=ACIK_KUMAS, beklenen=None, en_kucuk=None
-) -> set[str]:
-    return {
-        s.kapi.split()[0]
-        for s in kapilar.denetle(img, murekkep, kumaslar, beklenen, en_kucuk)
-        if not s.gecti
-    }
+def _dusenler(img, murekkep=KOYU, kumaslar=ACIK_KUMAS, beklenen=None, en_kucuk=None) -> set[str]:
+    return {s.kapi.split()[0] for s in kapilar.denetle(img, murekkep, kumaslar, beklenen, en_kucuk) if not s.gecti}
 
 
 def test_saglam_tasarim_gecer(saglam):
@@ -82,9 +76,7 @@ def test_kucuk_yazi_kapisi(saglam):
 def test_okunurluk_ust_uste_binen_yaziyi_yakalar():
     a = yigin([Yazi("GARDEN", "Anton-Regular.ttf")])
     b = yigin([Yazi("PLANTS", "AlfaSlabOne-Regular.ttf")])
-    svg = a.svg(KOYU).replace(
-        "</g></svg>", "".join(b.parcalar) + "</g></svg>"
-    )  # iki satır aynı yerde
+    svg = a.svg(KOYU).replace("</g></svg>", "".join(b.parcalar) + "</g></svg>")  # iki satır aynı yerde
     img = render.goruntu(svg)
     assert "okunurluk" in _dusenler(img, beklenen=["GARDEN", "PLANTS"])
 
@@ -99,6 +91,4 @@ def test_kavis_ortasi_yay_uclarinin_altinda():
         Yazi("Chapter Lover", "Lobster-Regular.ttf"),
     )
     img = render.goruntu(c.svg(KOYU))
-    assert kapilar.gecti(
-        kapilar.denetle(img, KOYU, ACIK_KUMAS, c.okunacak, c.en_kucuk_yazi)
-    )
+    assert kapilar.gecti(kapilar.denetle(img, KOYU, ACIK_KUMAS, c.okunacak, c.en_kucuk_yazi))

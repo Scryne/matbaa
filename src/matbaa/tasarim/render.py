@@ -16,11 +16,7 @@ DPI = 300
 
 def png_bayt(svg: str) -> bytes:
     # Yazılar yol olduğu için sistem fontu yüklenmez: render her makinede aynı.
-    return bytes(
-        resvg_py.svg_to_bytes(
-            svg_string=svg, width=TUVAL_G, height=TUVAL_Y, skip_system_fonts=True
-        )
-    )
+    return bytes(resvg_py.svg_to_bytes(svg_string=svg, width=TUVAL_G, height=TUVAL_Y, skip_system_fonts=True))
 
 
 def goruntu(svg: str) -> Image.Image:
@@ -39,9 +35,7 @@ def onizleme(img: Image.Image, kumas: str, genislik: int = 600) -> Image.Image:
     zemin = Image.new("RGBA", img.size, kumas)
     zemin.alpha_composite(img)
     oran = genislik / img.width
-    return zemin.convert("RGB").resize(
-        (genislik, int(img.height * oran)), Image.LANCZOS
-    )
+    return zemin.convert("RGB").resize((genislik, int(img.height * oran)), Image.LANCZOS)
 
 
 def alfa(img: Image.Image) -> np.ndarray:

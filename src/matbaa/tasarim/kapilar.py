@@ -35,9 +35,7 @@ class Sonuc:
     esik: str
 
     def __str__(self) -> str:
-        return (
-            f"{'✓' if self.gecti else '✗'} {self.kapi}: {self.deger:.4g} ({self.esik})"
-        )
+        return f"{'✓' if self.gecti else '✗'} {self.kapi}: {self.deger:.4g} ({self.esik})"
 
 
 def _bagil_parlaklik(hex_renk: str) -> float:
@@ -65,43 +63,29 @@ def _kelimeler(metin: str) -> list[str]:
     return [k for k in re.findall(r"[A-Z0-9]+", metin.upper()) if k]
 
 
-def okunurluk(
-    img: Image.Image, murekkep: str, beklenen: list[str]
-) -> tuple[float, list[str]]:
+def okunurluk(img: Image.Image, murekkep: str, beklenen: list[str]) -> tuple[float, list[str]]:
     """Tasarımı kendi zemininde OCR'la okur; beklenen kelimelerin kaçı bulunuyor.
 
     Yazım hatası kodla üretilen yazıda olmaz; bu kapı yerleşimin yazıyı bozup bozmadığını
     (üst üste binme, aşırı kavis, okunmaz el yazısı) yakalar.
     """
-    zemin = (
-        "#ffffff"
-        if kontrast(murekkep, "#ffffff") >= kontrast(murekkep, "#000000")
-        else "#000000"
-    )
+    zemin = "#ffffff" if kontrast(murekkep, "#ffffff") >= kontrast(murekkep, "#000000") else "#000000"
     tuval = Image.new("RGBA", img.size, zemin)
     tuval.alpha_composite(img)
     a = np.asarray(img.getchannel("A"))
     ys, xs = np.nonzero(a)
-    kirp = tuval.crop(
-        (max(xs.min() - 80, 0), max(ys.min() - 80, 0), xs.max() + 80, ys.max() + 80)
-    )
+    kirp = tuval.crop((max(xs.min() - 80, 0), max(ys.min() - 80, 0), xs.max() + 80, ys.max() + 80))
     # Tek ölçek yetmiyor: 1600 px'de dev harfler algılanmıyor (S5: "MORE PLANT" kaçtı); iki ölçeğin birleşimi.
     # Yön sınıflandırıcısı kapalı: el yazısını ters çevirip okuyordu ("Powered by" → "hg pauromod").
     okunan: list[str] = []
     for g in (1000, 700):
-        kucuk = kirp.convert("RGB").resize(
-            (g, max(int(kirp.height * g / kirp.width), 1)), Image.LANCZOS
-        )
+        kucuk = kirp.convert("RGB").resize((g, max(int(kirp.height * g / kirp.width), 1)), Image.LANCZOS)
         sonuc, _ = _ocr()(np.asarray(kucuk), use_cls=False)
         okunan += _kelimeler(" ".join(r[1] for r in (sonuc or [])))
     birlesik = "".join(okunan)
     bulunan, eksik = 0, []
     for k in (k for satir in beklenen for k in _kelimeler(satir)):
-        if (
-            k in okunan
-            or k in birlesik
-            or any(difflib.SequenceMatcher(None, k, o).ratio() >= 0.8 for o in okunan)
-        ):
+        if k in okunan or k in birlesik or any(difflib.SequenceMatcher(None, k, o).ratio() >= 0.8 for o in okunan):
             bulunan += 1
         else:
             eksik.append(k)
@@ -139,19 +123,10 @@ def denetle(
     kenar = ndimage.binary_dilation(opak, iterations=2) & ~opak
     serbest_yari = yari & ~kenar
     oran = serbest_yari.sum() / max(dolu.sum(), 1)
-    sonuc.append(
-        Sonuc("yari_saydam", oran <= YARI_SAYDAM_MAKS, oran, f"<= {YARI_SAYDAM_MAKS}")
-    )
+    sonuc.append(Sonuc("yari_saydam", oran <= YARI_SAYDAM_MAKS, oran, f"<= {YARI_SAYDAM_MAKS}"))
 
     govde = a >= 128
-    disk = (
-        np.hypot(
-            *np.mgrid[
-                -INCE_YARICAP : INCE_YARICAP + 1, -INCE_YARICAP : INCE_YARICAP + 1
-            ]
-        )
-        <= INCE_YARICAP
-    )
+    disk = np.hypot(*np.mgrid[-INCE_YARICAP : INCE_YARICAP + 1, -INCE_YARICAP : INCE_YARICAP + 1]) <= INCE_YARICAP
     acilmis = ndimage.binary_opening(govde, structure=disk)
     kayip = (govde & ~acilmis).sum() / max(govde.sum(), 1)
     sonuc.append(
@@ -169,9 +144,7 @@ def denetle(
 
     for k in kumaslar:
         oran_k = kontrast(murekkep, k)
-        sonuc.append(
-            Sonuc(f"kontrast {k}", oran_k >= KONTRAST_MIN, oran_k, f">= {KONTRAST_MIN}")
-        )
+        sonuc.append(Sonuc(f"kontrast {k}", oran_k >= KONTRAST_MIN, oran_k, f">= {KONTRAST_MIN}"))
     if en_kucuk_yazi is not None:
         sonuc.append(
             Sonuc(

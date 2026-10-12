@@ -35,9 +35,7 @@ class Cizim:
     tanimlar: list[str] = field(default_factory=list)
     alt: float = 0.0  # kullanılan en alt y
     en_kucuk_yazi: float = float("inf")  # en kısa yazı öğesinin yüksekliği, px
-    okunacak: list[str] = field(
-        default_factory=list
-    )  # OCR kapısının araması gereken düz satırlar
+    okunacak: list[str] = field(default_factory=list)  # OCR kapısının araması gereken düz satırlar
 
     def yazi(self, parca: str, yukseklik: float, metin: str | None = None) -> None:
         """`metin` verilmezse öğe OCR kapısına girmez (kavisli yazı: geometrisi çakışmayı zaten önler)."""
@@ -54,9 +52,7 @@ class Cizim:
         )
 
 
-def _yol(
-    satir: Satir, olcek: float, x_merkez: float, y_ust: float, ek: str = ""
-) -> tuple[str, float]:
+def _yol(satir: Satir, olcek: float, x_merkez: float, y_ust: float, ek: str = "") -> tuple[str, float]:
     tx = x_merkez - (satir.x0 + satir.genislik / 2) * olcek
     ty = y_ust - satir.y0 * olcek
     return (
@@ -100,14 +96,10 @@ def _kavisli(satir: Satir, olcek: float, cx: float, cy: float, r: float) -> list
 
 def _kucuk(satir: Satir, hedef: float, genislik_siniri: float) -> float:
     """İkincil satır ölçeği: hedef yüksekliğe çık ama genişlik sınırını aşma."""
-    return min(
-        max(hedef, KUCUK_YAZI) / satir.yukseklik, genislik_siniri / satir.genislik
-    )
+    return min(max(hedef, KUCUK_YAZI) / satir.yukseklik, genislik_siniri / satir.genislik)
 
 
-def kavis(
-    ust: Yazi, orta: Yazi, alt: Yazi | None = None, yay_derece: float = 70.0
-) -> Cizim:
+def kavis(ust: Yazi, orta: Yazi, alt: Yazi | None = None, yay_derece: float = 70.0) -> Cizim:
     """Kolej tarzı: üstte kavisli yazı, yayın uçlarının altında büyük düz satır, en altta küçük satır.
 
     Kavisli satır, kirişi içerik genişliğinin %90'ını tutacak şekilde ölçeklenir; orta satır yay
@@ -181,9 +173,7 @@ def rozet(ust: Yazi, orta: Yazi, alt: Yazi | None = None) -> Cizim:
     return c
 
 
-def el_yazisi_blok(
-    blok: Yazi, el: Yazi, aci: float = -6.0, oyma: float = 60.0
-) -> Cizim:
+def el_yazisi_blok(blok: Yazi, el: Yazi, aci: float = -6.0, oyma: float = 60.0) -> Cizim:
     """Büyük blok kelimenin alt kenarına binen eğik el yazısı; el yazısının çevresi bloktan oyulur.
 
     El yazısı bloğun ortasına konursa blok okunmaz (S5 ilk tur: "TEACH" → "TEASH"); alt kenara biner,

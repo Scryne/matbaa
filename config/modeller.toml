@@ -1,0 +1,6 @@
+# Model kimlikleri burada durur, koda gömülmez. Vault'taki saglik.py aktif projelerde bunları izler.
+
+[typesafe]
+# "latest": sabit sürüm API'den kalkınca sessizce ölmesin (Yanki dersi). Çözülen sürüm her kararla kayda yazılır.
+model = "jev-latest"
+zaman_asimi_sn = 30
