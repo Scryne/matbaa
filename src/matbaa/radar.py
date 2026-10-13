@@ -16,7 +16,7 @@ import statistics
 import time
 import tomllib
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from matbaa.ayar import CONFIG, KOK
 
@@ -82,6 +82,18 @@ def tara(etsy, marka_dizini=None, bekle=time.sleep, yazdir=print) -> dict:
         o["kelime"] for o in sonuc["adaylar"] if o["firsat"] > esik and o.get("marka_temiz", True) and o["giysi"]
     ][:8]
     return sonuc
+
+
+def son_tarama_taze(gun: int = 7, simdi: datetime | None = None) -> bool:
+    """Son `gun` gün içinde kaydedilmiş bir tarama var mı (`calisma/radar/YYYY-MM-DD.json`): radar haftada bir koşar."""
+    bugun = (simdi or datetime.now(UTC)).date()
+    for f in CIKTI.glob("????-??-??.json"):
+        try:
+            if (bugun - date.fromisoformat(f.stem)).days < gun:
+                return True
+        except ValueError:
+            continue
+    return False
 
 
 def kaydet(sonuc: dict) -> tuple:

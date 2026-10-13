@@ -217,26 +217,32 @@ def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohu
     """Kendi görsellerimizi ekler ve galeriyi kurar: vitrin rengindeki mockup, yakın plan, diğer mockup'lar, beden/renk/güven kartları.
 
     Etsy 11. görseli kabul etti (2026-10-13): sınır 10 değil (araştırma: 20). Görseller önce sona yüklenir, sonra sıra tek seferde kurulur.
+    Yarıda kalan bir koşunun yüklediği görsel alt metninden tanınır ve ikinci kez yüklenmez (ertesi gün yeniden denemede mükerrer olmaz).
     """
     import httpx
 
     indir = indir or (lambda url: Image.open(io.BytesIO(httpx.get(url, timeout=60).content)))
     u = urunler()[urun]
     mevcut = etsy.ilan_gorselleri(listing_id)
-    sonuc: dict = {"vitrin": None, "eklenen": []}
+    plan = ilan_gorselleri(urun, dosyalar, tohum)
+    alt_ad = {alt: ad for ad, _, alt in plan}
+    kendi: dict[str, int] = {alt_ad[g["alt_text"]]: g["listing_image_id"] for g in mevcut if g.get("alt_text") in alt_ad}
+    mockup_g = [g for g in mevcut if g.get("alt_text") not in alt_ad]
+    sonuc: dict = {"vitrin": None, "eklenen": [], "onceden": sorted(kendi)}
     vitrin = None
-    if (renk := u.get("vitrin_rengi")) and len(mevcut) > 1:
+    if (renk := u.get("vitrin_rengi")) and len(mockup_g) > 1:
         hedef = next((r["hex"] for r in u["renkler"] if r["ad"] == renk), None)
         if hedef:
-            vitrin = vitrin_sec([(g, indir(g["url_570xN"])) for g in mevcut], hedef)
-    kendi: dict[str, int] = {}
-    for ad, img, alt in ilan_gorselleri(urun, dosyalar, tohum)[: max(maks - len(mevcut), 0)]:
-        y = etsy.gorsel_yukle(listing_id, _jpeg(img), len(mevcut) + len(kendi) + 1, f"{ad}.jpg", alt)
+            vitrin = vitrin_sec([(g, indir(g["url_570xN"])) for g in mockup_g], hedef)
+    yer = max(maks - len(mevcut), 0)
+    for ad, img, alt in [x for x in plan if x[0] not in kendi][:yer]:
+        y = etsy.gorsel_yukle(listing_id, _jpeg(img), len(mevcut) + len(sonuc["eklenen"]) + 1, f"{ad}.jpg", alt)
         kendi[ad] = (y or {}).get("listing_image_id")
         sonuc["eklenen"].append(ad)
-    mockuplar = [g["listing_image_id"] for g in mevcut if not vitrin or g["listing_image_id"] != vitrin["listing_image_id"]]
+    mockuplar = [g["listing_image_id"] for g in mockup_g if not vitrin or g["listing_image_id"] != vitrin["listing_image_id"]]
     bas = ([vitrin["listing_image_id"]] if vitrin else mockuplar[:1]) + ([kendi["yakin-plan"]] if kendi.get("yakin-plan") else [])
-    sira = bas + [g for g in mockuplar if g not in bas] + [gid for ad, gid in kendi.items() if gid and ad != "yakin-plan"]
+    kartlar = [kendi[ad] for ad, _, _ in plan if ad != "yakin-plan" and kendi.get(ad)]
+    sira = bas + [g for g in mockuplar if g not in bas] + kartlar
     sira_kur(etsy, listing_id, sira)
     sonuc["vitrin"] = vitrin["listing_image_id"] if vitrin else None
     return sonuc

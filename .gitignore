@@ -30,3 +30,7 @@ veri/
 *.db-journal
 uretim/
 .etsy_token.json
+
+*.db-wal
+*.db-shm
+.etsy_token.json.tmp

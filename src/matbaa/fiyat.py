@@ -30,7 +30,11 @@ def kur_guncelle(http=None) -> float:
     """TCMB günlük USD döviz satış kuru → veri/kur.json. Etsy'nin TRY sabit ödeme ücreti (14 TRY) bu kurla USD'ye çevrilir."""
     import httpx
 
-    r = (http or httpx.Client(timeout=30)).get(TCMB)
+    if http is None:
+        with httpx.Client(timeout=30) as h:
+            r = h.get(TCMB)
+    else:
+        r = http.get(TCMB)
     r.raise_for_status()
     m = re.search(r'Kod="USD".*?<ForexSelling>([\d.]+)</ForexSelling>', r.text, re.S)
     if not m:
@@ -66,12 +70,13 @@ class Kirilim:
         return self.net / self.gelir if self.gelir else 0.0
 
 
-def hesap(fiyat: float, kargo: float, uretim: float, offsite: bool = False, ilan_try: bool = False) -> Kirilim:
+def hesap(fiyat: float, kargo: float, uretim: float, offsite: bool = False, ilan_try: bool = False, adet: int = 1) -> Kirilim:
+    """`adet`: siparişteki ürün adedi; Etsy satılan her adet için ilanı yeniler (listeleme ücreti adet başına)."""
     u = ucretler()
     gelir = fiyat + kargo
     vergi_dahil = gelir * (1 + u["abd_satis_vergisi_ort"])
     etsy = (
-        u["listeleme_usd"]
+        u["listeleme_usd"] * max(adet, 1)
         + u["islem_orani"] * gelir
         + u["odeme_orani"] * vergi_dahil
         + u["odeme_sabit_try"] / try_usd()

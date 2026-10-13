@@ -218,15 +218,21 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
             try:
                 if c.execute("SELECT durum FROM urun WHERE tasarim_id = ? AND urun = ?", (t["id"], urun)).fetchone()[0] == "hata":
                     db.urun_gecis(c, t["id"], urun, adim, "yeniden deneme")
+                    c.commit()  # yazma kilidi Printify çağrıları boyunca tutulmasın (panel aynı anda onay yazabilir)
                 if adim == "bekliyor":
                     bp, sg = ycfg[urun]["blueprint_id"], ycfg[urun]["saglayici_id"]
                     if urun not in varyant_onbellek:
                         varyant_onbellek[urun] = pf.varyant_sec(p.varyantlar(bp, sg), k["renkler"], k["bedenler"])
+                    # Fiyat yayın anındaki katalogdan (config/urunler.toml): metin yazıldıktan sonra değişen fiyat eski kalmasın.
                     govde = pf.urun_govdesi(
                         il["baslik"], il["aciklama"], json.loads(il["etiketler"]), bp, sg,
-                        varyant_onbellek[urun], _gorseller(p, t["id"], dosyalar, gorsel_onbellek, urun), il["fiyat"], k.get("buyuk_beden_ek", {}),
+                        varyant_onbellek[urun], _gorseller(p, t["id"], dosyalar, gorsel_onbellek, urun), k["fiyat"], k.get("buyuk_beden_ek", {}),
                     )  # fmt: skip
                     urun_id = p.urun_olustur(govde)["id"]
+                    c.execute(
+                        "UPDATE ilan SET fiyat = ?, kargo = ? WHERE tasarim_id = ? AND urun = ?",
+                        (k["fiyat"], k["kargo"], t["id"], urun),
+                    )
                     # Kimlik yayından önce kaydedilir: yayın düşerse sonraki koşu aynı ürünü yayınlar, ikincisini açmaz.
                     db.urun_gecis(c, t["id"], urun, "olusturuldu", "Printify ürünü oluşturuldu", printify_id=urun_id)
                     c.commit()
@@ -255,6 +261,7 @@ def _etsy_kimligi(urun: dict) -> str | None:
     return str(dis["id"]) if isinstance(dis, dict) and dis.get("id") else None
 
 
+ETSY_DENEME_MAKS = 3  # Etsy adımı bu kadar kez düşerse ürün "elle bakılmalı"ya alınır (alarm), her gün sessizce yinelenmez
 YAYIN_ZAMAN_ASIMI_SAAT = 48  # Printify'ın Etsy ilanını açması dakikalar sürer; bu kadar beklemişse yayın düşmüştür
 YENIDEN_YAYIN_MAKS = 2
 ELLE = "elle bakılmalı"  # bu hatayla düşen ürün otomatik yeniden denenmez (haftalık rapor ve panel gösterir)
@@ -290,7 +297,12 @@ def elle_denetle(c, p: pf.Printify, yazdir=print) -> dict:
     for r in c.execute(
         "SELECT tasarim_id, urun, printify_id, durum, guncelleme FROM urun WHERE durum IN ('printify', 'etsy_taslak')"
     ).fetchall():
-        u = p.urun(r["printify_id"])
+        try:
+            u = p.urun(r["printify_id"])
+        except Exception as e:  # tek ürünün okunamaması diğerlerinin denetimini durdurmaz; ertesi koşu yeniden bakar
+            sayac["hata"] = sayac.get("hata", 0) + 1
+            yazdir(f"  printify okuma hata {r['tasarim_id']}/{r['urun']}: {type(e).__name__}: {str(e)[:150]}")
+            continue
         listing = _etsy_kimligi(u)
         if not listing:
             if not _yayin_asimi(c, r):
@@ -353,8 +365,11 @@ def kargo_profili_kur(p: pf.Printify, etsy, yazdir=print) -> int:
     return kimlik
 
 
-def etsy_esle(c, p: pf.Printify, etsy, yazdir=print) -> dict:
-    """Printify'ın Etsy'ye açtığı ilanı bul → üretim ortağını bağla, AI beyanını doğrula, aktifleştir."""
+def etsy_esle(c, p: pf.Printify, etsy, yazdir=print, hata_dene: bool = True) -> dict:
+    """Printify'ın Etsy'ye açtığı ilanı bul → üretim ortağını bağla, AI beyanını doğrula, aktifleştir.
+
+    `hata_dene=False`: yalnız Etsy ilanı beklenenlere bakılır (aynı koşu içindeki tekrar turları hatalı ürünü dakikalar içinde
+    `ETSY_DENEME_MAKS`'a taşımasın; hata günde bir kez yeniden denenir)."""
     ortak = ayar()["etsy"]["uretim_ortagi_id"]
     if not ortak:
         raise RuntimeError(
@@ -367,7 +382,11 @@ def etsy_esle(c, p: pf.Printify, etsy, yazdir=print) -> dict:
             "SELECT tasarim_id, urun, printify_id, durum, etsy_listing_id, guncelleme, hata FROM urun WHERE durum IN ('printify', 'etsy_taslak', 'hata')"
         ).fetchall()
         if r["durum"] != "hata"
-        or (ELLE not in (r["hata"] or "") and db.hata_oncesi(c, r["tasarim_id"], r["urun"]) in ("printify", "etsy_taslak"))
+        or (
+            hata_dene
+            and ELLE not in (r["hata"] or "")
+            and db.hata_oncesi(c, r["tasarim_id"], r["urun"]) in ("printify", "etsy_taslak")
+        )
     ]
     for r in satirlar:
         try:
@@ -406,7 +425,13 @@ def etsy_esle(c, p: pf.Printify, etsy, yazdir=print) -> dict:
             if c.execute("SELECT durum FROM tasarim WHERE id = ?", (r["tasarim_id"],)).fetchone()[0] == "onaylandi":
                 db.gecis(c, r["tasarim_id"], "yayinda")
         except Exception as e:
-            db.urun_gecis(c, r["tasarim_id"], r["urun"], "hata", f"etsy: {type(e).__name__}: {e}"[:500])
+            onceki = c.execute(
+                "SELECT count(*) FROM olay WHERE varlik = 'urun' AND varlik_id = ? AND yeni = ? AND aciklama LIKE 'etsy:%'",
+                (r["tasarim_id"], f"{r['urun']}:hata"),
+            ).fetchone()[0]
+            ek = f" ({onceki + 1}. deneme, Etsy panelinde {ELLE})" if onceki + 1 >= ETSY_DENEME_MAKS else ""
+            neden = f"etsy: {type(e).__name__}: {e}"[: 500 - len(ek)] + ek
+            db.urun_gecis(c, r["tasarim_id"], r["urun"], "hata", neden)
             sayac["hata"] += 1
             yazdir(f"  etsy hata {r['tasarim_id']}/{r['urun']}: {e}")
         c.commit()

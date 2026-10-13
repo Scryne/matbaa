@@ -116,9 +116,13 @@ def simdi() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
-def baglan(yol: Path | str | None = None) -> sqlite3.Connection:
-    c = sqlite3.connect(yol or DB)  # DB çalışma anında okunur: testler geçici veritabanına yönlendirebilir
+def baglan(yol: Path | str | None = None, thread_serbest: bool = False) -> sqlite3.Connection:
+    """`thread_serbest`: bağlantı tek bir isteğe ait ama açılıp kapanması farklı iş parçacığında olabilir (panelin FastAPI bağımlılığı)."""
+    # DB çalışma anında okunur: testler geçici veritabanına yönlendirebilir. Panel ve günlük koşu aynı anda yazabilir:
+    # WAL okuyucuyu yazana takmaz, 30 sn bekleme ağ çağrısı süren bir yazma işleminin bitmesini bekler ("database is locked" yerine).
+    c = sqlite3.connect(yol or DB, timeout=30, check_same_thread=not thread_serbest)
     c.row_factory = sqlite3.Row
+    c.execute("PRAGMA journal_mode = WAL")
     c.execute("PRAGMA foreign_keys = ON")
     c.executescript(SEMA)
     # Sonradan eklenen sütunlar (eski veritabanlarına uygulanır).
@@ -209,6 +213,26 @@ def hata_oncesi(c: sqlite3.Connection, tasarim_id: int, urun: str) -> str | None
         (tasarim_id, f"{urun}:hata"),
     ).fetchone()
     return r[0] if r else None
+
+
+YEDEK_SAKLA = 14  # gün
+
+
+def yedekle(c: sqlite3.Connection, dizin: Path, gun: str | None = None, sakla: int = YEDEK_SAKLA) -> Path:
+    """Tutarlı anlık kopya (`sqlite3.backup`, yazma sürerken de güvenli) → `<dizin>/matbaa-<gün>.db`; en yeni `sakla` kopya kalır.
+
+    Veritabanı canlı ilanların Printify/Etsy kimliklerini ve sipariş defterini taşır, git dışındadır: kaybı elle eşleme demektir.
+    """
+    dizin.mkdir(parents=True, exist_ok=True)
+    hedef = dizin / f"matbaa-{gun or datetime.now(UTC).date().isoformat()}.db"
+    gecici = hedef.with_suffix(".db.tmp")
+    with sqlite3.connect(gecici) as kopya:
+        c.backup(kopya)
+    kopya.close()
+    gecici.replace(hedef)
+    for eski in sorted(dizin.glob("matbaa-????-??-??.db"))[:-sakla]:
+        eski.unlink()
+    return hedef
 
 
 def durumdakiler(c: sqlite3.Connection, durum: str) -> list[sqlite3.Row]:

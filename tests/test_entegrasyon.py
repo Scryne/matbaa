@@ -260,7 +260,7 @@ def test_printify_siparis_defteri_net_iptal_ve_gecikme(ortam):  # K-27, Faz 8-9 
 
     from matbaa import siparis
 
-    yayin.yayinla(ortam, SahtePrintify(), yazdir=lambda *_: None)  # p1..p3 tasarım 1'in ürünleri, ilan fiyatı 28.99
+    yayin.yayinla(ortam, SahtePrintify(), yazdir=lambda *_: None)  # p1..p3 tasarım 1'in ürünleri
     p = SiparisliPrintify(
         [
             _pf_siparis(1, "p1", "fulfilled", 3, takip="9400TRACK", fiyat_sent=3399),
@@ -272,7 +272,11 @@ def test_printify_siparis_defteri_net_iptal_ve_gecikme(ortam):  # K-27, Faz 8-9 
     assert s["yeni"] == 3 and len(s["alarm"]) == 1 and "5002" in s["alarm"][0]
     r = ortam.execute("SELECT brut, net, takip, tasarim_id FROM siparis WHERE etsy_receipt_id = '5001'").fetchone()
     assert r[0] == 33.99 and 0 < r[1] < 33.99 - 17.53 and r[2] == "9400TRACK" and r[3] == 1  # metadata fiyatı, maliyet düşülmüş
-    assert ortam.execute("SELECT brut FROM siparis WHERE etsy_receipt_id = '5002'").fetchone()[0] == 28.99  # ilan fiyatı
+    # metadata fiyatı yoksa yayınlanan ilan fiyatı (yayında güncel katalogdan yazılır)
+    assert (
+        ortam.execute("SELECT brut FROM siparis WHERE etsy_receipt_id = '5002'").fetchone()[0]
+        == fiyat.urunler()["sweatshirt"]["fiyat"]
+    )
     s2 = siparis.izle_printify(ortam, p, simdi=datetime(2026, 10, 20, tzinfo=UTC), yazdir=lambda *_: None)
     assert s2["yeni"] == 0 and s2["guncel"] == 3
     toplam = ortam.execute(f"SELECT count(*) FROM siparis WHERE {siparis.GECERLI}").fetchone()[0]

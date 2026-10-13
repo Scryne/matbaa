@@ -1,6 +1,6 @@
 """Etsy ilan kuralları: düzeltilebilen düzeltilir, düzeltilemeyen `sorunlar`a yazılır (boş değilse ilan onaya gitmez).
 
-Sınırlar: başlık ≤ 140 karakter; 13 etiket, her biri ≤ 20 karakter, yalnız harf/rakam/boşluk ve - ' ™ © ®
+Sınırlar: başlık ≤ 140 karakter, % : & + birer kez; 13 etiket, her biri ≤ 20 karakter, yalnız harf/rakam/boşluk ve - ' ™ © ®
 dışı karakter yok; aynı etiket iki kez yok. Açıklamada AI beyanı ve üretim ortağı cümlesi zorunlu (Creativity Standards).
 """
 
@@ -52,9 +52,22 @@ def _asiliyi_at(t: str) -> str:
     return " ".join(k)
 
 
+# Etsy API (createDraftListing/updateListing `title`): "%, :, & ve + karakterleri birer kez kullanılabilir"; ikincisi ilanı reddettirir.
+TEK_KULLANIM = {"&": " and ", "+": " and ", ":": ",", "%": " percent"}
+
+
+def _tek_kullanim(baslik: str) -> str:
+    """Dört özel karakterin ilkini bırakır, sonrakileri sözcükle değiştirir ("Fishing & Hunting & Camping" → "... and Camping")."""
+    for ch, yerine in TEK_KULLANIM.items():
+        if baslik.count(ch) > 1:
+            ilk = baslik.index(ch) + 1
+            baslik = baslik[:ilk] + baslik[ilk:].replace(ch, yerine)
+    return re.sub(r"\s+", " ", re.sub(r"\s+,", ",", baslik)).strip()
+
+
 def dogrula(ilan: Ilan) -> Ilan:
     sorunlar: list[str] = []
-    baslik = re.sub(r"\s+", " ", ilan.baslik).strip()
+    baslik = _tek_kullanim(re.sub(r"\s+", " ", ilan.baslik).strip())
     if len(baslik) > BASLIK_MAKS:
         kes = baslik[:BASLIK_MAKS].rsplit(" ", 1)[0].rstrip(",-|")
         baslik = kes

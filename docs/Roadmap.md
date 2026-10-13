@@ -53,6 +53,18 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   günlük koşuyu (ve haftalık raporu) düşürmesi, onay panelinin hiç açılmaması, Etsy yetki betiğinin `.env` okumaması, yanlış Etsy token
   adresi. Eklenen: Windows bildirimi, panelde Dikkat şeridi, satan tasarımlar, K-13 "insan" yolu, kimliklerin kendiliğinden yazılması.
 
+- Denetim turu 2 (2026-10-13 gece, `mod = "api"` geçişinden sonra): Düzeltilen: yayından sonra Etsy ilanı bir gün ücretli kargo
+  profiliyle ve üretim ortağısız kalıyordu (günlük koşu artık ilan düşene kadar ≤ 15 dk bekleyip aynı koşuda eşliyor); iki günlük
+  koşu aynı anda mükerrer Printify ürünü açabiliyordu (OS dosya kilidi); bir tasarımın `claude -p` zaman aşımı tüm metin adımını
+  düşürüyordu; Etsy yenileme token'ı atomik yazılmıyordu ve her `Etsy()` yeni yenileme yapıyordu (erişim token'ı paylaşılıyor);
+  makbuzlar 100'de kesiliyordu (sayfalama); kalıcı Etsy hatası her gün sessizce yineleniyordu (3. denemede "elle bakılmalı" alarmı);
+  yayın fiyatı metin anındaki kayıttan geliyordu (artık güncel katalog); yarıda kalan görsel yüklemesi ertesi gün mükerrer
+  görsel ekliyordu (alt metinle tanınıyor); başlıkta ikinci `& : + %` Etsy'de reddediliyordu; `kar_30g` adımı korumasızdı; radar
+  rapor düşünce her gün koşuyordu; USPTO yenilemesi yarıda kalırsa marka dosyasını bozuyordu (geçici dosya + satır sayısı kontrolü);
+  panel bağlantıları kapanmıyordu, başka sitelerden POST/DNS rebinding'e açıktı, eksik dosyada 500 veriyordu. Eklenen: günlük
+  tutarlı DB yedeği (14 gün, `MATBAA_YEDEK_DIZINI`), SQLite WAL + 30 sn bekleme (panel ve koşu aynı anda yazabilir), panelde
+  "düzelt" (Faz 5 bitti kriterindeki eksik parça: başlık/etiket, doğrulayıcı + marka süzgeciyle), adet başına yenileme ücreti.
+
 ### Faz 13: Performansa göre üretim 🔄 (kod 2026-10-13)
 - **Yapılan:** `performans.py`: niş puanı = ilan başına beklenen satış (görüntülenme × yumuşatılmış dönüşüm, önsel %2, favori 0,1 satış),
   boş nişe keşif payı; 30 aktif ilandan azken kuyruk dengesi. Satan ifadeler Claude istemine "aynı açı, yeni söz" örneği olarak girer.

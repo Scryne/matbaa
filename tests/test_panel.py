@@ -29,7 +29,7 @@ def istemci(tmp_path, monkeypatch):
     c.commit()
     from matbaa.panel.app import app
 
-    return TestClient(app)
+    return TestClient(app, base_url="http://127.0.0.1:8766")
 
 
 def test_kuyruk(istemci):
@@ -87,3 +87,39 @@ def test_onay_geri_alinir_ret_alinmaz(istemci):
     assert istemci.post("/api/geri-al/1").json()["durum"] == "onay_bekliyor"
     istemci.post("/api/karar/2", json={"karar": "ret"})
     assert istemci.post("/api/geri-al/2").status_code == 409
+
+
+def test_yerel_olmayan_host_ve_baska_kokenden_yazma_reddedilir(istemci):
+    from fastapi.testclient import TestClient
+
+    from matbaa.panel.app import app
+
+    assert TestClient(app, base_url="http://kotu.example").get("/api/kuyruk").status_code == 403  # DNS rebinding
+    r = istemci.post("/api/geri-al/1", headers={"Origin": "https://kotu.example"})
+    assert r.status_code == 403  # siteler arası POST
+    assert istemci.post("/api/karar/1", json={"karar": "onay"}, headers={"Origin": "http://127.0.0.1:8766"}).status_code == 200
+
+
+def test_eksik_baski_dosyasi_404(istemci):
+    assert istemci.get("/tam/1/koyu").status_code == 404
+    assert istemci.get("/onizleme/1/acik").status_code == 404
+
+
+def test_ilan_duzeltilir_kurala_ve_markaya_uymayan_kaydedilmez(istemci, monkeypatch):
+    from matbaa.ilan.metin import AI_BEYANI, URETIM_ORTAGI
+    from matbaa.ip import marka
+
+    monkeypatch.setattr(marka, "dizin", lambda: marka.MarkaDizini([("REEL COOL DAD", "1")]))
+    c = db.baglan()
+    c.execute("UPDATE ilan SET aciklama = ? WHERE tasarim_id = 1", (f"x\n\n{URETIM_ORTAGI}\n\n{AI_BEYANI}",))
+    c.commit()
+    etiketler = [f"fishing gift {i}" for i in range(13)]
+    r = istemci.post("/api/ilan/1/tisort", json={"baslik": "Funny Fishing Grandpa Shirt", "etiketler": etiketler})
+    assert r.status_code == 200 and r.json()["baslik"] == "Funny Fishing Grandpa Shirt"
+    assert db.baglan().execute("SELECT baslik FROM ilan WHERE tasarim_id = 1").fetchone()[0] == "Funny Fishing Grandpa Shirt"
+    assert istemci.post("/api/ilan/1/tisort", json={"baslik": "X", "etiketler": etiketler[:5]}).status_code == 422
+    r = istemci.post("/api/ilan/1/tisort", json={"baslik": "Fishing Shirt", "etiketler": ["reel cool dad", *etiketler[:12]]})
+    assert r.status_code == 422 and "markaya" in r.json()["detail"]
+    c.execute("INSERT INTO urun (tasarim_id, urun, durum) VALUES (1, 'tisort', 'olusturuldu')")
+    c.commit()
+    assert istemci.post("/api/ilan/1/tisort", json={"baslik": "Y", "etiketler": etiketler}).status_code == 409

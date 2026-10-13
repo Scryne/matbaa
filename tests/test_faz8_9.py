@@ -11,7 +11,7 @@ import httpx
 import pytest
 from test_entegrasyon import SahtePrintify, ortam  # noqa: F401  (fixture)
 
-from matbaa import db, fiyat, rapor, siparis, tavan, yayin
+from matbaa import db, fiyat, radar, rapor, siparis, tavan, yayin
 
 SIMDI = datetime(2026, 11, 16, 9, 0, tzinfo=UTC)
 
@@ -125,6 +125,10 @@ def gunluk_ortam(tmp_path, monkeypatch):
     for k in ("PRINTIFY_TOKEN", "PRINTIFY_SHOP_ID", "ETSY_KEYSTRING", "ETSY_SHARED_SECRET", "ETSY_SHOP_ID"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setattr(hat, "SON_KOSU", tmp_path / "son.json")
+    monkeypatch.setattr(hat, "KILIT", tmp_path / "kosu.kilit")
+    monkeypatch.setattr(hat, "YEDEK_DIZINI", tmp_path / "yedek")
+    monkeypatch.delenv("MATBAA_YEDEK_DIZINI", raising=False)
+    monkeypatch.setattr(radar, "CIKTI", tmp_path / "radar")
     monkeypatch.setattr(rapor, "RAPOR_DIZINI", tmp_path / "rapor")
     monkeypatch.setattr(hat, "uspto_tazelik", lambda: 3)
     monkeypatch.setattr(fiyat, "kur_guncelle", lambda: 49.0)
@@ -154,6 +158,7 @@ def test_gunluk_adim_duserse_digerleri_surer_kayit_ve_bildirim(gunluk_ortam, mon
     kayit = json.loads((tmp / "son.json").read_text(encoding="utf-8"))
     assert kayit["hatalar"] == r["hatalar"] and kayit["basladi"]
     assert gosterilen and "1 hata" in gosterilen[0][0]
+    assert r["yedek"].startswith(str(tmp / "yedek")) and len(list((tmp / "yedek").iterdir())) == 1  # günlük yedek alındı
 
 
 def test_gunluk_bayat_marka_verisinde_uretim_durur(gunluk_ortam, monkeypatch):

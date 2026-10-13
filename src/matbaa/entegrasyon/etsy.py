@@ -4,7 +4,7 @@
 token adresi `https://api.etsy.com/v3/public/oauth/token` (developers.etsy.com authentication, 2026-10-13; 9 Şubat 2026'dan beri
 shared secret'sız istek reddediliyor); `updateListing` gövdesi form-urlencoded ve
 `production_partner_ids`, `state`, `tags` alanlarını taşır. Erişim token'ı 1 saat, yenileme token'ı 90 gün ve
-her yenilemede değişir: yeni yenileme token'ı `ETSY_TOKEN_DOSYASI`na yazılır.
+her yenilemede değişir: yeni yenileme token'ı (ve geçerli erişim token'ı) `TOKEN_DOSYASI`na atomik yazılır.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import httpx
 
 from matbaa.ayar import KOK
 
-from .http import KULLANICI, istek
+from .http import KULLANICI, ApiHatasi, istek
 
 TABAN = "https://openapi.etsy.com/v3/application"
 TOKEN_URL = "https://api.etsy.com/v3/public/oauth/token"
@@ -45,20 +45,50 @@ class Etsy:
         self._erisim: str | None = None
         self._bitis = 0.0
 
+    def _kayit(self) -> dict:
+        try:
+            return json.loads(self.token_dosyasi.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+
+    def _kaydet(self, kayit: dict) -> None:
+        """Atomik yazım: yenileme token'ı her yenilemede değişir, yarım yazılmış dosya mağazayı yeniden yetkilendirmeye düşürür."""
+        gecici = self.token_dosyasi.with_name(self.token_dosyasi.name + ".tmp")
+        gecici.write_text(json.dumps(kayit), encoding="utf-8")
+        gecici.replace(self.token_dosyasi)
+
     def _yenile(self) -> None:
-        kayit = json.loads(self.token_dosyasi.read_text()) if self.token_dosyasi.exists() else {}
+        kayit = self._kayit()
+        # Aynı koşudaki başka bir istemcinin aldığı erişim token'ı hâlâ geçerliyse kullanılır: her `Etsy()` yeni yenileme yapmaz.
+        if kayit.get("access_token") and kayit.get("bitis", 0) > time.time():
+            self._erisim, self._bitis = kayit["access_token"], kayit["bitis"]
+            return
         yenileme = kayit.get("refresh_token") or os.environ.get("ETSY_REFRESH_TOKEN")
         if not yenileme:
             raise RuntimeError("Etsy yenileme token'ı yok: önce `uv run python scripts/etsy_yetki.py`")
-        r = istek(
-            self.http,
-            "POST",
-            TOKEN_URL,
-            data={"grant_type": "refresh_token", "client_id": self.keystring, "refresh_token": yenileme},
-        )
+        try:
+            r = istek(
+                self.http,
+                "POST",
+                TOKEN_URL,
+                data={"grant_type": "refresh_token", "client_id": self.keystring, "refresh_token": yenileme},
+            )
+        except ApiHatasi as e:
+            if e.durum in (400, 401):
+                raise RuntimeError(
+                    f"Etsy yenileme token'ı reddedildi ({e.durum}): yeniden yetkilendir → `uv run python scripts/etsy_yetki.py`"
+                ) from e
+            raise
         d = r.json()
         self._erisim, self._bitis = d["access_token"], time.time() + d.get("expires_in", 3600) - 120
-        self.token_dosyasi.write_text(json.dumps({"refresh_token": d["refresh_token"], "yenilendi": int(time.time())}))
+        self._kaydet(
+            {
+                "refresh_token": d["refresh_token"],
+                "yenilendi": int(time.time()),
+                "access_token": self._erisim,
+                "bitis": self._bitis,
+            }
+        )
 
     def _i(self, yontem: str, yol: str, **kw) -> dict:
         if not self._erisim or time.time() > self._bitis:
@@ -85,11 +115,18 @@ class Etsy:
         """createShopShippingProfile (form): zorunlu title, origin_country_iso, primary_cost, secondary_cost (şema 2026-10-13)."""
         return self._i("POST", f"/shops/{self.shop_id}/shipping-profiles", data=alanlar)
 
-    def makbuzlar(self, min_son_degisim: int | None = None, limit: int = 100) -> list[dict]:
-        params = {"limit": limit, "was_paid": "true"}
+    def makbuzlar(self, min_son_degisim: int | None = None, limit: int = 100, sayfa_maks: int = 20) -> list[dict]:
+        """Ödenmiş makbuzlar (yeniden eskiye), sayfalı: ilk koşuda ya da uzun aradan sonra 100'den fazlası kaybolmaz."""
+        params: dict = {"limit": limit, "was_paid": "true"}
         if min_son_degisim:
             params["min_last_modified"] = min_son_degisim
-        return self._i("GET", f"/shops/{self.shop_id}/receipts", params=params)["results"]
+        sonuc: list[dict] = []
+        for n in range(sayfa_maks):
+            sayfa = self._i("GET", f"/shops/{self.shop_id}/receipts", params=params | {"offset": n * limit})
+            sonuc += sayfa.get("results", [])
+            if len(sonuc) >= sayfa.get("count", 0) or len(sayfa.get("results", [])) < limit:
+                break
+        return sonuc
 
     def aktif_ilanlar(self) -> list[dict]:
         """Mağazanın aktif ilanları; `views` günde bir kez sayılan toplam görüntülenme, `num_favorers` favori (şema 2026-10-13)."""
