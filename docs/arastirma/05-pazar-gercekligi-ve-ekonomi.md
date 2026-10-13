@@ -102,7 +102,7 @@ yüksek sepet ya da organik/Pinterest trafiği şart. Pinterest/Google Shopping 
 | Printify Premium | $39/ay ya da $24,99/ay yıllık (Free $0) |
 | Etsy Ads testi | $15–45 |
 | Shopify | $29–39/ay + domain + uygulama; reklam testi ~$600–1.000 |
-Etsy-only minimum ilk 3 ay **$100–250**; gerçekçi 6 ay **$300–600**; Shopify + reklam anlamlı test **$1.000–3.000**. (Müşavir/şirket/Bağ-Kur hariç → bkz. [[03-tr-kurulum-ve-para-akisi]].)
+Etsy-only minimum ilk 3 ay **$100–250**; gerçekçi 6 ay **$300–600**; Shopify + reklam anlamlı test **$1.000–3.000**.
 
 ## Kolun sentezi
 **Gerçekçi beklenti** (yargı, yayımlanmış dağılım değil):

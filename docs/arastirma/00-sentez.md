@@ -28,8 +28,7 @@ büyük ölçüde otomatikleşebilir.** Otomatikleşemeyen dört şey var: Etsy'
 (bir kez), **üretim ortağının Etsy'ye tanıtılması** (bir kez) ve **kalite/IP kontrolü** (otomatik kapı var, güvenilir değil; insan örneklemesi
 gerekiyor). Shopify Türkiye'den zor: Shopify Payments ve Stripe yok, mağazaya trafik reklamla gelir ve reklamın sipariş başı maliyeti kârı
 aşıyor. Pazar gerçeği: Etsy'de ortalama aktif satıcı ayda ~$156 ciro yapıyor; yeni bir POD mağazası için 12. ayda aylık $100–600 brüt makul bant,
-kâr garantisiz. Asıl sürpriz maliyet Türkiye tarafında: düzenli satış ticari kazanç sayılıyor ve şahıs şirketinin **Bağ-Kur primi (~10–12 bin TL/ay)**
-küçük bir mağazanın tüm kârını yiyebilir — müşavire sorulması gereken bir numaralı soru.
+kâr garantisiz.
 
 ## 2. Zincir: ne otomatik, ne elle
 | Adım | Otomatik mi | Nasıl / neden |
@@ -77,16 +76,6 @@ Kurulum $0–29 · 100 listing $20 (4 ayda yenilenir) · numune ~$60–120 · Pr
 tasarım API'si tasarım başına ~$0,20–0,50 · Etsy Ads testi $15–45. **İlk 3 ay ~$100–250; gerçekçi 6 ay $300–600** (+ işletme sermayesi).
 Shopify + reklam ile anlamlı test $1.000–3.000.
 
-### Türkiye'de resmî yapı (operasyonel; mali müşavire teyit ettirilecek)
-- Etsy şirket istemiyor; vergi Etsy'den bağımsız. Düzenli satış ticari kazanç → mükellefiyet gerekiyor (ikincil kaynak).
-- Şahıs şirketi kuruluş ~9.500–13.500 TL; muhasebe ~3.600 TL/ay'dan; **Bağ-Kur en düşük ~10.157–11.808 TL/ay**, kazançtan bağımsız.
-  18–29 yaş Bağ-Kur genç girişimci prim desteği 01.01.2026'da kalkmış. Öğrenci durumuna özel düzenleme bulunamadı.
-- Genç girişimci kazanç istisnası (29 yaş altı, 3 yıl, 2026 ~400.000 TL) gelir vergisini kaldırır, Bağ-Kur'u kaldırmaz.
-- Esnaf muafiyeti üretim şartı istiyor → POD'a büyük olasılıkla uymuyor. Mikro ihracat/ETGB/e-ihracat: mal Türkiye'den çıkmadığı için zayıf.
-- 20/B (YouTube/Play istisnası) e-ticareti kapsamıyor (10-02 notu).
-- **Sonuç:** aylık sabit yük ~14–15 bin TL (~$300) olabilir. Bu, 12. ay beklenti bandının üstünde. Mükellefiyetin ne zaman zorunlu olduğu,
-  öğrenciyken Bağ-Kur durumu ve ilk ayların nasıl yürütüleceği **projeye başlamadan müşavire sorulmalı.**
-
 ## 4. Pazar gerçekliği
 - **Etsy:** 2025 marketplace cirosu $10,46 milyar (−%4); Q2 2026 +%7,5; aktif satıcı 7M zirveden 5,6M'ye indi, alıcı ~87M yatay.
   Take rate %25,9 ve artış Etsy Ads'ten → reklam baskısı artıyor (10-K ve Q2'26 hissedar mektubu).
@@ -104,15 +93,14 @@ Shopify + reklam ile anlamlı test $1.000–3.000.
   ABD de minimis muafiyetinin 29.08.2025'te kalkması ABD'de basılan POD'u Çin'den gelene karşı korur (çıkarım).
 
 ### Beklenti bandı (kolun yargısı; yayımlanmış dağılım yok)
-| Ufuk | Sipariş | Brüt | Net (araç, numune, reklam dahil; Bağ-Kur hariç) |
+| Ufuk | Sipariş | Brüt | Net (araç, numune, reklam dahil) |
 |---|---|---|---|
 | 3 ay | 0–10, tipik 0–5 | $0–300 | −$150 / +$50 |
 | 6 ay | 5–50 | $150–1.500 | −$100 / +$400 |
 | 12 ay | aylık 3–25 | aylık $100–600 | kâr mümkün, garantisiz |
 
 ## 5. Riskler (öncelik sırası)
-1. **Türkiye sabit maliyeti** (Bağ-Kur + muhasebe) beklenen kârı aşabilir.
-2. **Uzun süre sıfır satış** ve ücret yığını (offsite, Etsy Ads baskısı, TR kalemleri).
+1. **Uzun süre sıfır satış** ve ücret yığını (offsite, Etsy Ads baskısı, TR kalemleri).
 3. **Etsy politika/hesap riski:** yeni mağaza rezervi, Creativity Standards, AI beyanı, toplu listeleme; askıda fon tutulur, itiraz sınırlı.
    Otomat dersi: **çoğaltma = ceza** — aynı motorla yüzlerce benzer listing basmak, YouTube'un "inauthentic content" dalgasının Etsy karşılığına çarpar.
 4. **IP şikâyeti:** sabit eşik yok, tekrarlayan bildirim → mağaza kapanır, yeni mağaza "ilişkili hesap" diye reddedilebilir. Ünlü karakter/marka/slogan kaçağı bir kez bile pahalı.
@@ -147,7 +135,6 @@ Shopify + reklam ile anlamlı test $1.000–3.000.
 ## 9. Spike adayları (finalizasyondan önce)
 | # | Soru | Nasıl |
 |---|---|---|
-| S1 | Mükellefiyet ve Bağ-Kur (öğrenci) gerçek maliyeti ne? | Mali müşavir, tek görüşme |
 | S2 | Etsy mağazası TR'den açılıyor mu, kurulum ücreti, kimlik ve banka doğrulaması | Gerçek açılış (tek ilanla) |
 | S3 | Printify Türk kartını kabul ediyor mu; numune kalitesi | Hesap + 2 tişört + 1 kupa numune siparişi |
 | S4 | Etsy Seller App onayı; API'yle `production_partner_ids` + aktifleştirme; Printify publish → Etsy akışı | Uygulama kaydı + 1 test listing |
@@ -157,7 +144,6 @@ Shopify + reklam ile anlamlı test $1.000–3.000.
 ## 10. Açık sorular (Scryne'a)
 - Etsy-önce mi, ikisi aynı anda mı?
 - Bütçe: ilk 6 ay için ne kadar ayrılabilir (bu işte sermaye şart: numune + işletme tamponu)?
-- Mükellefiyet: müşavire danışma kararı.
 - Niş fikri ya da ilgi alanı var mı, yoksa niş seçimini veri mi yapsın?
 - Kişiselleştirme ilk fazda mı?
 - Hesaplar kimin adına (Etsy kimliği = banka hesabı adı)?

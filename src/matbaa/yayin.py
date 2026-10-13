@@ -93,9 +93,6 @@ def etsy_eksik() -> list[str]:
 
 
 def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
-    if not ayar().get("yayin_acik", False):  # K-25: ilk satış mükellefiyeti başlatır; kayıt kararı verilmeden yayın yok
-        yazdir("  yayin_acik = false (K-25, mükellefiyet kararı bekleniyor): yayın bekletildi")
-        return {"bekliyor": "K-25: yayin_acik = false", "tasarim": 0, "urun": 0, "hata": 0}
     if eksik := etsy_eksik():
         yazdir(f"  Etsy hazır değil ({', '.join(eksik)} boş): yayın bekletildi")
         return {"bekliyor": f"Etsy hazır değil: {', '.join(eksik)}", "tasarim": 0, "urun": 0, "hata": 0}

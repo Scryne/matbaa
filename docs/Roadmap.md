@@ -11,7 +11,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 
 | Faz | Adı | Durum | Bitti Kriteri |
 | --- | --- | --- | --- |
-| 0 | Hesaplar ve para (Scryne) | 🔄 Devam Ediyor | S1 müşavir cevabı yazıldı; Etsy mağazası açık (kimlik + banka doğrulandı); Printify hesabı + kart eklendi; Printify token + Etsy Seller App anahtarı `.env`'de |
+| 0 | Hesaplar ve para (Scryne) | 🔄 Devam Ediyor | Etsy mağazası açık (kimlik + banka doğrulandı); Printify hesabı + kart eklendi; Printify token + Etsy Seller App anahtarı `.env`'de |
 | 1 | İskelet ve sağlık | ✅ Tamamlandı | Private repo GitHub'da; CI (ruff + pytest) varsayılan dalda yeşil; `.github/dependabot.yml`; model kimlikleri `config/modeller.toml`'da; `.env.example`; SQLite şeması + durum makinesi testli |
 | 2 | Tasarım motoru v1 | ✅ Tamamlandı | En az 6 şablon, 20+ OFL font, çeşitlilik kuralı; 3 niş × 10 ifade → 30 tasarımın hepsi kapılardan geçiyor ve göz kontrolünde 30/30 yayınlanabilir; mutasyon testleri yeşil |
 | 3 | İfade üretimi + IP kapısı | ✅ Tamamlandı | Niş kartları `config/nisler.toml`'da; Claude ile niş başına 30 aday → USPTO + Jev kapısı; 90 adayın kapı kayıtları SQLite'ta; Aria'nın kör örneklemesinde (30 temiz ifade) riskli kaçak 0; USPTO verisi 35 günlük tazelik kontrolüyle |
@@ -55,7 +55,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 - **Kalan:** mağaza açıldıktan 30 gün sonra raporda niş dağılımının veriyle değiştiğini görmek.
 
 ### Faz 0: Hesaplar ve para (Scryne)
-- **İşler:** S1 müşavir; S2 Etsy mağazası (Aria ekran ekran yönlendirir); S3 Printify + kart (numune yok, K-20); Printify token; Etsy geliştirici
+- **İşler:** S2 Etsy mağazası (Aria ekran ekran yönlendirir); S3 Printify + kart (numune yok, K-20); Printify token; Etsy geliştirici
   hesabı ve Seller App kaydı (Aria yönlendirir).
 - **Bitti Kriteri:** tablodaki gibi.
 - **Notlar:** Kod fazları (1–5, 8) buna bağlı değil, paralel ilerler. Faz 6–7 ve 10 buna bağlı.
@@ -63,7 +63,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   6 ay × $10 ile 937 TL kredi zararlı); **mağaza 16:40 açıldı (HobbyHeartPrints)**. Printify hesabı + kart + token tamam (`.env`); Printify mağazası "My new store"
   (29308592) Etsy'ye bağlandı (API: sales_channel=etsy, PRINTIFY_SHOP_ID `.env`'de). 2FA açık; ilk ilan yok (deaktive gerekmedi); production partner (Printify, "Partners you work with") ve iade politikası ("No returns or exchanges") kuruldu. Printify ayarları: mağaza adı HobbyHeartPrints, sipariş otomatik (1 saat), Printify Choice ve order routing kapalı, gecikmeli sipariş otomatik üretime, GPSR Non-EU. Etsy geliştirici uygulaması "hhp-shop-tools" oluşturuldu (17:11), durum **Pending Personal Approval**: araştırmadaki "Seller App otomatik onay" bu hesapta tutmadı, Etsy elle inceliyor, red bildirilmiyor; keystring `.env`'de. Kalan: shared secret `.env`'e (Scryne) + Callback URL `http://localhost:3003/callback` → onay beklenir. Seller App denemesi reddedildi ("You already have a developer app. Seller apps are only available for shops that have not previously registered a developer app"); developer@etsy.com'a dönüştürme/silme/onay talebi gönderildi (destek talebi #27809529, 17:34; otomatik cevap: "birkaç iş günü"). Mağaza logosu hazır (`varliklar/marka/etsy-shop-icon.png`, "Stamp Heart": lacivert pul + mercan kalp, krem zemin), Etsy'ye yüklendi →
   onay gelince (Aria) `scripts/etsy_yetki.py`, `matbaa etsy-kargo-profili` → Printify Publishing preferences'ta kargo profilini "otomatik ata ve güncelle"den bu profile çevir (şu an Etsy'de profil olmadığı için listede tek seçenek var; otomatik kalırsa Printify ücretsiz kargo profilini ezebilir),
-  ilk 3 ilan. S1 cevabı geldi (docs/spike/S1-mukellefiyet.md, SMMM değil kaynaklı ön çerçeve): Bağ-Kur 10.157 TL/ay, ~25–35 satış/ay başabaş → K-25 yayın kilidi (`yayin_acik = false`); karar Scryne'ın yaşı ve 4/a durumuna bağlı. Panel ilk turu yapıldı (Faz 5 notu).
+  ilk 3 ilan. Panel ilk turu yapıldı (Faz 5 notu).
 
 ### Faz 1: İskelet ve sağlık ✅ (2026-10-13)
 - **Yapılan:** private `Scryne/matbaa`, `main`; CI (ruff check + format + pytest) main'de yeşil; Dependabot (uv + actions), güvenlik uyarıları açık;

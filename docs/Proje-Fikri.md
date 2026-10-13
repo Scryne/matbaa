@@ -36,8 +36,6 @@ Gerçekçi hedef "hiç ellemeden" değil, **kurulumdan sonra günde ~10 dakika i
 - **K-7 Para ve hesap Scryne'ın:** Etsy hesabı, banka (ID = banka adı = yasal ad) ve Printify kartı Scryne adına. Kodda para harcayan her eşik
   (reklam, Premium, API bütçesi) yapılandırmada sabit tavanla durur; tavanı Scryne onaylar.
 - **K-8 Tasarım üretimi API ile**, tasarım başına tavan $0,50. Model kimlikleri `config/`'te (model ömrü kısa: Imagen 4 ve Gemini 2.5 Flash Image 2026'da kapandı).
-- **K-9 Mükellefiyet sorusu projeden bağımsız ama satıştan önce:** Bağ-Kur (~10–12 bin TL/ay) kârı aşabilir; Faz 0'da müşavire sorulur. Cevap
-  "bu iş bu ölçekte kârsız" çıkarsa proje durur ya da modeli değişir (ör. Redbubble/TeePublic royalty). Hukuki analiz yapılmaz; bu operasyonel maliyet kalemidir.
 
 ## v1: Kapsam ve "Bitti" Tanımı
 - **Süre tavanı:** ~4 hafta.
@@ -69,7 +67,6 @@ Gerçekçi hedef "hiç ellemeden" değil, **kurulumdan sonra günde ~10 dakika i
 ## Spike'lar (finalizasyondan önce)
 | # | Soru | Kim |
 |---|---|---|
-| S1 | Mükellefiyet ve Bağ-Kur (öğrenci) maliyeti | Scryne + müşavir |
 | S2 | Etsy mağazası TR'den açılış, kurulum ücreti, kimlik/banka | Scryne (Aria adım adım yönlendirir) |
 | S3 | Printify Türk kartını kabul ediyor mu; numune kalitesi (2 sağlayıcı × tişört) | Scryne ödeme, Aria sipariş hazırlığı |
 | S4 | Etsy Seller App kaydı; API ile `production_partner_ids` + aktifleştirme; Printify publish → Etsy akışı | Aria (anahtar Scryne'ın hesabından) |

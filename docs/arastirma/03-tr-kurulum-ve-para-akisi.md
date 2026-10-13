@@ -9,14 +9,13 @@ tags: [pod, etsy, shopify, arastirma, odeme, vergi]
 # 03 — Türkiye'den operasyonel kurulum ve para akışı
 
 `arastirmaci` kolu, erişim 2026-10-12. Etsy sayfaları WebFetch'e 403 verdi; Etsy rakamları arama özetinden ("Etsy özeti").
-Vergi/SGK kısmı operasyonel çerçevedir, **mali müşavire teyit ettirilecek**. Sentez: [[00-sentez]].
+Sentez: [[00-sentez]].
 
 ## Özet
 - **Etsy Türkiye'den şirketsiz kurulabiliyor.** TR, Etsy Payments ülkelerinde; para TRY olarak Türk IBAN'a geliyor. PayPal yok.
 - **Shopify zor.** Shopify Payments TR'de yok, Stripe TR'de yok. Gerçekçi iki yol: şahıs şirketi + iyzico/PayTR, ya da ABD LLC + Stripe (üçüncü taraf ağ geçidi).
 - Kolun önerisi: **önce yalnız Etsy**, Shopify satış kanıtlanınca.
 - İşletme sermayesi: POD hemen karttan çeker, Etsy ~14 gün (+rezerv) sonra öder → 300–500 $ tampon (çıkarım).
-- Düzenli satış ticari kazanç sayılıyor; şahıs şirketinin asıl sabit yükü muhasebeciden çok **Bağ-Kur primi** olabilir.
 
 ## 1. Etsy, Türkiye (Etsy özeti)
 - Ödeme işleme: **%6,5 + 14 TRY** (08.07.2024'ten, KDV hariç). Eski kaynaklardaki 3 TRY bayat.
@@ -47,15 +46,6 @@ Vergi/SGK kısmı operasyonel çerçevedir, **mali müşavire teyit ettirilecek*
 - **Türk kartı kabulü güvenilir kaynakla doğrulanmadı** → küçük test siparişiyle doğrulanmalı. Printify Pop-Up Store ülkelerinde TR yok (TR'nin hassas ülke olduğuna işaret olabilir).
 - Çıkarım: ayda 20 sipariş × ~20 $ ≈ 400 $; 14–30 gün gecikmeyle sürekli 300–500 $ işletme sermayesi.
 
-## 5. Türkiye'de resmî yapı (teyit edilecek)
-- Düzenli Etsy satışı ticari kazanç; mükellefiyet gerekiyor (shipentegra, ikincil).
-- Şahıs şirketi kuruluş: toplam ~9.500–13.500 TL (noter imza beyanı, vekaletname, açılış), mali mühür ~1.740 TL.
-- Aylık muhasebe: 2026 SMMM asgari tarifesi şahıs şirketi tabanı **~3.593 TL/ay** (ikincil).
-- **Bağ-Kur 4/b 2026: en düşük ~10.157–11.808 TL/ay** (kaynaklar çelişiyor). 18–29 yaş genç girişimci prim desteği 01.01.2026'da 7566 sayılı Kanun'la kaldırılmış. Öğrenciye özel düzenleme bulunamadı. Kazançtan bağımsız sabit yük → **SGK/müşavirden mutlaka teyit**.
-- **Genç girişimci istisnası (GVK mük. 20):** sürüyor; 29 yaş altı, ilk kez mükellef, 3 dönem, 2026 ~400.000 TL. Gelir vergisini kaldırır, Bağ-Kur'u kaldırmaz. E-ticaret kapsamı için özel kaynak yok.
-- **Esnaf muafiyeti (GVK 9/10):** üretim şartı var, al-sat dışı → POD'da büyük olasılıkla uygulanmaz (çıkarım). Limit (1,9 / ~1,98 M TL) ve stopaj (%1 / %4) kaynaklarda çelişkili.
-- **Mikro ihracat / ETGB / e-ihracat KDV istisnası:** mal fiziksel olarak TR'den çıkmalı → POD'da uygulanması zayıf (çıkarım).
-- Önceki not (10-02): 20/B istisnası sosyal içerik + mobil uygulama içindir, e-ticareti kapsamaz.
 
 ## 6. Alıcı tarafı vergiler
 - **ABD satış vergisi:** Etsy marketplace facilitator olarak her satıcı adına toplayıp öder; satıcıya iş yok.
@@ -81,20 +71,17 @@ Vergi/SGK kısmı operasyonel çerçevedir, **mali müşavire teyit ettirilecek*
 - [ ] Üretim ortağı beyanı (+ AI beyanı).
 - [ ] Yurt dışına açık kart; Printify'ın Türk kartını kabulünü test siparişiyle doğrula.
 - [ ] 300–500 $ sermaye tamponu.
-- [ ] Mali müşavir: şahıs şirketi, Bağ-Kur (öğrenci durumu), genç girişimci, esnaf muafiyeti, POD'un KDV/ihracat statüsü.
 - [ ] Shopify sonraya: ağ geçidi (iyzico / LLC + Stripe), IOSS ve ABD nexus planı.
 
 ## Çelişkili / doğrulanamayan
 - Wise TR alma kısıtı (31.08.2026, önceki not) bu turda doğrulanamadı; vergimerkezi (01.02.2026) Wise'ı TR'de sorunsuz gösteriyor.
 - **Payoneer yıllık 29,95 $:** ücret sayfası eşiği 12 ayda **<6.000 $** alım diyor (önceki notumuzdaki "<2.000 $" yanlış olabilir). ABD alıcı hesabı %1 (min 1 $), TRY çekim %1,2–4.
 - Payoneer'in ABD hesabı Etsy'ye banka olarak girilebilir mi: kaynaklar çelişiyor (banka ülkesi = mağaza ülkesi kuralı).
-- Esnaf muafiyeti limit/stopaj, Bağ-Kur alt sınırı çelişkili.
 - Doğrulanmadı: Etsy kurulum ücreti, TR mevduat sıklığı, Etsy ücretlerine KDV, Shopify üçüncü taraf ağ geçidi komisyonu, Printify Türk kartı, Stripe'ın TR sahipli LLC'ye açılışı, shop location etkisi, POD için GİB özelgesi.
 
 ## Kaynaklar (seçme)
 help.shopify.com/en/manual/payments/shopify-payments/supported-countries · stripe.com/atlas · doola.com/pricing · payoneer.com/legal/fees ·
-custombull.com/en/blog/getting-paid-on-etsy-from-turkey · mukellef.co/blog/sahis-sirketi-kurma-maliyeti · kobitime.com/aylik-muhasebeci-ucretleri-2026 ·
-vergimerkezi.com.tr/2026-bagkur-primi-ne-kadar · ideasoft.com.tr/evden-eticaret-vergi-muafiyeti · shipentegra.com/blog/sahis-sirketi ·
+custombull.com/en/blog/getting-paid-on-etsy-from-turkey ·
 help.printify.com (4483601909393, 19768094570385) · help.printful.com (4626998446492) · support.printful.com (41396654298769) ·
 sdocpa.com/form-5472-foreign-owned-business-guide · crowe.com/uk/news/eu-agrees-fixed-customs-duty-on-small-parcels ·
 Etsy (yalnız arama özeti): help.etsy.com 115015710408, 115015628847, 1500011073202, 115015775908, 360058722214, 360000343968, 360000337247; etsy.com/legal/etsy-payments.

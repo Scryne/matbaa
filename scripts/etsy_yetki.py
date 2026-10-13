@@ -43,7 +43,7 @@ def ortak_yaz(ortak_id: int, dosya=CONFIG / "yayin.toml") -> None:
 def main() -> None:
     env_yukle()
     if not (os.environ.get("ETSY_KEYSTRING") and os.environ.get("ETSY_SHARED_SECRET")):
-        raise SystemExit(".env'de ETSY_KEYSTRING ve ETSY_SHARED_SECRET dolu olmalı (docs/Faz0-Rehber.md, 4. bölüm)")
+        raise SystemExit(".env'de ETSY_KEYSTRING ve ETSY_SHARED_SECRET dolu olmalı (docs/Faz0-Rehber.md, 3. bölüm)")
     anahtar = os.environ["ETSY_KEYSTRING"]
     dogrulayici = secrets.token_urlsafe(64)[:96]
     meydan = base64.urlsafe_b64encode(hashlib.sha256(dogrulayici.encode()).digest()).rstrip(b"=").decode()
