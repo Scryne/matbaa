@@ -150,7 +150,9 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
                     urun_id = c.execute(
                         "SELECT printify_id FROM urun WHERE tasarim_id = ? AND urun = ?", (t["id"], urun)
                     ).fetchone()[0]
-                p.yayinla(urun_id, kargo_sablonu=not elle_mod())
+                # Kargo şablonu açık: Printify, Publishing preferences'ta seçili "Free US shipping" profilini atar (K-27 testi:
+                # şablon kapalıyken de kendi ücretli profillerini bağladı, ilk 3 ilan elle düzeltildi).
+                p.yayinla(urun_id)
                 db.urun_gecis(c, t["id"], urun, "printify", "Etsy'ye yayın istendi")
                 sayac["urun"] += 1
             except Exception as e:  # ürün başına izole: biri düşerse diğerleri sürer

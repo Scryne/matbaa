@@ -136,8 +136,8 @@ iade kararı.
 - **K-27 API'siz yedek yol, şimdi (2026-10-13):** Etsy kişisel uygulamayı elle inceliyor (destek talebi #27809529, "birkaç iş günü");
   Q4 hediye sezonunda her gün değerli. Araştırma (Printify yardım sayfaları): Etsy'de "Printify" adlı üretim ortağı varsa Printify onu her
   yeni ilana kendisi bağlar (bizde var); siparişler ve takip Printify'ın kendi Etsy bağlantısıyla akar. Elle modda (`[etsy] mod = "elle"`)
-  Printify'a `shipping_template = false` gider (kendi ücretli profilini atamasın); ilanlar Etsy'de elle kurulan "Free US shipping" profilini
-  kullanır, `elle_kargo_hazir = true` olunca yayın açılır. İlk ilan elle denetlenir (aktif/taslak, kargo profili, ortak, who_made). API onayı
+  ilanlar Etsy'de elle kurulan "Free US shipping" profilini kullanır (ilk yayında `shipping_template = false` işe yaramadı, Printify yine kendi ücretli
+  profillerini bağladı; çözüm Printify → Publishing preferences → Shipping profile = "Free US shipping"), `elle_kargo_hazir = true` olunca yayın açılır. İlk ilan elle denetlenir (aktif/taslak, kargo profili, ortak, who_made). API onayı
   gelince `mod = "api"`: `etsy-kargo-profili` aynı adlı profili yeniden kullanır, `etsy-esle` mevcut ilanları eşler; kayıp yok. Elle modda
   sipariş defteri ve görüntülenme verisi (Faz 8/13) yok, o yüzden API yolu hâlâ hedef.
 
