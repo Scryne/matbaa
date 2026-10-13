@@ -18,7 +18,26 @@ YASAK_BASLIK = re.compile(r"[!$^*{}<>\[\]~`]|(\b[A-Z]{4,}\b.*){3,}")  # sembol y
 
 
 # Etiket bu kelimelerle bitemez: 20 karaktere kısaltılınca "christmas gift for" gibi yarım ifade kalıyordu (ilk 44 ilan).
-ASILI_KELIME = {"for", "to", "of", "and", "or", "the", "a", "an", "with", "in", "on", "at", "my", "your", "from", "by", "who", "is"}
+ASILI_KELIME = {
+    "for",
+    "to",
+    "of",
+    "and",
+    "or",
+    "the",
+    "a",
+    "an",
+    "with",
+    "in",
+    "on",
+    "at",
+    "my",
+    "your",
+    "from",
+    "by",
+    "who",
+    "is",
+}
 
 
 def _etiket_temizle(t: str) -> str:

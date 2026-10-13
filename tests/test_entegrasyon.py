@@ -134,7 +134,8 @@ class SahtePrintify:
         self.olusturulan.append(govde["blueprint_id"])
         return {"id": f"p{len(self.olusturulan)}"}
 
-    def yayinla(self, urun_id):
+    def yayinla(self, urun_id, kargo_sablonu=True):
+        self.kargo_sablonu = kargo_sablonu
         return {}
 
     def urun(self, urun_id):
@@ -200,6 +201,17 @@ def test_etsy_hazir_degilken_yayin_printifya_dokunmaz(ortam, monkeypatch, alan):
     assert ortam.execute("SELECT count(*) FROM urun WHERE durum != 'bekliyor'").fetchone()[0] == 0
 
 
+def test_elle_mod_kargo_hazir_olmadan_yayinlamaz_hazirsa_printify_kargosunu_kapatir(ortam, monkeypatch):  # K-27
+    cfg = yayin.ayar()
+    monkeypatch.setitem(cfg, "etsy", {"mod": "elle", "elle_kargo_hazir": False})
+    p = SahtePrintify()
+    s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert "elle_kargo_hazir" in s["bekliyor"] and not p.olusturulan
+    monkeypatch.setitem(cfg["etsy"], "elle_kargo_hazir", True)  # API kimlikleri yokken de yayınlar
+    s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert s["urun"] == 3 and p.kargo_sablonu is False
+
+
 def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
     p = SahtePrintify(dus={2})  # sweatshirt düşer
     yayin.yayinla(ortam, p, yazdir=lambda *_: None)
@@ -239,7 +251,8 @@ class YayiniDusenPrintify(SahtePrintify):
         super().__init__()
         self.yayin_istekleri, self.dusur = [], True
 
-    def yayinla(self, urun_id):
+    def yayinla(self, urun_id, kargo_sablonu=True):
+        self.kargo_sablonu = kargo_sablonu
         self.yayin_istekleri.append(urun_id)
         if self.dusur:
             raise ApiHatasi(500, "publish", "POST")

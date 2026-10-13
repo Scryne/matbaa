@@ -116,8 +116,13 @@ class Printify:
     def urun_olustur(self, govde: dict) -> dict:
         return self._i("POST", f"/shops/{self.shop_id}/products.json", json=govde, tekrar_5xx=False)
 
-    def yayinla(self, urun_id: str) -> dict:
-        return self._i("POST", f"/shops/{self.shop_id}/products/{urun_id}/publish.json", json=YAYIN_ALANLARI)
+    def yayinla(self, urun_id: str, kargo_sablonu: bool = True) -> dict:
+        """`kargo_sablonu=False`: Printify ilana kendi (ücretli) kargo profilini atamaz; elle mod, Etsy'deki ücretsiz profil (K-27)."""
+        return self._i(
+            "POST",
+            f"/shops/{self.shop_id}/products/{urun_id}/publish.json",
+            json=YAYIN_ALANLARI | {"shipping_template": kargo_sablonu},
+        )
 
     def urun(self, urun_id: str) -> dict:
         return self._i("GET", f"/shops/{self.shop_id}/products/{urun_id}.json")

@@ -89,7 +89,15 @@ def etsy_eksik() -> list[str]:
     """Yayından önce Etsy'de kurulu olması gerekenler. Biri eksikken Printify'ın açtığı ilan üretim ortağısız ve Printify'ın
     ücretli kargo profiliyle kalır; K-23 fiyatı kargoyu içerdiği için alıcı kargoyu iki kez öder."""
     e = ayar()["etsy"]
+    if (
+        elle_mod()
+    ):  # K-27: üretim ortağını Printify kendisi bağlar (Etsy'de "Printify" adlı ortak var), kargo profili Etsy'de elle kurulur
+        return [] if e.get("elle_kargo_hazir") else ["elle_kargo_hazir"]
     return [k for k in ("uretim_ortagi_id", "kargo_profili_id") if not e.get(k)]
+
+
+def elle_mod() -> bool:
+    return ayar()["etsy"].get("mod", "api") == "elle"
 
 
 def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
@@ -142,7 +150,7 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
                     urun_id = c.execute(
                         "SELECT printify_id FROM urun WHERE tasarim_id = ? AND urun = ?", (t["id"], urun)
                     ).fetchone()[0]
-                p.yayinla(urun_id)
+                p.yayinla(urun_id, kargo_sablonu=not elle_mod())
                 db.urun_gecis(c, t["id"], urun, "printify", "Etsy'ye yayın istendi")
                 sayac["urun"] += 1
             except Exception as e:  # ürün başına izole: biri düşerse diğerleri sürer
