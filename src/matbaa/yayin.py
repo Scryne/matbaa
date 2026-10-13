@@ -195,6 +195,45 @@ def _yayin_asimi(c, r) -> bool:
     return True
 
 
+def elle_denetle(c, p: pf.Printify, yazdir=print) -> dict:
+    """Elle mod (K-27): Etsy'ye düşen ilanı kaydeder ve kargo profilini denetler; API'siz yolun günlük gözü.
+
+    Printify'ın bildirdiği profil "Free US shipping" (`kargo_profili_id`) değilse alarm: alıcı fiyata dahil kargoyu bir daha öder.
+    Alarm bir kez verilir, ürün yine `aktif`e geçer (Etsy'de elle düzeltilen profil Printify'a geri yansımıyor, alarm tekrar etmesin).
+    """
+    beklenen = str(ayar()["etsy"].get("kargo_profili_id") or "")
+    sayac: dict = {"etsy": 0, "bekleyen": 0, "alarm": []}
+    for r in c.execute(
+        "SELECT tasarim_id, urun, printify_id, durum, guncelleme FROM urun WHERE durum IN ('printify', 'etsy_taslak')"
+    ).fetchall():
+        u = p.urun(r["printify_id"])
+        listing = _etsy_kimligi(u)
+        if not listing:
+            if not _yayin_asimi(c, r):
+                sayac["bekleyen"] += 1
+            c.commit()
+            continue
+        if r["durum"] == "printify":
+            db.urun_gecis(c, r["tasarim_id"], r["urun"], "etsy_taslak", "Etsy ilanı oluştu (elle mod)", etsy_listing_id=listing)
+        dis = u.get("external")
+        dis = dis[0] if isinstance(dis, list) and dis else dis
+        profil = str((dis or {}).get("shipping_template_id") or "")
+        not_ = "kargo profili doğru"
+        if beklenen and profil != beklenen:
+            not_ = f"kargo profili {profil}, beklenen {beklenen}: Etsy'de elle düzeltilmeli"
+            sayac["alarm"].append(
+                f"{r['tasarim_id']}/{r['urun']} Etsy ilanı {listing} ücretsiz kargoda değil: Shop Manager → Listings → Change shipping profiles"
+            )
+        db.urun_gecis(c, r["tasarim_id"], r["urun"], "aktif", f"Etsy'de aktif (elle mod), {not_}")
+        if c.execute("SELECT durum FROM tasarim WHERE id = ?", (r["tasarim_id"],)).fetchone()[0] == "onaylandi":
+            db.gecis(c, r["tasarim_id"], "yayinda")
+        sayac["etsy"] += 1
+        c.commit()
+    for a in sayac["alarm"]:
+        yazdir(f"  ALARM {a}")
+    return sayac
+
+
 KARGO_PROFILI = {  # K-23: ABD'ye ücretsiz kargo; üretim 2–5 iş günü (Printify), teslim 3–7 iş günü
     "title": "Free US shipping",
     "origin_country_iso": "US",

@@ -348,6 +348,9 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
             s = _adim(rapor, "siparis", lambda: siparis.izle(c, e, p, yazdir=yazdir), yazdir)
             alarmlar += (s or {}).get("alarm", [])
             rapor["kar_30g"] = siparis.ozet(c)
+        elif yayin.elle_mod():
+            e = _adim(rapor, "etsy_elle", lambda: yayin.elle_denetle(c, p, yazdir), yazdir)
+            alarmlar += (e or {}).get("alarm", [])
         else:
             rapor["etsy"] = "Etsy anahtarları eksik (ETSY_KEYSTRING / ETSY_SHARED_SECRET / ETSY_SHOP_ID): eşleme atlandı"
     else:

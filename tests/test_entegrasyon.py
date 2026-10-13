@@ -212,6 +212,28 @@ def test_elle_mod_kargo_hazir_olmadan_yayinlamaz_hazirsa_yayinlar(ortam, monkeyp
     assert s["urun"] == 3 and p.kargo_sablonu is True
 
 
+class KargoluPrintify(SahtePrintify):
+    def __init__(self, profil):
+        super().__init__()
+        self.profil = profil
+
+    def urun(self, urun_id):
+        return {"external": {"id": f"L{urun_id}", "shipping_template_id": self.profil}}
+
+
+@pytest.mark.parametrize(("profil", "alarm"), [("777", 0), ("123", 3)])
+def test_elle_denetim_ilani_kaydeder_yanlis_kargoda_bir_kez_alarm_verir(ortam, monkeypatch, profil, alarm):  # K-27
+    monkeypatch.setitem(yayin.ayar(), "etsy", {"mod": "elle", "elle_kargo_hazir": True, "kargo_profili_id": 777})
+    p = KargoluPrintify(profil)
+    yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    s = yayin.elle_denetle(ortam, p, yazdir=lambda *_: None)
+    assert s["etsy"] == 3 and len(s["alarm"]) == alarm
+    durumlar = ortam.execute("SELECT durum, etsy_listing_id FROM urun WHERE printify_id IS NOT NULL").fetchall()
+    assert {d[0] for d in durumlar} == {"aktif"} and all(d[1].startswith("L") for d in durumlar)
+    assert ortam.execute("SELECT durum FROM tasarim WHERE id = 1").fetchone()[0] == "yayinda"
+    assert yayin.elle_denetle(ortam, p, yazdir=lambda *_: None)["alarm"] == []  # ikinci gün aynı alarm tekrar etmez
+
+
 def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
     p = SahtePrintify(dus={2})  # sweatshirt düşer
     yayin.yayinla(ortam, p, yazdir=lambda *_: None)
