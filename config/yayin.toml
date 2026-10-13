@@ -1,3 +1,6 @@
+# K-25: ilk satış mükellefiyeti (ve Bağ-Kur'u) başlatır. Scryne kayıt kararını verene kadar false; true iken hat yayınlar.
+yayin_acik = false
+
 # Yayın ısınma eğrisi: yeni Etsy mağazasında ani toplu ilan ödeme bekletmesi ve askı riskini artırır (araştırma 01, S7).
 # Satırlar: [başlangıç günü, bitiş günü, günlük en çok TASARIM]. Her tasarım urunler.toml'daki her ürüne dönüşür (şu an 3 ilan).
 isinma = [[0, 7, 1], [7, 21, 2], [21, 45, 4], [45, 90, 6], [90, 100000, 8]]

@@ -125,6 +125,12 @@ iade kararı.
   doğru fiyat), mockup'larda baskı yeri ve mürekkep doğru; ürünler silindi. Renk eşleme tam ada çekildi ("Heather Sport Dark Navy"
   "Navy" sanılıyordu), katalog araması "Comfort Colors®" yazımına dayanıklı.
 
+- **K-25 Mükellefiyet netleşmeden satış yok (2026-10-13, S1):** İlk satış ticari faaliyet sayılıyor ve 10 gün içinde kayıt gerekiyor;
+  kayıt Bağ-Kur'u başlatıyor (10.157 TL/ay, öğrencilik etkilemiyor, 4/a varsa başlamıyor). Bağ-Kur'lu senaryoda sabit yükü karşılamak
+  ayda ~25–35 satış istiyor, yeni mağaza için ilk aylarda gerçekçi değil (S1). Kayıtsız satış seçenek değil: hem kural dışı hem genç
+  girişimci istisnasını yakıyor. Bu yüzden `config/yayin.toml` `yayin_acik = false` iken hat yayın yapmaz; Scryne kayıt tarihine
+  (ya da 4/a senaryosuna) karar verince açılır. 2026'da satışa geçmemek Ekim–Aralık Bağ-Kur'unu ve bir istisna yılını korur.
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.
@@ -136,7 +142,7 @@ iade kararı.
 | AI/otomatik tasarımın baskı kalitesi | Azaltıldı | Kodla vektör yazı; 7 kalite kapısı; mutasyonla 6/6 kapı yakalıyor (S5). Gerçek baskı: numune yok (K-20), ilk siparişlerin yorumları |
 | Marka/eser şikâyeti | Azaltıldı | USPTO + Jev, 50 ifadede kaçan 0 (S6); en yaygın POD kalıplarının tescilli olduğu bulundu |
 | Etsy kuralları (AI beyanı, üretim ortağı, ücretler) | Doğrulandı | Birincil sayfalar (S7) |
-| Türkiye sabit maliyeti (Bağ-Kur) | **Açık** | S1: müşavir (Scryne) — cevap "kârsız" derse model değişir |
+| Türkiye sabit maliyeti (Bağ-Kur) | **Tetiklendi** | S1 (2026-10-13): Bağ-Kur 10.157 TL/ay, ~25–35 satış/ay başabaş; K-25 yayın kilidi, senaryo Scryne'ın yaşı ve 4/a durumuna bağlı |
 | Printify Türk kartı | **Açık** | İlk gerçek sipariş; ödeme düşmezse gecikme alarmı (K-20) |
 | Etsy API erişimi | **Açık** | S4: Seller App kaydı (mağaza açılınca) |
 | Satış hiç gelmemesi | Kabul edilen risk | Öldürme kriteri: 90. gün 100 ilan / < 5 satış → niş ve tasarım dili baştan; 180. gün < $100/ay net → dur |

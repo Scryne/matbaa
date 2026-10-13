@@ -157,6 +157,7 @@ def ortam(tmp_path, monkeypatch):
     monkeypatch.setattr(db, "DB", tmp_path / "y.db")
     monkeypatch.setattr(yayin, "KOK", tmp_path)
     cfg = {
+        "yayin_acik": True,
         "isinma": [[0, 7, 1], [7, 100000, 5]],
         "printify": {
             u: {"blueprint_ara": u, "blueprint_id": i + 1, "saglayici_id": 9}
@@ -188,6 +189,13 @@ def test_isinma_ilk_gun_bir_tasarim(ortam):
     s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
     assert s["sinir"] == 1 and s["tasarim"] == 1 and s["urun"] == 3
     assert yayin.yayinla(ortam, p, yazdir=lambda *_: None)["tasarim"] == 0  # aynı gün ikinci koşu: sınır dolu
+
+
+def test_yayin_kapaliyken_printifya_dokunmaz(ortam, monkeypatch):  # K-25
+    monkeypatch.setitem(yayin.ayar(), "yayin_acik", False)
+    p = SahtePrintify()
+    s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert "K-25" in s["bekliyor"] and not p.olusturulan
 
 
 @pytest.mark.parametrize("alan", ["uretim_ortagi_id", "kargo_profili_id"])
