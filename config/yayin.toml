@@ -4,7 +4,7 @@ isinma = [[0, 7, 1], [7, 21, 2], [21, 45, 4], [45, 90, 6], [90, 100000, 8]]
 # Star Seller olduktan sonra elle yükseltilebilir; mağaza yaşı ilk yayın gününden sayılır.
 
 [printify]
-# Kataloğu ilk bağlantıda eşleyip doldurmak için: `uv run matbaa printify-kesif`. Sağlayıcı numuneyle seçilip kilitlenir (K-2).
+# Kataloğu ilk bağlantıda eşleyip doldurmak için: `uv run matbaa printify-kesif`. Sağlayıcı keşif çıktısından seçilip kilitlenir (K-2, K-20: numune yok).
 tisort = { blueprint_ara = "Comfort Colors 1717", blueprint_id = 0, saglayici_id = 0 }
 sweatshirt = { blueprint_ara = "Gildan 18000", blueprint_id = 0, saglayici_id = 0 }
 hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 0, saglayici_id = 0 }

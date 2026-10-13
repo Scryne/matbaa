@@ -47,7 +47,7 @@ def bugun_yayinlanan(c) -> int:
 
 
 def printify_kesif(p: pf.Printify) -> dict:
-    """Katalog eşlemesi: her ürün için blueprint ve ABD sağlayıcı adayları. Seçim numuneden sonra config'e yazılır."""
+    """Katalog eşlemesi: her ürün için blueprint ve ABD sağlayıcı adayları. Seçim (K-20: numunesiz) config'e yazılır."""
     sonuc = {}
     for urun, a in ayar()["printify"].items():
         bps = p.blueprint_bul(a["blueprint_ara"])

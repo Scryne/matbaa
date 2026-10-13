@@ -38,13 +38,12 @@ o durumda modeli birlikte değiştiririz.
 9. **Policies:** iadeler: *"Made to order: no returns or exchanges, but we replace or refund any item that arrives damaged or misprinted
    (contact us within 30 days with a photo)."* — Printify'ın politikasıyla aynı.
 
-## 3. Printify (~20 dk + numune)
+## 3. Printify (~20 dk)
 1. printify.com → Sign up (Free plan). **My account → Billing:** yurt dışı ve internet alışverişine açık kart ekle.
 2. **My stores → Add new store → Etsy** → Etsy hesabınla bağla.
    **Store settings:** Order approval: **automatic (1 hour)**; "Publish as draft" kapalı kalsın (aktifleştirmeyi kod yapıyor).
-3. **Numune:** bana "Printify açıldı" de; kataloğu tarayıp ABD sağlayıcı adaylarını çıkarırım (`matbaa printify-kesif`).
-   Sonra Printify'da 2 numune siparişi: Comfort Colors 1717 **Ivory** + **True Navy**, beden M, adresin Türkiye (~$40–60, 1–3 hafta).
-   Gelince ön/arka fotoğrafını at: baskı kalitesi ve renk bu fotoğraflarla onaylanır. **Kartın kabul edilip edilmediği de burada belli olur.**
+3. Numune sipariş etmiyoruz (K-20). Token'ı koyunca bana "Printify açıldı" de; kataloğu tarayıp ABD sağlayıcısını ben seçerim
+   (`matbaa printify-kesif`). Kartın çalıştığı ilk gerçek siparişte belli olur; ödeme düşmezse gecikme alarmı haber verir.
 4. **API token:** My account → **Connections** → Generate token → ad `matbaa`, tüm kapsamlar. Token'ı bana yazma;
    `Projeler\Matbaa\.env` dosyasında `PRINTIFY_TOKEN=` satırına yapıştır (`.env.example`'ı `.env` olarak kopyala).
 

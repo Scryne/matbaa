@@ -88,28 +88,32 @@ iade kararı.
 - **K-19 Harcama tavanları (K-7'nin uygulanışı):** `config/tavanlar.toml`: aylık Etsy listeleme ücreti $60 (ısınma eğrisinin ilk ayı
   ~$42), günlük IP denetimi 120 ifade (TypeSafe). Sayım olay günlüğünden; tavanda hat para harcamadan durur, ürünü hataya düşürmez.
   Değerler Scryne onayı bekliyor. Kur TCMB'den günlük (`veri/kur.json`), alınamazsa config değeri.
+- **K-20 Numune yok (Scryne, 2026-10-13):** Scryne kendine numune sipariş etmeyecek; bu kalıcı. Sağlayıcıyı Aria `printify-kesif`
+  çıktısından seçer (ABD'de, araştırmadaki adaylar Monster Digital / SwiftPOD önde) ve kilitler (K-2). Kartın Printify'da çalıştığı ilk
+  gerçek siparişte belli olur: ödeme alınamazsa sipariş üretime girmez, takip 5 iş gününde düşmez ve gecikme alarmı yakalar.
+  Baskı kalitesi ilk siparişlerin yorum ve şikâyetleriyle izlenir. Kabul edilen risk: kötü baskı ilk alıcıda görülür (araştırma 04'teki
+  numunesiz mağaza anekdotu); tasarım dilinin sade, vektör ve iki renkli olması bu riski küçültür.
 
 ## Kapsam (v1)
-- **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve numune Scryne'ın Faz 0 işlerine bağlı.
-- **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış, numune siparişi baskı
-  kalitesini doğrulamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.
-  4 haftada sipariş gelmezse v1 "30 ilan canlı + numune doğrulandı" ile kapanır; sipariş zinciri v1.1'in ilk kontrolüdür.
+- **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
+- **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.
+  4 haftada sipariş gelmezse v1 "30 ilan canlı" ile kapanır; sipariş zinciri v1.1'in ilk kontrolüdür.
 
 ## Riskler ve Doğrulamalar
 | Risk | Durum | Kanıt |
 |---|---|---|
-| AI/otomatik tasarımın baskı kalitesi | Azaltıldı | Kodla vektör yazı; 7 kalite kapısı; mutasyonla 6/6 kapı yakalıyor (S5). Gerçek baskı: numune (Faz 0) |
+| AI/otomatik tasarımın baskı kalitesi | Azaltıldı | Kodla vektör yazı; 7 kalite kapısı; mutasyonla 6/6 kapı yakalıyor (S5). Gerçek baskı: numune yok (K-20), ilk siparişlerin yorumları |
 | Marka/eser şikâyeti | Azaltıldı | USPTO + Jev, 50 ifadede kaçan 0 (S6); en yaygın POD kalıplarının tescilli olduğu bulundu |
 | Etsy kuralları (AI beyanı, üretim ortağı, ücretler) | Doğrulandı | Birincil sayfalar (S7) |
 | Türkiye sabit maliyeti (Bağ-Kur) | **Açık** | S1: müşavir (Scryne) — cevap "kârsız" derse model değişir |
-| Printify Türk kartı | **Açık** | S3: numune siparişi (Scryne) |
+| Printify Türk kartı | **Açık** | İlk gerçek sipariş; ödeme düşmezse gecikme alarmı (K-20) |
 | Etsy API erişimi | **Açık** | S4: Seller App kaydı (mağaza açılınca) |
 | Satış hiç gelmemesi | Kabul edilen risk | Öldürme kriteri: 90. gün 100 ilan / < 5 satış → niş ve tasarım dili baştan; 180. gün < $100/ay net → dur |
 
 ## Scryne'ın işleri (Faz 0)
 1. **Mali müşavir** (S1): Etsy'den POD satışında mükellefiyet ne zaman, öğrenciyken şahıs şirketinde Bağ-Kur, genç girişimci istisnası.
 2. **Etsy mağazası** (S2): kimlik, Türk IBAN (ad = kimlik = yasal ad), 2FA. Aria ekran ekran yönlendirir. Mağaza adı Aria'dan.
-3. **Printify** (S3): hesap, yurt dışına açık kart, 2 numune (1717 siyah + beyaz; ~$40–60), Etsy bağlantısı.
+3. **Printify** (S3): hesap, yurt dışına açık kart, Etsy bağlantısı. Numune yok (K-20).
 4. **Anahtarlar:** Printify kişisel token; Etsy geliştirici hesabı → Seller App (Aria adım adım). USPTO API anahtarı isteğe bağlı (v1.1).
 
 ## Kapsam Dışı
