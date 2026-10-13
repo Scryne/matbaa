@@ -80,16 +80,16 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
         "SELECT count(*) FROM olay WHERE varlik = 'urun' AND yeni LIKE '%:aktif' AND zaman >= ?", (bas,)
     ).fetchone()[0]
     s = c.execute(
-        "SELECT count(*), coalesce(sum(brut), 0), coalesce(sum(net), 0) FROM siparis WHERE olusturma >= ?", (bas,)
+        f"SELECT count(*), coalesce(sum(brut), 0), coalesce(sum(net), 0) FROM siparis WHERE olusturma >= ? AND {siparis.GECERLI}",
+        (bas,),
     ).fetchone()
-    takipsiz = c.execute(
-        "SELECT etsy_receipt_id, olusturma FROM siparis WHERE (takip IS NULL OR takip = '') AND coalesce(durum, '') NOT IN ('completed', 'canceled', 'fully refunded')"
+    gecikme = siparis.geciken(c, simdi)
+    # Hangi tasarımlar satıyor (son 30 gün): üretimin neye yöneleceğinin tek gerçek sinyali.
+    satanlar = c.execute(
+        f"""SELECT i.nis, i.satirlar, count(*) FROM siparis s JOIN tasarim t ON t.id = s.tasarim_id JOIN ifade i ON i.id = t.ifade_id
+            WHERE s.olusturma >= ? AND {siparis.GECERLI.replace("durum", "s.durum")} GROUP BY t.id ORDER BY count(*) DESC LIMIT 5""",
+        ((simdi - timedelta(days=30)).isoformat(),),
     ).fetchall()
-    gecikme = [
-        f"makbuz {r[0]}: {siparis.is_gunu_farki(datetime.fromisoformat(r[1]), simdi)} iş günü, takip yok"
-        for r in takipsiz
-        if r[1] and siparis.is_gunu_farki(datetime.fromisoformat(r[1]), simdi) > siparis.GECIKME_IS_GUNU
-    ]
     hatalar = [
         f"{r[0]}/{r[1]}: {(r[2] or '')[:120]}"
         for r in c.execute("SELECT tasarim_id, urun, hata FROM urun WHERE durum = 'hata' ORDER BY tasarim_id").fetchall()
@@ -106,6 +106,7 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
         if etsy is not None or c.execute("SELECT 1 FROM goruntulenme LIMIT 1").fetchone()
         else None,
         "satis": {"siparis": s[0], "brut_usd": round(s[1], 2), "net_usd": round(s[2], 2)},
+        "satanlar_30g": [{"nis": r[0], "ifade": " / ".join(json.loads(r[1])), "siparis": r[2]} for r in satanlar],
         "ilan_ucreti_usd": tavan.ilan_ucreti(c, bas),
         "ay": siparis.aylik(c, simdi.strftime("%Y-%m")),
         "dikkat": {"gecikme": gecikme, "urun_hata": hatalar},
@@ -137,6 +138,7 @@ def _metin(v: dict) -> str:
         "",
         "## Satış",
         f"- Bu hafta: {s['siparis']} sipariş, brüt ${s['brut_usd']:.2f}, net ${s['net_usd']:.2f}",
+        *[f"  - satan (30 gün): {x['ifade']} ({x['nis']}) — {x['siparis']}" for x in v.get("satanlar_30g", [])],
         f"- Bu hafta açılan ilanların listeleme ücreti: ${v['ilan_ucreti_usd']:.2f}",
         f"- {ay['ay']} ayı: {ay['siparis']} sipariş, sipariş neti ${ay['siparis_net_usd']:.2f} − ilan ücreti ${ay['ilan_ucreti_usd']:.2f}"
         f" = **${ay['net_usd']:.2f}** (ilan tavanı ${ay['ilan_tavani_usd']:.0f}, kur {ay['kur_try_usd']:.2f} TRY/USD)",

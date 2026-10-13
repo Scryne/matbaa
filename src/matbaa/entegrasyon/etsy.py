@@ -1,7 +1,8 @@
 """Etsy Open API v3 istemcisi — yalnız kendi mağazamız (Seller App).
 
 Şemadan doğrulandı (etsy.com/openapi/generated/oas/3.0.0.json, 2026-10-13): `x-api-key` = `keystring:shared_secret`;
-token adresi `https://openapi.etsy.com/v3/public/oauth/token`; `updateListing` gövdesi form-urlencoded ve
+token adresi `https://api.etsy.com/v3/public/oauth/token` (developers.etsy.com authentication, 2026-10-13; 9 Şubat 2026'dan beri
+shared secret'sız istek reddediliyor); `updateListing` gövdesi form-urlencoded ve
 `production_partner_ids`, `state`, `tags` alanlarını taşır. Erişim token'ı 1 saat, yenileme token'ı 90 gün ve
 her yenilemede değişir: yeni yenileme token'ı `ETSY_TOKEN_DOSYASI`na yazılır.
 """
@@ -20,7 +21,7 @@ from matbaa.ayar import KOK
 from .http import KULLANICI, istek
 
 TABAN = "https://openapi.etsy.com/v3/application"
-TOKEN_URL = "https://openapi.etsy.com/v3/public/oauth/token"
+TOKEN_URL = "https://api.etsy.com/v3/public/oauth/token"
 TOKEN_DOSYASI = KOK / ".etsy_token.json"  # git dışı
 
 

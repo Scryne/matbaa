@@ -27,12 +27,15 @@ GECISLER: dict[str, set[str]] = {
     "ret": set(),
 }
 # Bir tasarım birden çok ürüne (tişört, sweatshirt, hoodie) dönüşür; yayın durumu ürün başına.
+# bekliyor → olusturuldu (Printify ürünü var, kimliği kayıtlı) → printify (Etsy'ye yayın istendi) → etsy_taslak → aktif.
+# Hata, düştüğü adımdan yeniden denenir (`hata_oncesi`): Printify ürünü açılmışsa ikinci ürün açılmaz.
 URUN_GECISLERI: dict[str, set[str]] = {
-    "bekliyor": {"printify", "hata"},
-    "printify": {"etsy_taslak", "hata"},
+    "bekliyor": {"olusturuldu", "hata"},
+    "olusturuldu": {"printify", "hata"},
+    "printify": {"etsy_taslak", "hata", "olusturuldu"},  # "olusturuldu": yayın zaman aşımı, yeniden yayın
     "etsy_taslak": {"aktif", "hata"},
     "aktif": {"kaldirildi"},
-    "hata": {"bekliyor", "printify", "etsy_taslak"},  # Printify ürünü varsa yalnız Etsy adımı yeniden denenir (mükerrer ürün yok)
+    "hata": {"bekliyor", "olusturuldu", "printify", "etsy_taslak"},
     "kaldirildi": set(),
 }
 
@@ -161,8 +164,8 @@ def kapi_yaz(c: sqlite3.Connection, ifade_id: int, karar: str, nedenler: list[st
 
 def tasarim_ekle(c: sqlite3.Connection, ifade_id: int, sablon: str, fontlar: list[str]) -> int:
     karar = c.execute("SELECT kapi_karar FROM ifade WHERE id = ?", (ifade_id,)).fetchone()
-    if karar is None or karar[0] != "temiz":
-        raise GecersizGecis(f"ifade {ifade_id} IP kapısından temiz geçmedi ({karar and karar[0]}); tasarım üretilemez (K-13)")
+    if karar is None or karar[0] not in ("temiz", "insan"):  # "insan": onay panelinde işaretli gider (K-13)
+        raise GecersizGecis(f"ifade {ifade_id} IP kapısından geçmedi ({karar and karar[0]}); tasarım üretilemez (K-13)")
     cur = c.execute(
         "INSERT INTO tasarim (ifade_id, sablon, fontlar, durum, durum_zamani) VALUES (?, ?, ?, 'aday', ?)",
         (ifade_id, sablon, json.dumps(fontlar), simdi()),
@@ -197,6 +200,15 @@ def urun_gecis(c: sqlite3.Connection, tasarim_id: int, urun: str, yeni: str, aci
         (yeni, simdi(), aciklama if yeni == "hata" else None, *alanlar.values(), tasarim_id, urun),
     )
     olay(c, "urun", tasarim_id, satir[0], f"{urun}:{yeni}", aciklama)
+
+
+def hata_oncesi(c: sqlite3.Connection, tasarim_id: int, urun: str) -> str | None:
+    """Ürün `hata`daysa hangi adımda düştüğü (son `hata` geçişinin eski durumu); yeniden deneme oradan başlar."""
+    r = c.execute(
+        "SELECT eski FROM olay WHERE varlik = 'urun' AND varlik_id = ? AND yeni = ? ORDER BY id DESC LIMIT 1",
+        (tasarim_id, f"{urun}:hata"),
+    ).fetchone()
+    return r[0] if r else None
 
 
 def durumdakiler(c: sqlite3.Connection, durum: str) -> list[sqlite3.Row]:

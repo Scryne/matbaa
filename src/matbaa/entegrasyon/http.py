@@ -16,10 +16,14 @@ class ApiHatasi(RuntimeError):
         self.govde = govde
 
 
-def istek(http: httpx.Client, yontem: str, url: str, deneme: int = 5, bekle=time.sleep, **kw) -> httpx.Response:
+def istek(
+    http: httpx.Client, yontem: str, url: str, deneme: int = 5, bekle=time.sleep, tekrar_5xx: bool = True, **kw
+) -> httpx.Response:
+    """`tekrar_5xx=False`: kaynak oluşturan istek 5xx'te yinelenmez (sunucu oluşturup yanıtı düşürmüş olabilir → mükerrer).
+    429 her zaman yinelenir: istek işlenmemiştir."""
     for k in range(deneme):
         r = http.request(yontem, url, **kw)
-        if r.status_code == 429 or r.status_code >= 500:
+        if r.status_code == 429 or (r.status_code >= 500 and tekrar_5xx):
             if k == deneme - 1:
                 break
             try:

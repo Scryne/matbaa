@@ -74,7 +74,8 @@ iade kararı.
 - **K-12 Nişler v1:** balıkçılık (baba/dede, Aralık + Babalar Günü), pickleball (Aralık), örgü/tığ işi (yükselen). Sezon varyantları niş
   içinde (Sevgililer Günü, St. Patrick's). "Class of 2027" kişiselleştirmeyle Ocak'ta (koşullu faz).
 - **K-13 IP kapısı zorunlu:** USPTO + Jev'den geçmeyen hiçbir ifade render'a girmez; "insan" sonucu onay kuyruğunda ayrıca işaretlenir.
-  USPTO verisi ayda bir yenilenir; 35 günden eski veriyle hat durur.
+  USPTO dosyası ayda bir yenilenir. Tazelik dosyanın tarihinden değil verideki en yeni başvurudan ölçülür (kaynak donarsa dosyayı
+  yenilemek veriyi tazelemez): 45 günü geçince uyarı, 60 günü geçince ifade üretimi durur (K-21).
 - **K-14 Metin üretimi Claude:** ifadeler ve ilan metni `claude -p` ile; çıktı JSON şemasıyla doğrulanır, hatalıysa bir kez yeniden üretilir.
   Gerekçe: yaratıcı İngilizce kelime oyunu yerel 4B modelin üstünde. Jev metin üretmez (global kural).
 - **K-15 Hat yerelde koşar** (Windows görev). Makine kapalıysa o gün atlanır; kuyruğa bir şey olmaz.
@@ -93,6 +94,19 @@ iade kararı.
   gerçek siparişte belli olur: ödeme alınamazsa sipariş üretime girmez, takip 5 iş gününde düşmez ve gecikme alarmı yakalar.
   Baskı kalitesi ilk siparişlerin yorum ve şikâyetleriyle izlenir. Kabul edilen risk: kötü baskı ilk alıcıda görülür (araştırma 04'teki
   numunesiz mağaza anekdotu); tasarım dilinin sade, vektör ve iki renkli olması bu riski küçültür.
+- **K-21 Uçtan uca denetim sonrası sağlamlaştırma (2026-10-13):** gerçek hesap öncesi tam kod denetimi ve resmî API'ye karşı doğrulama.
+  - Yayın adım adım kaydedilir (`bekliyor → olusturuldu → printify → etsy_taslak → aktif`); hata düştüğü adımdan yeniden denenir.
+    Printify ürün kimliği yayından önce yazılır, ürün oluşturma 5xx'te yinelenmez: mükerrer ürün/ilan ücreti açılmaz. Etsy ilanı
+    48 saatte oluşmazsa aynı ürün en çok iki kez yeniden yayınlanır, sonra "elle bakılmalı" olarak panelde ve bildirimde görünür.
+    Etsy eşlemesini bekleyen tasarım günlük yayın sınırından pay almaz.
+  - Sipariş defteri: Printify siparişleri sayfalanır (sayfa başına en çok 10); eşleme `shop_order_id`/`label`, tutmazsa aynı Printify
+    ürününü taşıyan en yakın sipariş; makbuz kalemleri tasarıma ve ürün türüne bağlanır (haftalık raporda "satan tasarımlar");
+    takip numarası Etsy'den de okunur; iptal/tam iade gelire girmez; gecikme alarmı yalnız bugün değişen makbuzdan değil tüm açık
+    siparişlerden.
+  - Günlük koşu: her adım ayrı korunur, biri düşerse diğerleri ve haftalık rapor sürer; sonuç `calisma/gunluk/son.json`; hata ya
+    da alarm varsa Windows bildirimi; hata varsa çıkış kodu 1 (Görev Zamanlayıcı'da görünür). Panelin üstünde "Dikkat" şeridi.
+  - K-13'ün "insan" yolu uygulandı: Jev'in emin olmadığı ifade tasarıma girer, panelde işaretli gelir; karar Scryne'ın onayında.
+  - Etsy token adresi `api.etsy.com` (resmî doküman); kurulum betikleri mağaza ve üretim ortağı kimliklerini kendisi yazar.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

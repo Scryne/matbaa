@@ -24,13 +24,20 @@ def test_ayni_ifade_iki_kez_eklenmez(c):
     assert db.ifade_ekle(c, "knitting", ["A", "B"]) is not None
 
 
-@pytest.mark.parametrize("karar", [None, "ret", "insan"])
+@pytest.mark.parametrize("karar", [None, "ret"])
 def test_temiz_olmayan_ifadeden_tasarim_dogmaz(c, karar):
     i = db.ifade_ekle(c, "fishing", ["X"])
     if karar:
         db.kapi_yaz(c, i, karar, ["neden"], [])
     with pytest.raises(db.GecersizGecis):
         db.tasarim_ekle(c, i, "kavis", ["Anton-Regular.ttf"])
+
+
+def test_insan_karari_tasarima_girer_panelde_isaretli(c):
+    """K-13: "insan" sonucu reddedilmez, onay kuyruğunda işaretli gider; kararı Scryne'ın onayı verir."""
+    i = db.ifade_ekle(c, "fishing", ["X"])
+    db.kapi_yaz(c, i, "insan", ["benzer marka, ünlülük belirsiz"], [])
+    assert db.tasarim_ekle(c, i, "kavis", [])
 
 
 def test_mutlu_yol_ve_olay_gunlugu(c):
@@ -45,10 +52,12 @@ def test_mutlu_yol_ve_olay_gunlugu(c):
 def test_urun_durumu_ayri_izlenir(c):
     t = db.tasarim_ekle(c, _temiz_ifade(c), "kavis", [])
     c.execute("INSERT INTO urun (tasarim_id, urun) VALUES (?, 'tisort'), (?, 'hoodie')", (t, t))
-    db.urun_gecis(c, t, "tisort", "printify", printify_id="p1")
+    db.urun_gecis(c, t, "tisort", "olusturuldu", printify_id="p1")
+    db.urun_gecis(c, t, "tisort", "printify")
     db.urun_gecis(c, t, "hoodie", "hata", "429")
     r = dict(c.execute("SELECT urun, durum FROM urun WHERE tasarim_id = ?", (t,)).fetchall())
     assert r == {"tisort": "printify", "hoodie": "hata"}
+    assert db.hata_oncesi(c, t, "hoodie") == "bekliyor" and db.hata_oncesi(c, t, "tisort") is None
     assert c.execute("SELECT printify_id FROM urun WHERE urun = 'tisort'").fetchone()[0] == "p1"
     with pytest.raises(db.GecersizGecis):
         db.urun_gecis(c, t, "tisort", "aktif")  # Etsy taslağı atlanamaz

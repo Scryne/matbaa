@@ -1,7 +1,9 @@
 """Printify API v1 istemcisi (developers.printify.com, 2026-10-13 okundu).
 
 Sınırlar: genel 600/dk, katalog 100/dk, yayın 200/30 dk; hatalı istek oranı toplamın %5'ini aşmamalı.
-Görsel base64 yüklenir (genel bir URL'imiz yok); baskı dosyası önce içerik kutusuna kırpılır.
+Görsel base64 yüklenir (genel bir URL'imiz yok); baskı dosyası önce içerik kutusuna kırpılır. Printify 5 MB üstü base64
+desteğini kaldırmayı planlıyor; kırpılmış dosyalarımız ~0,2–0,4 MB (2026-10-13, 88 dosya), sınır yine de denetlenir.
+Sipariş listesi sayfa başına en çok 10 kayıt döner (`limit` maks. 10).
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ from PIL import Image
 from .http import KULLANICI, istek
 
 TABAN = "https://api.printify.com/v1"
+BASE64_MAKS = 5_000_000
 YAYIN_ALANLARI = {
     "title": True,
     "description": True,
@@ -72,8 +75,9 @@ class Printify:
         self._bekle = bekle
 
     def _i(self, yontem: str, yol: str, **kw):
-        ek = {"bekle": self._bekle} if self._bekle else {}
-        return istek(self.http, yontem, f"{TABAN}{yol}", **ek, **kw).json()
+        if self._bekle:
+            kw["bekle"] = self._bekle
+        return istek(self.http, yontem, f"{TABAN}{yol}", **kw).json()
 
     # --- keşif ---
     def dukkanlar(self) -> list[dict]:
@@ -99,11 +103,13 @@ class Printify:
     # --- ürün ---
     def gorsel_yukle(self, png: Path, ad: str) -> tuple[str, tuple[int, int, int, int], tuple[int, int]]:
         veri, kutu, tuval = kirp(png)
+        if len(veri) * 4 / 3 > BASE64_MAKS:
+            raise ValueError(f"{png}: base64 {len(veri) * 4 / 3 / 1e6:.1f} MB > 5 MB (Printify sınırı)")
         r = self._i("POST", "/uploads/images.json", json={"file_name": ad, "contents": base64.b64encode(veri).decode()})
         return r["id"], kutu, tuval
 
     def urun_olustur(self, govde: dict) -> dict:
-        return self._i("POST", f"/shops/{self.shop_id}/products.json", json=govde)
+        return self._i("POST", f"/shops/{self.shop_id}/products.json", json=govde, tekrar_5xx=False)
 
     def yayinla(self, urun_id: str) -> dict:
         return self._i("POST", f"/shops/{self.shop_id}/products/{urun_id}/publish.json", json=YAYIN_ALANLARI)
@@ -113,6 +119,16 @@ class Printify:
 
     def siparisler(self, sayfa: int = 1) -> dict:
         return self._i("GET", f"/shops/{self.shop_id}/orders.json", params={"page": sayfa, "limit": 10})
+
+    def son_siparisler(self, sayfa_maks: int = 10) -> list[dict]:
+        """En yeni siparişler (yeniden eskiye), en çok `sayfa_maks` × 10 kayıt: açık siparişlerin maliyet ve takibi için yeter."""
+        sonuc: list[dict] = []
+        for n in range(1, sayfa_maks + 1):
+            s = self.siparisler(n)
+            sonuc += s.get("data", [])
+            if n >= (s.get("last_page") or 1) or not s.get("data"):
+                break
+        return sonuc
 
 
 def varyant_sec(varyantlar: list[dict], renkler: list[dict], bedenler: list[str]) -> dict[str, list[dict]]:

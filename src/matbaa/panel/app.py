@@ -59,7 +59,7 @@ def _kanit(kayit_json: str | None) -> dict:
 def kuyruk() -> dict:
     c = _c()
     satirlar = c.execute(
-        """SELECT t.id, t.sablon, t.fontlar, t.dosyalar, i.satirlar, i.nis, i.kapi_kayit
+        """SELECT t.id, t.sablon, t.fontlar, t.dosyalar, i.satirlar, i.nis, i.kapi_kayit, i.kapi_karar, i.kapi_nedenler
            FROM tasarim t JOIN ifade i ON i.id = t.ifade_id WHERE t.durum = 'onay_bekliyor' ORDER BY t.id"""
     ).fetchall()
     urun_kat = fiyat.urunler()
@@ -85,6 +85,7 @@ def kuyruk() -> dict:
                 "sablon": r["sablon"],
                 "fontlar": json.loads(r["fontlar"]),
                 "kanit": _kanit(r["kapi_kayit"]),
+                "ip": {"karar": r["kapi_karar"], "nedenler": json.loads(r["kapi_nedenler"] or "[]")},
                 "ilanlar": ilanlar,
             }
         )
@@ -99,7 +100,26 @@ def kuyruk() -> dict:
         "ret_nedenleri": RET_NEDENLERI,
         "ozet": ozet,
         "kar": siparis.ozet(c),
+        **_dikkat(c),
     }
+
+
+def _dikkat(c) -> dict:
+    """Onaydan önce görülmesi gerekenler: son günlük koşunun hata/alarmları, şu an geciken sipariş, takılan ürün."""
+    from matbaa import hat, yayin
+
+    son, dikkat = None, []
+    try:
+        k = json.loads(hat.SON_KOSU.read_text(encoding="utf-8"))
+        son = {"zaman": k.get("basladi"), "hata": len(k.get("hatalar", []))}
+        dikkat += [f"son koşu: {h}" for h in k.get("hatalar", [])]
+        dikkat += [a for a in k.get("alarmlar", []) if not a.startswith("makbuz ")]  # gecikme aşağıda güncel hâliyle
+    except (OSError, ValueError):
+        pass
+    dikkat += siparis.geciken(c)
+    elle = c.execute("SELECT tasarim_id, urun, hata FROM urun WHERE durum = 'hata' AND hata LIKE ?", (f"%{yayin.ELLE}%",))
+    dikkat += [f"#{r[0]} {r[1]}: {r[2][:160]}" for r in elle.fetchall()]
+    return {"dikkat": list(dict.fromkeys(dikkat)), "son_kosu": son}
 
 
 @lru_cache(maxsize=256)

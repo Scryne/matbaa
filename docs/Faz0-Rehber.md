@@ -29,7 +29,8 @@ o durumda modeli birlikte değiştiririz.
    - Başlık, 13 etiket, açıklama, fiyat: `ilan.txt` (kopyala-yapıştır)
    - Kategori: Clothing → Gender-Neutral Adult Clothing → Tops & Tees → T-shirts
    - "Who made it?": **I did** · "What is it?": **A finished product** · "When was it made?": **Made to order**
-   - Bu ilan Printify bağlanınca silinir; şimdi sadece mağazayı açmak için.
+   - Bu ilan sadece mağazayı açmak için. **Mağaza açılır açılmaz Shop Manager → Listings → bu ilanı seç → Deactivate:** ürün henüz
+     Printify'a bağlı değil, sipariş gelirse elle karşılanamaz. Printify bağlanınca silinir.
 5. **How you'll get paid:** "Individual/Sole proprietor", Türk banka hesabın (IBAN). **Ad soyad kimlikteki ve bankadaki ile birebir aynı.**
 6. **Billing:** kartın (açılış ücreti çıkarsa buradan alınır; Etsy ekranda gösterir).
 7. **Security:** iki adımlı doğrulamayı aç. Etsy kimlik doğrulaması isterse yükle.
@@ -42,10 +43,10 @@ o durumda modeli birlikte değiştiririz.
 1. printify.com → Sign up (Free plan). **My account → Billing:** yurt dışı ve internet alışverişine açık kart ekle.
 2. **My stores → Add new store → Etsy** → Etsy hesabınla bağla.
    **Store settings:** Order approval: **automatic (1 hour)**; "Publish as draft" kapalı kalsın (aktifleştirmeyi kod yapıyor).
-3. Numune sipariş etmiyoruz (K-20). Token'ı koyunca bana "Printify açıldı" de; kataloğu tarayıp ABD sağlayıcısını ben seçerim
-   (`matbaa printify-kesif`). Kartın çalıştığı ilk gerçek siparişte belli olur; ödeme düşmezse gecikme alarmı haber verir.
-4. **API token:** My account → **Connections** → Generate token → ad `matbaa`, tüm kapsamlar. Token'ı bana yazma;
-   `Projeler\Matbaa\.env` dosyasında `PRINTIFY_TOKEN=` satırına yapıştır (`.env.example`'ı `.env` olarak kopyala).
+3. **API token:** My account → **Connections** → Generate token → ad `matbaa`, tüm kapsamlar. Token'ı bana yazma;
+   `Projeler\Matbaa\.env` dosyasında `PRINTIFY_TOKEN=` satırına yapıştır (dosya hazır: `notepad .env`).
+4. Bana "Printify açıldı" de. `matbaa printify-kesif` Printify mağaza kimliğini `.env`'e kendisi yazar; ABD sağlayıcısını ben seçerim.
+   Numune sipariş etmiyoruz (K-20): kartın çalıştığı ilk gerçek siparişte belli olur, ödeme düşmezse gecikme alarmı bildirim olarak gelir.
 
 ## 4. Etsy geliştirici uygulaması (~10 dk)
 1. etsy.com/developers/register → uygulama oluştur:
@@ -53,10 +54,11 @@ o durumda modeli birlikte değiştiririz.
    - Callback URL: `http://localhost:3003/callback`
 2. **Your apps** sayfasındaki **Keystring** ve **Shared secret** → `.env`: `ETSY_KEYSTRING=`, `ETSY_SHARED_SECRET=`
 3. Bana "Etsy anahtarı hazır" de. Ben `scripts/etsy_yetki.py`'yi çalıştırırım; tarayıcıda Etsy izin sayfası açılır, **Allow Access**
-   dersin. Betik mağaza kimliğini ve Printify üretim ortağı kimliğini yazar; ben `.env` ve `config/yayin.toml`'a işlerim.
+   dersin. Betik mağaza kimliğini `.env`'e, Printify üretim ortağı kimliğini `config/yayin.toml`'a kendisi yazar.
 
 ## 5. Sonra ne olur
 - Panelden ilk 10 tasarımı onaylarsın (`uv run matbaa panel` → http://127.0.0.1:8766, A onay / R ret).
 - Günlük görev ısınma eğrisiyle yayınlar: ilk hafta günde 1 tasarım (3 ilan: tişört, sweatshirt, hoodie), sonra 2, 4, 6, 8.
 - Etsy mesajları telefonuna gelir (Etsy Seller uygulamasını kur); hazır cevaplar `docs/hazir-cevaplar.md`'de.
-- Haftada bir: panelde 10 dakika onay.
+- Haftada bir: panelde 10 dakika onay. Panelin üstündeki sarı **Dikkat** şeridi geciken sipariş, takılan ürün ve günlük koşu hatalarını gösterir.
+- Günlük koşu bir hata ya da alarm bulursa ekranının köşesine Windows bildirimi düşer; her şey yolundaysa sessizdir.

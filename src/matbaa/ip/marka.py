@@ -152,3 +152,11 @@ class MarkaDizini:
 @cache
 def dizin() -> MarkaDizini:
     return MarkaDizini.dosyadan()
+
+
+@cache
+def veri_tarihi(dosya: Path = DOSYA):
+    """Verideki en yeni başvuru tarihi (`date`): verinin gerçek tazeliği. Dosya yoksa None."""
+    if not dosya.exists():
+        return None
+    return duckdb.sql(f"SELECT max(filing_dt) FROM '{dosya.as_posix()}'").fetchone()[0]

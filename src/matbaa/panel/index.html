@@ -56,6 +56,12 @@
   .nedenler.acik { display: flex; }
   .neden { background: var(--masa); color: var(--metin); border: 1px solid var(--primary); border-radius: 99px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px; }
   .bos { grid-column: 1 / -1; text-align: center; padding: 15vh 16px; color: var(--metin-2); }
+  .dikkat { margin: calc(var(--b) * 2) calc(var(--b) * 3) 0; padding: 12px 16px; border: 1px solid var(--uyari); border-radius: var(--r-kart); background: var(--masa-y); }
+  .dikkat h2 { font-size: 14px; font-weight: 650; color: var(--uyari); margin: 0 0 4px; }
+  .dikkat ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--metin); }
+  .ip-insan { margin: var(--b) 0 0; padding: 8px 12px; border-left: 3px solid var(--uyari); background: var(--masa); font-size: 13px; }
+  .ip-insan strong { color: var(--uyari); }
+  @media (max-width: 900px) { .dikkat { margin: var(--b) 16px 0; } }
   .bildirim { position: fixed; top: 16px; right: 16px; background: var(--masa-y); border: 1px solid var(--cizgi); border-radius: var(--r-dugme); padding: 8px 14px; font-size: 13px; opacity: 0; transition: opacity .2s; z-index: 20; }
   .bildirim.gorunur { opacity: 1; }
   @media (prefers-reduced-motion: reduce) { .bildirim { transition: none; } }
@@ -66,6 +72,7 @@
   <h1>Onay masası</h1>
   <span class="etiket" id="ozet">yükleniyor…</span>
 </header>
+<section class="dikkat" id="dikkat" role="alert" hidden></section>
 <main id="ana" aria-live="polite"></main>
 <div class="cubuk" role="toolbar" aria-label="Karar">
   <button class="ana ikincil" id="onceki" aria-label="Önceki tasarım">← <kbd>←</kbd></button>
@@ -144,7 +151,12 @@ function ilanlar(t) {
 function ciz() {
   const o = veri.ozet;
   const k = veri.kar;
-  $("#ozet").textContent = `kuyruk ${veri.tasarimlar.length} · onaylı ${o.onaylandi || 0} · yayında ${o.yayinda || 0} · ret ${o.ret || 0} · 30 gün: ${k.siparis} sipariş, net $${k.net_usd.toFixed(2)}`;
+  const sk = veri.son_kosu;
+  const kosu = sk ? ` · son günlük koşu ${sk.zaman.slice(0, 16).replace("T", " ")} UTC${sk.hata ? `, ${sk.hata} hata` : ""}` : " · günlük koşu kaydı yok";
+  $("#ozet").textContent = `kuyruk ${veri.tasarimlar.length} · onaylı ${o.onaylandi || 0} · yayında ${o.yayinda || 0} · ret ${o.ret || 0} · 30 gün: ${k.siparis} sipariş, net $${k.net_usd.toFixed(2)}${kosu}`;
+  const d = $("#dikkat");
+  d.hidden = !veri.dikkat.length;
+  d.innerHTML = veri.dikkat.length ? `<h2>Dikkat (${veri.dikkat.length})</h2><ul>${veri.dikkat.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
   const ana = $("#ana");
   if (!veri.tasarimlar.length) {
     ana.innerHTML = `<p class="bos">Kuyruk boş. Yeni tasarım için: <code>uv run matbaa uret --nis …</code> ve <code>uv run matbaa metin</code>.</p>`;
@@ -161,6 +173,7 @@ function ciz() {
       <div class="kart">
         <span class="etiket">#${t.id} · ${esc(t.nis)} · ${esc(t.sablon)} · ${esc(t.fontlar[0].replace("-Regular.ttf", ""))}</span>
         <p class="slogan">${t.satirlar.map(esc).join("<br>")}</p>
+        ${t.ip.karar === "insan" ? `<p class="ip-insan"><strong>Marka kapısı emin değil:</strong> ${esc(t.ip.nedenler.join("; ").replace(/^Jev: /, ""))}. Benzer bir markanın parodisi gibi duruyorsa reddet (marka şüphesi).</p>` : ""}
       </div>
       <div class="kart">${kanit(t.kanit)}</div>
       <div class="kart">${ilanlar(t)}</div>

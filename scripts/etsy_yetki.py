@@ -6,7 +6,8 @@
     uv run python scripts/etsy_yetki.py
 
 Tarayıcıda Etsy izin sayfası açılır; Scryne "Allow Access" der; yönlendirme bu betiğin yerel sunucusuna düşer,
-kod token'a çevrilir ve yenileme token'ı git dışı dosyaya yazılır. Ardından mağaza kimliği ve üretim ortakları yazdırılır.
+kod token'a çevrilir ve yenileme token'ı git dışı dosyaya yazılır. Mağaza kimliği `.env`'e (ETSY_SHOP_ID), adı "Printify"
+olan tek üretim ortağı `config/yayin.toml`'a yazılır; birden çok ya da hiç yoksa liste basılır, seçim elle.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import secrets
 import time
 import urllib.parse
@@ -23,13 +25,25 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import httpx
 
+from matbaa.ayar import CONFIG, env_yaz, env_yukle
 from matbaa.entegrasyon.etsy import TOKEN_DOSYASI, TOKEN_URL
 
 YONLENDIRME = "http://localhost:3003/callback"
 KAPSAM = "listings_r listings_w shops_r transactions_r transactions_w"
 
 
+def ortak_yaz(ortak_id: int, dosya=CONFIG / "yayin.toml") -> None:
+    t = dosya.read_text(encoding="utf-8")
+    t, n = re.subn(r"(?m)^uretim_ortagi_id = \d+", f"uretim_ortagi_id = {ortak_id}", t)
+    if n != 1:
+        raise SystemExit(f"{dosya}: uretim_ortagi_id satırı bulunamadı")
+    dosya.write_text(t, encoding="utf-8")
+
+
 def main() -> None:
+    env_yukle()
+    if not (os.environ.get("ETSY_KEYSTRING") and os.environ.get("ETSY_SHARED_SECRET")):
+        raise SystemExit(".env'de ETSY_KEYSTRING ve ETSY_SHARED_SECRET dolu olmalı (docs/Faz0-Rehber.md, 4. bölüm)")
     anahtar = os.environ["ETSY_KEYSTRING"]
     dogrulayici = secrets.token_urlsafe(64)[:96]
     meydan = base64.urlsafe_b64encode(hashlib.sha256(dogrulayici.encode()).digest()).rstrip(b"=").decode()
@@ -84,13 +98,28 @@ def main() -> None:
     basliklar = {"x-api-key": f"{anahtar}:{os.environ['ETSY_SHARED_SECRET']}", "Authorization": f"Bearer {d['access_token']}"}
     dukkan = httpx.get(f"https://openapi.etsy.com/v3/application/users/{kullanici}/shops", headers=basliklar, timeout=30).json()
     print(f"Token kaydedildi → {TOKEN_DOSYASI}")
-    print(f"Mağaza: {dukkan.get('shop_name')} — ETSY_SHOP_ID={dukkan.get('shop_id')} (.env'e yaz)")
-    ortak = httpx.get(
-        f"https://openapi.etsy.com/v3/application/shops/{dukkan.get('shop_id')}/production-partners",
-        headers=basliklar,
-        timeout=30,
-    ).json()
-    print("Üretim ortakları:", [(p.get("production_partner_id"), p.get("partner_name")) for p in ortak.get("results", [])])
+    if not dukkan.get("shop_id"):
+        raise SystemExit(f"Mağaza bulunamadı: {dukkan}")
+    env_yaz("ETSY_SHOP_ID", str(dukkan["shop_id"]))
+    print(f"Mağaza: {dukkan.get('shop_name')} — ETSY_SHOP_ID={dukkan['shop_id']} → .env")
+    ortaklar = (
+        httpx.get(
+            f"https://openapi.etsy.com/v3/application/shops/{dukkan['shop_id']}/production-partners",
+            headers=basliklar,
+            timeout=30,
+        )
+        .json()
+        .get("results", [])
+    )
+    printify = [p for p in ortaklar if "printify" in str(p.get("partner_name", "")).lower()]
+    if len(printify) == 1:
+        ortak_yaz(int(printify[0]["production_partner_id"]))
+        print(f"Üretim ortağı: {printify[0].get('partner_name')} ({printify[0]['production_partner_id']}) → config/yayin.toml")
+    else:
+        print(
+            "Üretim ortağı seçilemedi (Printify adlı tek ortak yok):",
+            [(p.get("production_partner_id"), p.get("partner_name")) for p in ortaklar],
+        )
 
 
 if __name__ == "__main__":

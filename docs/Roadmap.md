@@ -37,8 +37,13 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   listeleme ücreti), harcama tavanları (`config/tavanlar.toml`, K-19; tavanda yayın para harcamadan durur). Kalan: Scryne'ın tavan
   onayı ve ilk gerçek siparişte netin Etsy/Printify ekstresiyle tutması.
 - Faz 9 🔄 (üçüncü tur): `Matbaa-Gunluk` Windows görevi kurulu (her gün 10:30); haftalık rapor (`matbaa rapor`, haftanın ilk koşusunda
-  otomatik; ilan, Etsy görüntülenme farkı, satış, net, gecikme/hata en üstte); USPTO 30. günde yenilenir, 35 günü geçerse hat durur.
+  otomatik; ilan, Etsy görüntülenme farkı, satış, net, gecikme/hata en üstte); USPTO 30. günde yenilenir; verideki en yeni başvuru 60 günü geçerse üretim durur (K-21).
   Kalan: Faz 0 anahtarlarıyla günlük koşunun yayın + Etsy + sipariş adımlarını gerçek hesapta uçtan uca koşması.
+- Denetim turu (K-21, 2026-10-13): tam kod denetimi + resmî API doğrulaması. Düzeltilen: yayın düşünce mükerrer Printify ürünü,
+  Etsy eşlemesi bekleyen tasarımın günlük sınırı tıkaması, Printify siparişlerinin yalnız ilk 10'unun okunması, sipariş eşlemesinin
+  belgelenmemiş alana dayanması, iptallerin gelire girmesi, gecikme alarmının değişmeyen siparişte kaybolması, tek adım hatasının
+  günlük koşuyu (ve haftalık raporu) düşürmesi, onay panelinin hiç açılmaması, Etsy yetki betiğinin `.env` okumaması, yanlış Etsy token
+  adresi. Eklenen: Windows bildirimi, panelde Dikkat şeridi, satan tasarımlar, K-13 "insan" yolu, kimliklerin kendiliğinden yazılması.
 
 ### Faz 0: Hesaplar ve para (Scryne)
 - **İşler:** S1 müşavir; S2 Etsy mağazası (Aria ekran ekran yönlendirir); S3 Printify + kart (numune yok, K-20); Printify token; Etsy geliştirici

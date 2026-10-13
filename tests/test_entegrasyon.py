@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
 from PIL import Image
 
-from matbaa import db, yayin
+from matbaa import db, fiyat, yayin
 from matbaa.entegrasyon import etsy as etsy_mod
 from matbaa.entegrasyon import printify as pf
 from matbaa.entegrasyon.http import ApiHatasi, istek
@@ -202,18 +203,82 @@ def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
     assert ortam.execute("SELECT durum FROM tasarim WHERE id = 1").fetchone()[0] == "yayinda"
 
 
+def _dun(c) -> None:
+    """Ürün olaylarını bir gün geriye al: günlük sınır sıfırlanır, geçmiş (hata_oncesi) korunur."""
+    dun = (datetime.now(UTC) - timedelta(days=1)).isoformat(timespec="seconds")
+    c.execute("UPDATE olay SET zaman = ? WHERE varlik = 'urun'", (dun,))  # mağaza yaşı 1 gün: sınır hâlâ 1 tasarım
+    c.commit()
+
+
 def test_printify_urunu_olan_hata_yeniden_printifya_gitmez(ortam):
     p = SahtePrintify(dus={2})
-    yayin.yayinla(ortam, p, yazdir=lambda *_: None)  # tasarım 1: tişört + hoodie printify, sweatshirt hata (printify_id yok)
-    ortam.execute("UPDATE urun SET durum = 'hata' WHERE tasarim_id = 1 AND urun = 'tisort'")  # Etsy adımında düşmüş gibi
+    yayin.yayinla(ortam, p, yazdir=lambda *_: None)  # tasarım 1: tişört + hoodie printify, sweatshirt hata (ürün açılmadı)
+    db.urun_gecis(ortam, 1, "tisort", "hata", "etsy: 500")  # Etsy adımında düşmüş
     pid = ortam.execute("SELECT printify_id FROM urun WHERE tasarim_id = 1 AND urun = 'tisort'").fetchone()[0]
-    ortam.execute("DELETE FROM olay WHERE varlik = 'urun'")  # yeni gün: günlük sınır sıfır
-    ortam.execute("UPDATE tasarim SET durum = 'onaylandi', durum_zamani = '2000-01-01' WHERE id = 1")  # önce bu seçilsin
+    _dun(ortam)
     once = list(p.olusturulan)
-    yayin.yayinla(ortam, p, yazdir=lambda *_: None)
-    assert p.olusturulan == once  # tişört (printify_id var) yeniden oluşturulmadı; sweatshirt yine düştü
+    s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert p.olusturulan == once and s["hata"] == 1  # tişört yeniden açılmadı; yalnız sweatshirt denendi, yine düştü
     r = ortam.execute("SELECT durum, printify_id FROM urun WHERE tasarim_id = 1 AND urun = 'tisort'").fetchone()
     assert tuple(r) == ("hata", pid) and pid
+    assert yayin.etsy_esle(ortam, p, SahteEtsy(), yazdir=lambda *_: None)["aktif"] == 2  # tişört Etsy adımından sürer
+
+
+class YayiniDusenPrintify(SahtePrintify):
+    def __init__(self):
+        super().__init__()
+        self.yayin_istekleri, self.dusur = [], True
+
+    def yayinla(self, urun_id):
+        self.yayin_istekleri.append(urun_id)
+        if self.dusur:
+            raise ApiHatasi(500, "publish", "POST")
+        return {}
+
+
+def test_yayin_duserse_ayni_urun_yeniden_yayinlanir_ikinci_urun_acilmaz(ortam):
+    p = YayiniDusenPrintify()
+    yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert p.olusturulan == [1, 2, 3]
+    assert {r[0] for r in ortam.execute("SELECT durum FROM urun WHERE tasarim_id = 1")} == {"hata"}
+    _dun(ortam)
+    p.dusur = False
+    s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert p.olusturulan == [1, 2, 3] and s["urun"] == 3  # aynı üç ürün yayınlandı, yenisi açılmadı
+    assert p.yayin_istekleri[-3:] == ["p1", "p2", "p3"]
+    assert {r[0] for r in ortam.execute("SELECT durum FROM urun WHERE tasarim_id = 1")} == {"printify"}
+
+
+def test_etsy_eslemesi_bekleyen_tasarim_gunluk_siniri_harcamaz(ortam):
+    p = SahtePrintify()
+    yayin.yayinla(ortam, p, yazdir=lambda *_: None)  # tasarım 1'in üç ürünü printify'da, Etsy eşlemesi bekliyor
+    _dun(ortam)
+    s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert s["tasarim"] == 1 and p.olusturulan[-3:] == [1, 2, 3] and len(p.olusturulan) == 6  # sıradaki tasarım 2 açıldı
+    assert {r[0] for r in ortam.execute("SELECT durum FROM urun WHERE tasarim_id = 2")} == {"printify"}
+
+
+class EtsyyeDusmeyenPrintify(SahtePrintify):
+    def urun(self, urun_id):
+        return {"external": []}
+
+
+def test_etsy_ilani_olusmazsa_yeniden_yayin_sonra_elle(ortam):
+    p = EtsyyeDusmeyenPrintify()
+    yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert yayin.etsy_esle(ortam, p, SahteEtsy(), yazdir=lambda *_: None)["bekleyen"] == 3  # henüz süre dolmadı
+    eski = lambda: ortam.execute("UPDATE urun SET guncelleme = '2000-01-01T00:00:00+00:00' WHERE tasarim_id = 1")  # noqa: E731
+    for _ in range(yayin.YENIDEN_YAYIN_MAKS):
+        eski()
+        assert yayin.etsy_esle(ortam, p, SahteEtsy(), yazdir=lambda *_: None)["yeniden_yayin"] == 3
+        _dun(ortam)
+        yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert len(p.olusturulan) == 3  # yeniden yayın aynı ürünleri kullandı
+    eski()
+    yayin.etsy_esle(ortam, p, SahteEtsy(), yazdir=lambda *_: None)
+    hatalar = [r[0] for r in ortam.execute("SELECT hata FROM urun WHERE tasarim_id = 1")]
+    assert all(yayin.ELLE in h for h in hatalar)
+    assert yayin.etsy_esle(ortam, p, SahteEtsy(), yazdir=lambda *_: None)["bekleyen"] == 0  # elle bakılacaklar döngüye girmez
 
 
 def test_uretim_ortagi_yoksa_etsy_esle_durur(ortam, monkeypatch):
@@ -234,9 +299,11 @@ class SahteEtsyMakbuz:
 
 
 class SahtePrintifySiparis:
-    def siparisler(self, sayfa):
-        return {
-            "data": [
+    def __init__(self, siparisler=None):
+        self.s = (
+            siparisler
+            if siparisler is not None
+            else [
                 {
                     "id": "po1",
                     "metadata": {"shop_order_id": 111},
@@ -246,7 +313,24 @@ class SahtePrintifySiparis:
                     "shipments": [{"number": "1Z999"}],
                 }
             ]
-        }
+        )
+
+    def son_siparisler(self):
+        return self.s
+
+
+def _para(x):
+    return {"amount": round(x * 100), "divisor": 100}
+
+
+def _makbuz(no, gun, toplam=33.98, **ek):
+    from datetime import UTC, datetime
+
+    return {
+        "receipt_id": no, "grandtotal": _para(toplam), "total_tax_cost": _para(0), "total_vat_cost": _para(0),
+        "total_shipping_cost": _para(4.99), "create_timestamp": int(datetime(2026, 11, gun, tzinfo=UTC).timestamp()),
+        "status": "Paid", "is_shipped": False, **ek,
+    }  # fmt: skip
 
 
 def test_siparis_net_ve_gecikme_alarmi(tmp_path, monkeypatch):
@@ -257,21 +341,84 @@ def test_siparis_net_ve_gecikme_alarmi(tmp_path, monkeypatch):
     monkeypatch.setattr(db, "DB", tmp_path / "s.db")
     c = db.baglan()
     simdi = datetime(2026, 11, 20, tzinfo=UTC)
-    para = lambda x: {"amount": round(x * 100), "divisor": 100}  # noqa: E731
-    makbuzlar = [
-        {"receipt_id": 111, "grandtotal": para(35.98), "total_tax_cost": para(2.0), "total_vat_cost": para(0), "total_shipping_cost": para(4.99),
-         "create_timestamp": int(datetime(2026, 11, 18, tzinfo=UTC).timestamp()), "status": "Paid", "is_shipped": False},
-        {"receipt_id": 222, "grandtotal": para(33.98), "total_tax_cost": para(0), "total_vat_cost": para(0), "total_shipping_cost": para(4.99),
-         "create_timestamp": int(datetime(2026, 11, 9, tzinfo=UTC).timestamp()), "status": "Paid", "is_shipped": False},
-    ]  # fmt: skip
+    makbuzlar = [_makbuz(111, 18, 35.98, total_tax_cost=_para(2.0)), _makbuz(222, 9)]
     s = siparis.izle(c, SahteEtsyMakbuz(makbuzlar), SahtePrintifySiparis(), simdi, yazdir=lambda *_: None)
     assert s["yeni"] == 2
     assert s["alarm"] == ["makbuz 222: 9 iş günü, takip yok"]  # 111'in takibi var ve yeni
-    r = c.execute("SELECT printify_order_id, brut, net, takip FROM siparis WHERE etsy_receipt_id = '111'").fetchone()
-    assert tuple(r)[:2] == ("po1", 33.98) and r[3] == "1Z999"
-    assert r[2] == pytest.approx(33.98 - 16.94 - (33.98 - 16.94 - r[2]), abs=0.01) and 5 < r[2] < 12
+    r = c.execute("SELECT printify_order_id, brut, net, takip, durum FROM siparis WHERE etsy_receipt_id = '111'").fetchone()
+    assert tuple(r)[:2] == ("po1", 33.98) and r[3] == "1Z999" and r[4] == "paid"
+    assert 5 < r[2] < 12
     assert siparis.izle(c, SahteEtsyMakbuz(makbuzlar), SahtePrintifySiparis(), simdi, yazdir=lambda *_: None)["guncel"] == 2
     assert siparis.ozet(c, gun=100000)["siparis"] == 2
+    # Ertesi gün Etsy 222'yi döndürmese de (değişmedi) alarm sürer: alarm veritabanının tamamından.
+    s = siparis.izle(c, SahteEtsyMakbuz([]), SahtePrintifySiparis(), simdi, yazdir=lambda *_: None)
+    assert s["alarm"] == ["makbuz 222: 9 iş günü, takip yok"]
+
+
+def test_siparis_urunden_eslesir_tasarima_baglanir_iptal_gelirden_duser(tmp_path, monkeypatch):
+    from datetime import UTC, datetime
+
+    from matbaa import siparis
+
+    monkeypatch.setattr(db, "DB", tmp_path / "s.db")
+    c = db.baglan()
+    i = db.ifade_ekle(c, "fishing", ["REEL COOL"])
+    db.kapi_yaz(c, i, "temiz", [], [])
+    t = db.tasarim_ekle(c, i, "yigin", [])
+    c.execute("INSERT INTO urun (tasarim_id, urun, printify_id, etsy_listing_id) VALUES (?, 'hoodie', 'pp-h', '7001')", (t,))
+    c.commit()
+    printify = SahtePrintifySiparis(
+        [
+            # Makbuz kimliği taşımayan iki sipariş: aynı ürün, biri çok geç (başka makbuzun) → yakın olan seçilir
+            {"id": "geç", "metadata": {}, "line_items": [{"product_id": "pp-h"}], "created_at": "2026-11-15 10:00:00+00:00",
+             "total_price": 9999, "total_shipping": 0, "total_tax": 0},
+            {"id": "po-h", "metadata": {}, "line_items": [{"product_id": "pp-h"}], "created_at": "2026-11-03 12:00:00+00:00",
+             "total_price": 2311, "total_shipping": 879, "total_tax": 0, "shipments": []},
+        ]
+    )  # fmt: skip
+    makbuzlar = [
+        _makbuz(333, 3, 55.98, transactions=[{"listing_id": 7001, "quantity": 1}], shipments=[{"tracking_code": "9400ETSY"}]),
+        _makbuz(444, 4, 55.98, status="Canceled", transactions=[{"listing_id": 1, "quantity": 1}]),
+    ]
+    simdi = datetime(2026, 11, 20, tzinfo=UTC)
+    s = siparis.izle(c, SahteEtsyMakbuz(makbuzlar), printify, simdi, yazdir=lambda *_: None)
+    r = c.execute("SELECT printify_order_id, tasarim_id, takip FROM siparis WHERE etsy_receipt_id = '333'").fetchone()
+    assert tuple(r) == ("po-h", t, "9400ETSY")  # ürünle eşleşti, tasarıma bağlandı, takip Etsy'den
+    assert s["alarm"] == [] and s["printify_eslesmedi"] == 1  # iptal makbuz alarm vermez
+    o = siparis.ozet(c, gun=100000)
+    assert o["siparis"] == 1  # iptal gelire girmez
+    # Printify eşleşmeyen sipariş katalog tahmini ürün türünden: tişört değil hoodie maliyeti
+    hoodie = fiyat.urun_hesap("hoodie").uretim
+    c.execute("DELETE FROM siparis")
+    siparis.izle(c, SahteEtsyMakbuz(makbuzlar[:1]), SahtePrintifySiparis([]), simdi, yazdir=lambda *_: None)
+    net = c.execute("SELECT net FROM siparis WHERE etsy_receipt_id = '333'").fetchone()[0]
+    assert net == fiyat.hesap(55.98 - 4.99, 4.99, hoodie).net
+
+
+def test_printify_siparis_sayfalari():
+    sayfalar = {1: {"data": [{"id": 1}] * 10, "last_page": 2}, 2: {"data": [{"id": 2}] * 3, "last_page": 2}}
+    gorulen = []
+
+    def isle(r: httpx.Request):
+        n = int(r.url.params["page"])
+        gorulen.append((n, r.url.params["limit"]))
+        return httpx.Response(200, json=sayfalar[n])
+
+    p = pf.Printify("tok", "s1", http=httpx.Client(transport=httpx.MockTransport(isle)))
+    assert len(p.son_siparisler()) == 13 and gorulen == [(1, "10"), (2, "10")]
+
+
+def test_urun_olusturma_5xxte_yinelenmez():
+    n = []
+
+    def isle(r):
+        n.append(r)
+        return httpx.Response(502)
+
+    p = pf.Printify("tok", "s1", http=httpx.Client(transport=httpx.MockTransport(isle)), bekle=lambda s: None)
+    with pytest.raises(ApiHatasi):
+        p.urun_olustur({})
+    assert len(n) == 1  # sunucu ürünü açıp yanıtı düşürmüş olabilir: ikinci POST mükerrer ürün açar
 
 
 def test_is_gunu_farki():

@@ -37,6 +37,26 @@ def test_kuyruk(istemci):
     assert [t["id"] for t in d["tasarimlar"]] == [1, 2]
     assert d["tasarimlar"][0]["ilanlar"]["tisort"]["net"] > 0
     assert d["tasarimlar"][0]["kanit"]["aday_markalar"] == ["SLOGAN"]
+    assert d["tasarimlar"][0]["ip"] == {"karar": "temiz", "nedenler": []}
+
+
+def test_dikkat_seridi_geciken_siparis_ve_takilan_urun(istemci, tmp_path, monkeypatch):
+    from matbaa import hat, yayin
+
+    monkeypatch.setattr(hat, "SON_KOSU", tmp_path / "son.json")
+    (tmp_path / "son.json").write_text(
+        json.dumps({"basladi": "2026-11-20T07:30:00+00:00", "hatalar": ["yayin: ApiHatasi: 401"], "alarmlar": ["makbuz 9: eski"]})
+    )
+    c = db.baglan()
+    c.execute("INSERT INTO siparis (etsy_receipt_id, durum, olusturma) VALUES ('77', 'paid', '2000-01-03T00:00:00+00:00')")
+    c.execute("UPDATE urun SET durum = 'hata', hata = ? WHERE tasarim_id = 1", (f"Printify panelinde {yayin.ELLE}",))
+    c.execute("INSERT INTO urun (tasarim_id, urun, durum, hata) VALUES (2, 'hoodie', 'hata', ?)", (f"x {yayin.ELLE}",))
+    c.commit()
+    d = istemci.get("/api/kuyruk").json()
+    assert d["son_kosu"] == {"zaman": "2026-11-20T07:30:00+00:00", "hata": 1}
+    assert d["dikkat"][0] == "son koşu: yayin: ApiHatasi: 401"
+    assert any(x.startswith("makbuz 77:") for x in d["dikkat"]) and not any("makbuz 9" in x for x in d["dikkat"])
+    assert any(x.startswith("#2 hoodie") for x in d["dikkat"])
 
 
 def test_sayfanin_okudugu_her_alan_apide_var(istemci):

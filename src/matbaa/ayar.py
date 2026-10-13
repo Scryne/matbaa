@@ -29,3 +29,20 @@ def env_yukle(dosya=None) -> None:
             k, v = satir.split("=", 1)
             if v.strip():
                 os.environ.setdefault(k.strip(), v.strip().strip('"'))
+
+
+def env_yaz(anahtar: str, deger: str, dosya=None) -> None:
+    """`.env`'de `anahtar=` satırını yazar (yoksa ekler) ve ortama da koyar: kurulum betikleri kimlikleri elle kopyalatmaz."""
+    import os
+
+    dosya = dosya or KOK / ".env"
+    satirlar = dosya.read_text(encoding="utf-8").splitlines() if dosya.exists() else []
+    yeni = f"{anahtar}={deger}"
+    for i, s in enumerate(satirlar):
+        if s.split("=", 1)[0].strip() == anahtar:
+            satirlar[i] = yeni
+            break
+    else:
+        satirlar.append(yeni)
+    dosya.write_text("\n".join(satirlar) + "\n", encoding="utf-8")
+    os.environ[anahtar] = deger

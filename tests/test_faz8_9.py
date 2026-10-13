@@ -113,3 +113,69 @@ def test_haftalik_rapor_goruntulenme_farki_ve_gecikme(c, tmp_path, monkeypatch):
     assert "## Dikkat" in metin.split("## İlan")[0]  # dikkat isteyen en üstte
     yol = rapor.yaz(veri, metin)
     assert os.path.basename(yol) == "2026-H47.md" and rapor.bu_hafta_var_mi(SIMDI)
+
+
+@pytest.fixture
+def gunluk_ortam(tmp_path, monkeypatch):
+    """Günlük koşu: gerçek .env, ağ, Claude ve bildirim yok; dosyalar geçici dizinde."""
+    from matbaa import ayar, bildirim, hat
+
+    monkeypatch.setattr(db, "DB", tmp_path / "g.db")
+    monkeypatch.setattr(ayar, "env_yukle", lambda *a: None)
+    for k in ("PRINTIFY_TOKEN", "PRINTIFY_SHOP_ID", "ETSY_KEYSTRING", "ETSY_SHARED_SECRET", "ETSY_SHOP_ID"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr(hat, "SON_KOSU", tmp_path / "son.json")
+    monkeypatch.setattr(rapor, "RAPOR_DIZINI", tmp_path / "rapor")
+    monkeypatch.setattr(hat, "uspto_tazelik", lambda: 3)
+    monkeypatch.setattr(fiyat, "kur_guncelle", lambda: 49.0)
+    gosterilen = []
+    monkeypatch.setattr(bildirim, "goster", lambda b, m, yazdir=None: gosterilen.append((b, m)))
+    uretilen = []
+    monkeypatch.setattr(hat, "uret", lambda n, adet, c, yazdir: uretilen.append(n) or {"tasarim": 0})
+    return hat, gosterilen, uretilen, tmp_path
+
+
+def test_gunluk_adim_duserse_digerleri_surer_kayit_ve_bildirim(gunluk_ortam, monkeypatch):
+    from datetime import date
+
+    from matbaa.ip import marka
+
+    hat, gosterilen, uretilen, tmp = gunluk_ortam
+    monkeypatch.setattr(marka, "veri_tarihi", lambda: date.today() - timedelta(days=10))
+
+    def bozuk(*a, **k):
+        raise RuntimeError("claude -p çıkış 1")
+
+    monkeypatch.setattr(hat, "metin", bozuk)
+    r = hat.gunluk(nis_sayisi=1, adet=1, yazdir=lambda *_: None)
+    assert r["hatalar"] == ["metin: RuntimeError: claude -p çıkış 1"]
+    assert len(uretilen) == 1 and r["uspto"] == "10 günlük"  # üretim metin hatasından önce koştu
+    assert r["haftalik_rapor"].endswith(".md")  # metin düştü, haftalık rapor yine yazıldı
+    kayit = json.loads((tmp / "son.json").read_text(encoding="utf-8"))
+    assert kayit["hatalar"] == r["hatalar"] and kayit["basladi"]
+    assert gosterilen and "1 hata" in gosterilen[0][0]
+
+
+def test_gunluk_bayat_marka_verisinde_uretim_durur(gunluk_ortam, monkeypatch):
+    from datetime import date
+
+    from matbaa.ip import marka
+
+    hat, gosterilen, uretilen, _ = gunluk_ortam
+    monkeypatch.setattr(marka, "veri_tarihi", lambda: date.today() - timedelta(days=hat.USPTO_VERI_MAKS_GUN + 1))
+    monkeypatch.setattr(hat, "metin", lambda c, yazdir: {"tasarim": 0})
+    r = hat.gunluk(nis_sayisi=2, adet=1, yazdir=lambda *_: None)
+    assert uretilen == [] and r["hatalar"][0].startswith("uspto: RuntimeError")
+    assert gosterilen  # Scryne'ın ekranına düştü
+
+
+def test_gunluk_temizse_bildirim_yok(gunluk_ortam, monkeypatch):
+    from datetime import date
+
+    from matbaa.ip import marka
+
+    hat, gosterilen, _, _ = gunluk_ortam
+    monkeypatch.setattr(marka, "veri_tarihi", lambda: date.today() - timedelta(days=5))
+    monkeypatch.setattr(hat, "metin", lambda c, yazdir: {"tasarim": 0})
+    r = hat.gunluk(nis_sayisi=0, adet=1, yazdir=lambda *_: None)
+    assert "hatalar" not in r and r["alarmlar"] == [] and gosterilen == []
