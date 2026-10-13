@@ -88,7 +88,7 @@ iade kararı.
   kontrast kapısından geçer (kiremit ve hardal koyulaştırıldı).
 - **K-19 Harcama tavanları (K-7'nin uygulanışı):** `config/tavanlar.toml`: aylık Etsy listeleme ücreti $60 (ısınma eğrisinin ilk ayı
   ~$42), günlük IP denetimi 120 ifade (TypeSafe). Sayım olay günlüğünden; tavanda hat para harcamadan durur, ürünü hataya düşürmez.
-  Değerler Scryne onayı bekliyor. Kur TCMB'den günlük (`veri/kur.json`), alınamazsa config değeri.
+  Değerler K-22 ile karara bağlandı. Kur TCMB'den günlük (`veri/kur.json`), alınamazsa config değeri.
 - **K-20 Numune yok (Scryne, 2026-10-13):** Scryne kendine numune sipariş etmeyecek; bu kalıcı. Sağlayıcıyı Aria `printify-kesif`
   çıktısından seçer (ABD'de, araştırmadaki adaylar Monster Digital / SwiftPOD önde) ve kilitler (K-2). Kartın Printify'da çalıştığı ilk
   gerçek siparişte belli olur: ödeme alınamazsa sipariş üretime girmez, takip 5 iş gününde düşmez ve gecikme alarmı yakalar.
@@ -107,6 +107,10 @@ iade kararı.
     da alarm varsa Windows bildirimi; hata varsa çıkış kodu 1 (Görev Zamanlayıcı'da görünür). Panelin üstünde "Dikkat" şeridi.
   - K-13'ün "insan" yolu uygulandı: Jev'in emin olmadığı ifade tasarıma girer, panelde işaretli gelir; karar Scryne'ın onayında.
   - Etsy token adresi `api.etsy.com` (resmî doküman); kurulum betikleri mağaza ve üretim ortağı kimliklerini kendisi yazar.
+- **K-22 Karar yetkisi ve kendini finanse eden tavan (Scryne, 2026-10-13):** Scryne kararları "kazanılabilecek en yüksek para" hedefiyle
+  Aria'ya bıraktı; Aria karar verir, kayda yazar, sonra bildirir. Scryne'da yalnız kimlik/hesap/para hareketi isteyen adımlar kalır.
+  İlk karar: aylık ilan ücreti tavanı = $60 taban + son 30 günün sipariş neti × 0,5. Satış yokken kayıp sınırlı, satış geldikçe
+  kazancın yarısı yeni ilana döner. IP denetimi 120 ifade/gün. Tavanda durmak alarm değildir (beklenen davranış), kayıtta görünür.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

@@ -179,3 +179,16 @@ def test_gunluk_temizse_bildirim_yok(gunluk_ortam, monkeypatch):
     monkeypatch.setattr(hat, "metin", lambda c, yazdir: {"tasarim": 0})
     r = hat.gunluk(nis_sayisi=0, adet=1, yazdir=lambda *_: None)
     assert "hatalar" not in r and r["alarmlar"] == [] and gosterilen == []
+
+
+def test_ilan_tavani_kazancla_buyur_iptal_saymaz(c, monkeypatch):
+    monkeypatch.setattr(
+        tavan, "tavanlar", lambda: {"aylik_ilan_ucreti_usd": 60.0, "yeniden_yatirim_orani": 0.5, "gunluk_ip_denetim": 3}
+    )
+    assert tavan.aylik_ilan_tavani(c, SIMDI) == 60.0  # satış yok: taban
+    _siparis(c, "a", SIMDI - timedelta(days=3), 40.0)
+    _siparis(c, "b", SIMDI - timedelta(days=40), 500.0)  # 30 günden eski
+    _siparis(c, "c", SIMDI - timedelta(days=2), 99.0, durum="canceled")
+    assert tavan.aylik_ilan_tavani(c, SIMDI) == 80.0
+    _olay(c, SIMDI, "urun", "tisort:printify", 300)  # $60 harcandı
+    tavan.ilan_kontrol(c, SIMDI)  # kazanç tavanı $80'e çıkardı: izinli

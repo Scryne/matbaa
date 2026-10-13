@@ -329,9 +329,7 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
         from matbaa.entegrasyon.printify import Printify
 
         p = Printify()
-        y = _adim(rapor, "yayin", lambda: yayin.yayinla(c, p, yazdir), yazdir)
-        if y and y.get("tavan"):
-            alarmlar.append(y["tavan"])
+        _adim(rapor, "yayin", lambda: yayin.yayinla(c, p, yazdir), yazdir)  # tavanda durmak beklenen davranış: alarm değil, kayıtta
         if _etsy_hazir():
             from matbaa import siparis
             from matbaa.entegrasyon.etsy import Etsy

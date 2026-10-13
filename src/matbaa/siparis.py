@@ -176,6 +176,6 @@ def aylik(c, ay: str | None = None) -> dict:
         "siparis_net_usd": round(r[2], 2),
         "ilan_ucreti_usd": ilan,
         "net_usd": round(r[2] - ilan, 2),
-        "ilan_tavani_usd": tavan.tavanlar()["aylik_ilan_ucreti_usd"],
+        "ilan_tavani_usd": tavan.aylik_ilan_tavani(c, min(son, datetime.now(UTC))),
         "kur_try_usd": fiyat.try_usd(),
     }
