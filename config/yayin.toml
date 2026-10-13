@@ -11,5 +11,5 @@ sweatshirt = { blueprint_ara = "Gildan 18000", blueprint_id = 49, saglayici_id =
 hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 77, saglayici_id = 410 }           # Printful, NC
 
 [etsy]
-uretim_ortagi_id = 0   # etsy_yetki.py çıktısındaki Printify ortağının kimliği
-kargo_profili_id = 0   # `uv run matbaa etsy-kargo-profili` açar ve yazar: ABD'ye ücretsiz kargo (K-23); 0 ise Printify'ın profili kalır
+uretim_ortagi_id = 0   # etsy_yetki.py çıktısındaki Printify ortağının kimliği; 0 iken yayın durur
+kargo_profili_id = 0   # `uv run matbaa etsy-kargo-profili` açar ve yazar: ABD'ye ücretsiz kargo (K-23); 0 iken yayın durur

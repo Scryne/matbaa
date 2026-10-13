@@ -85,7 +85,17 @@ def _yayin_bekleyen(c, tasarim_id: int) -> list[tuple[str, str]]:
     return sonuc
 
 
+def etsy_eksik() -> list[str]:
+    """Yayından önce Etsy'de kurulu olması gerekenler. Biri eksikken Printify'ın açtığı ilan üretim ortağısız ve Printify'ın
+    ücretli kargo profiliyle kalır; K-23 fiyatı kargoyu içerdiği için alıcı kargoyu iki kez öder."""
+    e = ayar()["etsy"]
+    return [k for k in ("uretim_ortagi_id", "kargo_profili_id") if not e.get(k)]
+
+
 def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
+    if eksik := etsy_eksik():
+        yazdir(f"  Etsy hazır değil ({', '.join(eksik)} boş): yayın bekletildi")
+        return {"bekliyor": f"Etsy hazır değil: {', '.join(eksik)}", "tasarim": 0, "urun": 0, "hata": 0}
     sayac = {"sinir": gunluk_sinir(c), "bugun_onceki": bugun_yayinlanan(c), "tasarim": 0, "urun": 0, "hata": 0}
     kalan = sayac["sinir"] - sayac["bugun_onceki"]
     if kalan <= 0:

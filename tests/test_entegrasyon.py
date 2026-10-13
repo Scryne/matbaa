@@ -162,7 +162,7 @@ def ortam(tmp_path, monkeypatch):
             u: {"blueprint_ara": u, "blueprint_id": i + 1, "saglayici_id": 9}
             for i, u in enumerate(["tisort", "sweatshirt", "hoodie"])
         },
-        "etsy": {"uretim_ortagi_id": 55},
+        "etsy": {"uretim_ortagi_id": 55, "kargo_profili_id": 66},
     }
     monkeypatch.setattr(yayin, "ayar", lambda: cfg)
     c = db.baglan()
@@ -188,6 +188,16 @@ def test_isinma_ilk_gun_bir_tasarim(ortam):
     s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
     assert s["sinir"] == 1 and s["tasarim"] == 1 and s["urun"] == 3
     assert yayin.yayinla(ortam, p, yazdir=lambda *_: None)["tasarim"] == 0  # aynı gün ikinci koşu: sınır dolu
+
+
+@pytest.mark.parametrize("alan", ["uretim_ortagi_id", "kargo_profili_id"])
+def test_etsy_hazir_degilken_yayin_printifya_dokunmaz(ortam, monkeypatch, alan):
+    cfg = yayin.ayar()
+    monkeypatch.setitem(cfg["etsy"], alan, 0)
+    p = SahtePrintify()
+    s = yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    assert alan in s["bekliyor"] and not p.olusturulan and s["urun"] == 0
+    assert ortam.execute("SELECT count(*) FROM urun WHERE durum != 'bekliyor'").fetchone()[0] == 0
 
 
 def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
