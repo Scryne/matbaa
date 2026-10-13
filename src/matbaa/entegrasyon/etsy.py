@@ -78,6 +78,13 @@ class Etsy:
         form = {k: ",".join(map(str, v)) if isinstance(v, list | tuple) else v for k, v in alanlar.items()}
         return self._i("PATCH", f"/shops/{self.shop_id}/listings/{listing_id}", data=form)
 
+    def kargo_profilleri(self) -> list[dict]:
+        return self._i("GET", f"/shops/{self.shop_id}/shipping-profiles")["results"]
+
+    def kargo_profili_olustur(self, **alanlar) -> dict:
+        """createShopShippingProfile (form): zorunlu title, origin_country_iso, primary_cost, secondary_cost (şema 2026-10-13)."""
+        return self._i("POST", f"/shops/{self.shop_id}/shipping-profiles", data=alanlar)
+
     def makbuzlar(self, min_son_degisim: int | None = None, limit: int = 100) -> list[dict]:
         params = {"limit": limit, "was_paid": "true"}
         if min_son_degisim:

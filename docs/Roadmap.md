@@ -24,6 +24,9 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 10 | Gerçek kullanım (v1) | ⏳ Bekliyor | 30 ilan Scryne onayıyla canlı; ilk gerçek siparişte Etsy → Printify → takip zinciri elle dokunulmadan çalıştı (ya da 4 hafta dolup v1 "30 ilan canlı" ile kapandı); bulgular roadmap'e işlendi |
 | 11 | Kişiselleştirme — Class of 2027 (koşullu) | ⏳ Bekliyor | v1 kapandıysa ve Ocak 2027 geldiyse: Etsy kişiselleştirme alanı → sipariş anında tasarım → Printify API siparişi; 5 test siparişi doğru basıldı |
 | 12 | Shopify (koşullu) | ⏳ Bekliyor | Etsy'de ≥ 30 satış ve TR ödeme yolu (iyzico ya da LLC) netleştiyse: aynı Printify kataloğu Shopify'a; ilk sipariş zinciri çalıştı |
+| 13 | Performansa göre üretim | ⏳ Bekliyor | Günlük üretim niş seçimini görüntülenme/favori/satış verisinden yapıyor (ölü niş kısılır, satan niş büyür); satan ifadenin benzerleri üretiliyor; fiyat testi satış verisiyle; mağaza açılmadan sahte veriyle testli, açıldıktan 30 gün sonra raporda niş dağılımı veriyle değişmiş |
+| 14 | Kupa (ikinci ürün ailesi, koşullu) | ⏳ Bekliyor | İlk 30 gün verisinde ≥ 1 satış: tasarım motoru yatay kupa yerleşimi üretiyor (kapılardan geçiyor), satan tasarımlar önce kupaya da açılıyor; net > 0 fiyatla |
+| 15 | Niş radarı (koşullu) | ⏳ Bekliyor | Faz 13 çalışınca: Etsy arama önerileri + mevsim takviminden yükselen hobi/meslek nişleri aday listesi; marka kapısından geçen niş kartı otomatik taslaklanıyor, ilk 2 yeni niş canlı |
 
 ## Faz Detayları
 

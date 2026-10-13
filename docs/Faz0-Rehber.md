@@ -29,6 +29,8 @@ o durumda modeli birlikte değiştiririz.
    - Başlık, 13 etiket, açıklama, fiyat: `ilan.txt` (kopyala-yapıştır)
    - Kategori: Clothing → Gender-Neutral Adult Clothing → Tops & Tees → T-shirts
    - "Who made it?": **I did** · "What is it?": **A finished product** · "When was it made?": **Made to order**
+   - Kargo (Shipping): **Free shipping** seç, işlem süresi **2–5 business days**; Etsy başka bir şey sorarsa varsayılanı bırak.
+     Kalıcı ücretsiz kargo profilini sonra ben API ile kuruyorum.
    - Bu ilan sadece mağazayı açmak için. **Mağaza açılır açılmaz Shop Manager → Listings → bu ilanı seç → Deactivate:** ürün henüz
      Printify'a bağlı değil, sipariş gelirse elle karşılanamaz. Printify bağlanınca silinir.
 5. **How you'll get paid:** "Individual/Sole proprietor", Türk banka hesabın (IBAN). **Ad soyad kimlikteki ve bankadaki ile birebir aynı.**

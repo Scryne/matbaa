@@ -111,6 +111,12 @@ iade kararı.
   Aria'ya bıraktı; Aria karar verir, kayda yazar, sonra bildirir. Scryne'da yalnız kimlik/hesap/para hareketi isteyen adımlar kalır.
   İlk karar: aylık ilan ücreti tavanı = $60 taban + son 30 günün sipariş neti × 0,5. Satış yokken kayıp sınırlı, satış geldikçe
   kazancın yarısı yeni ilana döner. IP denetimi 120 ifade/gün. Tavanda durmak alarm değildir (beklenen davranış), kayıtta görünür.
+- **K-23 Ücretsiz kargo, fiyat aynı toplam (2026-10-13):** Etsy ABD aramasında ücretsiz ya da < $6 kargoyu öne alıyor (Seller Handbook,
+  1 Eki 2024; ABD dışı satıcı muafiyeti yalnız ikincil kaynakta). Kargo fiyata gömüldü: tişört $33.99, sweatshirt $48.99, hoodie
+  $55.99, kargo $0; alıcının ödediği toplam ve sipariş neti eskisiyle aynı ($9.28 / $11.38 / $11.66). Etsy'de "Free US shipping"
+  profili API ile açılır (`matbaa etsy-kargo-profili`) ve her ilana eşlemede bağlanır. Piyasa medyanına (tişört ~$22, sweatshirt
+  ~$37, RankHero 2026) inmek TR ücret yığınıyla (~%25) zarar: fiyatı tahmin değil satış verisi düşürür (Faz 13). Offsite Ads açık
+  kalır: atfedilen satışta net hâlâ pozitif ($1.6–3.2) ve yeni mağazaya trafik getirir; net negatife dönerse kapatılır.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
@@ -135,5 +141,6 @@ iade kararı.
 4. **Anahtarlar:** Printify kişisel token; Etsy geliştirici hesabı → Seller App (Aria adım adım). USPTO API anahtarı isteğe bağlı (v1.1).
 
 ## Kapsam Dışı
-Shopify (koşullu faz), ücretli dış reklam, kişiselleştirme (koşullu faz, Ocak), kupa/poster/sticker, dijital ürün, Etsy mesaj otomasyonu
+Shopify (koşullu faz), ücretli dış reklam, kişiselleştirme (koşullu faz, Ocak), poster/sticker (kupa Faz 14'te koşullu), dijital ürün,
+fabrika ürünü/trend oyuncak yeniden satışı (Etsy'de yasak; ayrı iş modeli), Etsy mesaj otomasyonu
 (API yok; hazır cevap şablonları var), Redbubble/TeePublic/Amazon Merch kolları, AI görsel katmanı (grafik öğe; v1.1 spike).

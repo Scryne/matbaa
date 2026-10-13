@@ -144,7 +144,7 @@ function ilanlar(t) {
   return `<div class="sekmeler" role="tablist">${urunler.map(u => `<button class="sekme" role="tab" aria-selected="${u === aktifUrun}" data-urun="${u}">${esc(veri.urun_adlari[u])}</button>`).join("")}</div>
     <p class="baslik-ilan">${esc(il.baslik)}</p>
     <div>${il.etiketler.map(e => `<span class="cip">${esc(e)}</span>`).join("")}</div>
-    <p class="para">$${il.fiyat.toFixed(2)} + $${il.kargo.toFixed(2)} kargo · beklenen net ≈ $${il.net.toFixed(2)}</p>
+    <p class="para">$${il.fiyat.toFixed(2)} ${il.kargo ? `+ $${il.kargo.toFixed(2)} kargo` : "· ücretsiz kargo"} · beklenen net ≈ $${il.net.toFixed(2)}</p>
     <details><summary>Açıklama</summary><pre>${esc(il.aciklama)}</pre></details>`;
 }
 

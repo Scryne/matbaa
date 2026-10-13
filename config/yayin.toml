@@ -11,3 +11,4 @@ hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 0, saglayici_id = 0 }
 
 [etsy]
 uretim_ortagi_id = 0   # etsy_yetki.py çıktısındaki Printify ortağının kimliği
+kargo_profili_id = 0   # `uv run matbaa etsy-kargo-profili` açar ve yazar: ABD'ye ücretsiz kargo (K-23); 0 ise Printify'ın profili kalır

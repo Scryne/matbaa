@@ -1,12 +1,15 @@
 # Ürün kataloğu (K-11). Maliyetler Printify'dan tahmin (araştırma 02, 06); Faz 6'da katalog API'sinden gerçek değerle güncellenir.
 # Renk adları Printify varyant adlarıdır; "murekkep" o renkte hangi baskı dosyasının kullanılacağını söyler.
+# Fiyat K-23 (2026-10-13): ABD kargosu fiyata gömülü, ilan "FREE shipping" (Etsy ABD aramasında ücretsiz/≤$6 kargo öncelikli).
+# Alıcının ödediği toplam eskisiyle aynı (28.99+4.99 → 33.99), net değişmez. Piyasa medyanına (tişört ~$22, sweatshirt ~$37) inmek
+# TR ücret yığınıyla zarar: fiyatı satış verisi düşürür, tahmin değil.
 
 [tisort]
 ad = "Comfort Colors 1717 Garment-Dyed Tee"
 blank = "Comfort Colors 1717"
 etsy_turu = "T-shirt"
-fiyat = 28.99
-kargo = 4.99
+fiyat = 33.99
+kargo = 0.0
 buyuk_beden_ek = { "2XL" = 2.00, "3XL" = 3.00 }
 bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
 tahmini_maliyet = 12.65
@@ -26,8 +29,8 @@ detay = "Garment-dyed, heavyweight 100% ring-spun cotton (6.1 oz) with a soft, l
 ad = "Gildan 18000 Crewneck Sweatshirt"
 blank = "Gildan 18000"
 etsy_turu = "Sweatshirt"
-fiyat = 42.99
-kargo = 5.99
+fiyat = 48.99
+kargo = 0.0
 buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 4.00 }
 bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
 tahmini_maliyet = 17.87
@@ -47,8 +50,8 @@ detay = "Classic crewneck in a 50/50 cotton-poly blend, soft fleece inside, ribb
 ad = "Gildan 18500 Hooded Sweatshirt"
 blank = "Gildan 18500"
 etsy_turu = "Hoodie"
-fiyat = 49.99
-kargo = 5.99
+fiyat = 55.99
+kargo = 0.0
 buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 4.00 }
 bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
 tahmini_maliyet = 23.11

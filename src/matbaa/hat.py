@@ -329,7 +329,9 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
         from matbaa.entegrasyon.printify import Printify
 
         p = Printify()
-        _adim(rapor, "yayin", lambda: yayin.yayinla(c, p, yazdir), yazdir)  # tavanda durmak beklenen davranış: alarm değil, kayıtta
+        _adim(
+            rapor, "yayin", lambda: yayin.yayinla(c, p, yazdir), yazdir
+        )  # tavanda durmak beklenen davranış: alarm değil, kayıtta
         if _etsy_hazir():
             from matbaa import siparis
             from matbaa.entegrasyon.etsy import Etsy
@@ -398,6 +400,7 @@ def main(argv: list[str] | None = None) -> None:
     alt.add_parser("printify-kesif", help="Printify kataloğunda blueprint ve sağlayıcı adayları")
     alt.add_parser("yayinla", help="onaylı tasarımları Printify'a (ısınma eğrisi sınırıyla)")
     alt.add_parser("etsy-esle", help="Printify'ın açtığı Etsy ilanlarına üretim ortağı + aktifleştirme")
+    alt.add_parser("etsy-kargo-profili", help="Etsy'de ücretsiz ABD kargo profilini aç, config'e yaz (K-23)")
     pn = alt.add_parser("panel", help="yerel onay paneli (127.0.0.1)")
     pn.add_argument("--port", type=int, default=8766)
     a = p.parse_args(argv)
@@ -412,7 +415,7 @@ def main(argv: list[str] | None = None) -> None:
             sys.exit(1)  # Görev Zamanlayıcı "son sonuç" sütununda görünür
     elif a.komut == "yeniden-ciz":
         print(json.dumps(yeniden_ciz(), ensure_ascii=False))
-    elif a.komut in ("printify-kesif", "yayinla", "etsy-esle"):
+    elif a.komut in ("printify-kesif", "yayinla", "etsy-esle", "etsy-kargo-profili"):
         import os
 
         from matbaa import yayin
@@ -435,7 +438,10 @@ def main(argv: list[str] | None = None) -> None:
         else:
             from matbaa.entegrasyon.etsy import Etsy
 
-            print(json.dumps(yayin.etsy_esle(db.baglan(), p, Etsy()), ensure_ascii=False))
+            if a.komut == "etsy-kargo-profili":
+                yayin.kargo_profili_kur(p, Etsy())
+            else:
+                print(json.dumps(yayin.etsy_esle(db.baglan(), p, Etsy()), ensure_ascii=False))
     elif a.komut == "panel":
         from matbaa.panel.app import calistir
 

@@ -175,6 +175,41 @@ def _yayin_asimi(c, r) -> bool:
     return True
 
 
+KARGO_PROFILI = {  # K-23: ABD'ye ücretsiz kargo; üretim 2–5 iş günü (Printify), teslim 3–7 iş günü
+    "title": "Free US shipping",
+    "origin_country_iso": "US",
+    "primary_cost": 0,
+    "secondary_cost": 0,
+    "destination_country_iso": "US",
+    "min_processing_time": 2,
+    "max_processing_time": 5,
+    "processing_time_unit": "business_days",
+    "min_delivery_days": 3,
+    "max_delivery_days": 7,
+}
+
+
+def kargo_profili_kur(p: pf.Printify, etsy, yazdir=print) -> int:
+    """Etsy'de ücretsiz ABD kargo profilini açar (varsa aynısını kullanır), kimliği config/yayin.toml'a yazar."""
+    var = [k for k in etsy.kargo_profilleri() if k.get("title") == KARGO_PROFILI["title"]]
+    if var:
+        kimlik = int(var[0]["shipping_profile_id"])
+    else:
+        konum = p.saglayici(ayar()["printify"]["tisort"]["saglayici_id"]).get("location") or {}
+        if not konum.get("zip"):
+            raise RuntimeError(f"Printify sağlayıcısının posta kodu yok ({konum}): önce printify-kesif ve saglayici_id")
+        kimlik = int(etsy.kargo_profili_olustur(**KARGO_PROFILI, origin_postal_code=konum["zip"])["shipping_profile_id"])
+    dosya = CONFIG / "yayin.toml"
+    t = dosya.read_text(encoding="utf-8")
+    t, n = re.subn(r"(?m)^kargo_profili_id = \d+", f"kargo_profili_id = {kimlik}", t)
+    if n != 1:
+        raise RuntimeError("config/yayin.toml: kargo_profili_id satırı yok")
+    dosya.write_text(t, encoding="utf-8")
+    ayar.cache_clear()
+    yazdir(f"Etsy kargo profili {kimlik} ({KARGO_PROFILI['title']}) → config/yayin.toml")
+    return kimlik
+
+
 def etsy_esle(c, p: pf.Printify, etsy, yazdir=print) -> dict:
     """Printify'ın Etsy'ye açtığı ilanı bul → üretim ortağını bağla, AI beyanını doğrula, aktifleştir."""
     ortak = ayar()["etsy"]["uretim_ortagi_id"]
@@ -211,6 +246,7 @@ def etsy_esle(c, p: pf.Printify, etsy, yazdir=print) -> dict:
                 sayac["eslesen"] += 1
             ilan = etsy.ilan(int(listing))
             alanlar: dict = {
+                **({"shipping_profile_id": kp} if (kp := ayar()["etsy"].get("kargo_profili_id")) else {}),
                 "production_partner_ids": [ortak],
                 "who_made": "i_did",
                 "when_made": "made_to_order",

@@ -427,3 +427,45 @@ def test_is_gunu_farki():
     from matbaa.siparis import is_gunu_farki
 
     assert is_gunu_farki(datetime(2026, 11, 13), datetime(2026, 11, 16)) == 1  # Cuma → Pazartesi
+
+
+class KargoEtsy(SahteEtsy):
+    def __init__(self, profiller=()):
+        super().__init__()
+        self.profiller, self.olusturulan = list(profiller), []
+
+    def kargo_profilleri(self):
+        return self.profiller
+
+    def kargo_profili_olustur(self, **alanlar):
+        self.olusturulan.append(alanlar)
+        return {"shipping_profile_id": 555}
+
+
+class KonumluPrintify(SahtePrintify):
+    def saglayici(self, sid):
+        return {"id": sid, "location": {"country": "US", "zip": "92614"}}
+
+
+def test_kargo_profili_kurulur_config_yazilir_ilana_baglanir(ortam, tmp_path, monkeypatch):
+    from matbaa.ayar import CONFIG
+
+    (tmp_path / "yayin.toml").write_text((CONFIG / "yayin.toml").read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setattr(yayin, "CONFIG", tmp_path)
+    cfg = yayin.ayar()
+    monkeypatch.setattr(yayin.ayar, "cache_clear", lambda: None, raising=False)  # fikstürün ayar'ı önbelleksiz
+    e = KargoEtsy()
+    assert yayin.kargo_profili_kur(KonumluPrintify(), e, yazdir=lambda *_: None) == 555
+    a = e.olusturulan[0]
+    assert (a["primary_cost"], a["destination_country_iso"], a["origin_postal_code"]) == (0, "US", "92614")
+    assert "kargo_profili_id = 555" in (tmp_path / "yayin.toml").read_text(encoding="utf-8")
+    # Aynı adlı profil varsa yenisi açılmaz
+    e2 = KargoEtsy([{"title": "Free US shipping", "shipping_profile_id": 777}])
+    assert yayin.kargo_profili_kur(KonumluPrintify(), e2, yazdir=lambda *_: None) == 777 and not e2.olusturulan
+    # Eşleme her ilana profili bağlar
+    cfg["etsy"]["kargo_profili_id"] = 777
+    p = SahtePrintify()
+    yayin.yayinla(ortam, p, yazdir=lambda *_: None)
+    e3 = SahteEtsy()
+    yayin.etsy_esle(ortam, p, e3, yazdir=lambda *_: None)
+    assert all(al["shipping_profile_id"] == 777 for _, al in e3.guncellenen) and e3.guncellenen

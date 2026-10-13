@@ -94,6 +94,10 @@ class Printify:
     def saglayicilar(self, blueprint_id: int) -> list[dict]:
         return self._i("GET", f"/catalog/blueprints/{blueprint_id}/print_providers.json")
 
+    def saglayici(self, saglayici_id: int) -> dict:
+        """Sağlayıcı ayrıntısı; `location` (country, zip, …) Etsy kargo profilinin çıkış adresi olur."""
+        return self._i("GET", f"/catalog/print_providers/{saglayici_id}.json")
+
     def varyantlar(self, blueprint_id: int, saglayici_id: int) -> list[dict]:
         return self._i("GET", f"/catalog/blueprints/{blueprint_id}/print_providers/{saglayici_id}/variants.json")["variants"]
 
