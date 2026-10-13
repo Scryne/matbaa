@@ -36,7 +36,7 @@ o durumda modeli birlikte değiştiririz.
 5. **How you'll get paid:** "Individual/Sole proprietor", Türk banka hesabın (IBAN). **Ad soyad kimlikteki ve bankadaki ile birebir aynı.**
 6. **Billing:** kartın (açılış ücreti çıkarsa buradan alınır; Etsy ekranda gösterir).
 7. **Security:** iki adımlı doğrulamayı aç. Etsy kimlik doğrulaması isterse yükle.
-8. Açılınca **Shop Manager → Settings → Production partners → Add a production partner**:
+8. Açılınca **Shop Manager → Settings → Partners you work with** (eski adı Production partners):
    - Name: `Printify` · Location: United States · "About": *"Prints and ships our original designs on demand."*
 9. **Policies:** iadeler: *"Made to order: no returns or exchanges, but we replace or refund any item that arrives damaged or misprinted
    (contact us within 30 days with a photo)."* — Printify'ın politikasıyla aynı.
