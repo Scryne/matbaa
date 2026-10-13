@@ -33,7 +33,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 ### Durum notu (2026-10-13, ikinci tur)
 - Faz 3 ✅: 7 niş, mevsim takvimi, talebe bağlı üretim; ilk iki günlük koşuda 72 slogan → 44 tasarım (6 USPTO reddi).
 - Faz 4 ✅: 132 ilan (44 tasarım × 3 ürün) doğrulayıcıdan geçti; etiketler marka süzgecinden, eksik etiket niş yedekleriyle.
-- Faz 5 🔄: panel hazır ve görsel doğrulamadan geçti (4 genişlik, 0 sorun); bitti kriteri Scryne'ın ilk 10 dakikalık kullanımı.
+- Faz 5 🔄: panel hazır ve görsel doğrulamadan geçti (4 genişlik, 0 sorun). 2026-10-13: Scryne seçimi Aria'ya bıraktı; 44 tasarımdan 17 onay (yayın sırası 3,18,28,38,35,4,31,23,40,5,17,21,34,2,25,14,30), 10 ret (gerekçeli), 17 yedek. Yayın, Etsy kilidi (üretim ortağı + kargo profili) açılınca başlar.
 - Faz 6–7 ⛔ Faz 0'a bağlı: istemciler resmî dokümandan doğrulanmış uç noktalarla yazıldı, sahte HTTP ile test edildi (mükerrer ürün
   koruması dahil); gerçek hesapta 3 ürün oluşturulunca ✅.
 - Faz 8 🔄 (üçüncü tur): kod tamam: sipariş defteri, TCMB kuru (`veri/kur.json`, günlük), aylık özet (`matbaa ozet`: sipariş neti −
