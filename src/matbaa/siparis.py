@@ -14,7 +14,12 @@ from datetime import UTC, datetime, timedelta
 from matbaa import db, fiyat, tavan
 
 GECIKME_IS_GUNU = 5
-KAPANMIS = ("completed", "canceled", "fully refunded")  # takip beklenmeyen makbuz durumları
+KAPANMIS = (
+    "completed",
+    "canceled",
+    "fully refunded",
+    "fulfilled",
+)  # takip beklenmeyen durumlar (Etsy makbuzu ya da Printify siparişi)
 IPTAL = ("canceled", "fully refunded")  # gelirden düşülür
 GECERLI = f"lower(coalesce(durum, '')) NOT IN ({', '.join(repr(x) for x in IPTAL)})"  # SQL: iptal/iade olmayan sipariş
 ESLEME_GUN = 4  # Printify siparişi Etsy makbuzundan en geç bu kadar gün sonra açılmış olur
@@ -141,6 +146,58 @@ def izle(c, etsy, printify, simdi: datetime | None = None, yazdir=print) -> dict
         sayac["printify_eslesmedi"] += o is None
     sayac["alarm"] = geciken(c, simdi)
     db.olay(c, "siparis", None, None, "izlendi", f"{sayac['yeni']} yeni, {len(sayac['alarm'])} alarm")
+    c.commit()
+    for a in sayac["alarm"]:
+        yazdir(f"  ALARM {a}")
+    return sayac
+
+
+def _perakende(c, li: dict, urun: str | None) -> float:
+    """Kalemin satış fiyatı (USD): Printify kalem metadatasındaki mağaza fiyatı, yoksa ilan kaydımızdaki fiyat."""
+    fiyat_sent = (li.get("metadata") or {}).get("price")
+    if isinstance(fiyat_sent, int | float) and fiyat_sent > 0:
+        return fiyat_sent / 100
+    if urun:
+        r = c.execute(
+            "SELECT fiyat FROM ilan i JOIN urun u USING (tasarim_id, urun) WHERE u.printify_id = ?", (str(li.get("product_id")),)
+        ).fetchone()
+        if r:
+            return float(r[0])
+    return fiyat.urunler()["tisort"]["fiyat"]
+
+
+def izle_printify(c, printify, simdi: datetime | None = None, yazdir=print) -> dict:
+    """Elle mod (K-27) sipariş defteri: Etsy API'si yokken siparişler Printify'ın Etsy'den içe aktardığı kayıtlardan okunur.
+
+    Makbuz anahtarı `metadata.shop_order_id` (yoksa `printify-<id>`); brüt = kalemlerin satış fiyatı (kargo ücretsiz, K-23), maliyet =
+    Printify toplamı; net `fiyat.hesap` ile. Takipsiz ve `GECIKME_IS_GUNU`'nden eski açık sipariş alarm verir (`geciken`).
+    """
+    simdi = simdi or datetime.now(UTC)
+    sayac: dict = {"yeni": 0, "guncel": 0}
+    for o in printify.son_siparisler():
+        meta = o.get("metadata") or {}
+        anahtar = str(meta.get("shop_order_id") or f"printify-{o.get('id')}")
+        ozet_ = _printify_ozeti(o)
+        tasarim, brut = None, 0.0
+        for li in o.get("line_items") or []:
+            u = c.execute("SELECT tasarim_id, urun FROM urun WHERE printify_id = ?", (str(li.get("product_id")),)).fetchone()
+            tasarim = tasarim or (u["tasarim_id"] if u else None)
+            brut += _perakende(c, li, u["urun"] if u else None) * int(li.get("quantity") or 1)
+        k = fiyat.hesap(brut, 0.0, ozet_["maliyet"])
+        onceki = c.execute("SELECT 1 FROM siparis WHERE etsy_receipt_id = ?", (anahtar,)).fetchone()
+        c.execute(
+            """INSERT INTO siparis (etsy_receipt_id, printify_order_id, tasarim_id, brut, net, para_birimi, durum, takip, olusturma, guncelleme)
+               VALUES (?, ?, ?, ?, ?, 'USD', ?, ?, ?, ?)
+               ON CONFLICT(etsy_receipt_id) DO UPDATE SET net = excluded.net, durum = excluded.durum,
+                 takip = coalesce(excluded.takip, takip), guncelleme = excluded.guncelleme""",
+            (
+                anahtar, ozet_["id"], tasarim, round(brut, 2), k.net, str(o.get("status") or "").lower(), ozet_["takip"],
+                (ozet_["zaman"] or simdi).isoformat(), simdi.isoformat(timespec="seconds"),
+            ),
+        )  # fmt: skip
+        sayac["guncel" if onceki else "yeni"] += 1
+    sayac["alarm"] = geciken(c, simdi)
+    db.olay(c, "siparis", None, None, "izlendi", f"printify: {sayac['yeni']} yeni, {len(sayac['alarm'])} alarm")
     c.commit()
     for a in sayac["alarm"]:
         yazdir(f"  ALARM {a}")

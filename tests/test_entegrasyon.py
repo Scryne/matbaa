@@ -234,6 +234,51 @@ def test_elle_denetim_ilani_kaydeder_yanlis_kargoda_bir_kez_alarm_verir(ortam, m
     assert yayin.elle_denetle(ortam, p, yazdir=lambda *_: None)["alarm"] == []  # ikinci gün aynı alarm tekrar etmez
 
 
+class SiparisliPrintify(SahtePrintify):
+    def __init__(self, siparisler):
+        super().__init__()
+        self.siparisler_ = siparisler
+
+    def son_siparisler(self, sayfa_maks: int = 10):
+        return self.siparisler_
+
+
+def _pf_siparis(i, urun_id, durum, gun_once, takip=None, fiyat_sent=None):
+    from datetime import UTC, datetime, timedelta
+
+    return {
+        "id": f"o{i}", "status": durum, "metadata": {"shop_order_id": 5000 + i},
+        "created_at": (datetime(2026, 10, 20, tzinfo=UTC) - timedelta(days=gun_once)).isoformat(),
+        "total_price": 1304, "total_shipping": 449, "total_tax": 0,
+        "line_items": [{"product_id": urun_id, "quantity": 1, "metadata": {"price": fiyat_sent} if fiyat_sent else {}}],
+        "shipments": [{"number": takip}] if takip else [],
+    }  # fmt: skip
+
+
+def test_printify_siparis_defteri_net_iptal_ve_gecikme(ortam):  # K-27, Faz 8-9 API'siz
+    from datetime import UTC, datetime
+
+    from matbaa import siparis
+
+    yayin.yayinla(ortam, SahtePrintify(), yazdir=lambda *_: None)  # p1..p3 tasarım 1'in ürünleri, ilan fiyatı 28.99
+    p = SiparisliPrintify(
+        [
+            _pf_siparis(1, "p1", "fulfilled", 3, takip="9400TRACK", fiyat_sent=3399),
+            _pf_siparis(2, "p2", "in-production", 9),  # takipsiz, 9 gün önce: alarm
+            _pf_siparis(3, "p3", "canceled", 2),
+        ]
+    )
+    s = siparis.izle_printify(ortam, p, simdi=datetime(2026, 10, 20, tzinfo=UTC), yazdir=lambda *_: None)
+    assert s["yeni"] == 3 and len(s["alarm"]) == 1 and "5002" in s["alarm"][0]
+    r = ortam.execute("SELECT brut, net, takip, tasarim_id FROM siparis WHERE etsy_receipt_id = '5001'").fetchone()
+    assert r[0] == 33.99 and 0 < r[1] < 33.99 - 17.53 and r[2] == "9400TRACK" and r[3] == 1  # metadata fiyatı, maliyet düşülmüş
+    assert ortam.execute("SELECT brut FROM siparis WHERE etsy_receipt_id = '5002'").fetchone()[0] == 28.99  # ilan fiyatı
+    s2 = siparis.izle_printify(ortam, p, simdi=datetime(2026, 10, 20, tzinfo=UTC), yazdir=lambda *_: None)
+    assert s2["yeni"] == 0 and s2["guncel"] == 3
+    toplam = ortam.execute(f"SELECT count(*) FROM siparis WHERE {siparis.GECERLI}").fetchone()[0]
+    assert toplam == 2  # iptal gelirden düşer
+
+
 def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
     p = SahtePrintify(dus={2})  # sweatshirt düşer
     yayin.yayinla(ortam, p, yazdir=lambda *_: None)
