@@ -96,7 +96,9 @@ def yeniden_ciz(c=None, yazdir=print) -> dict:
 def uret(nis: str, adet: int, c=None, yazdir=print) -> dict:
     c = c or db.baglan()
     sayac = {"uretilen": 0, "bicim_hatali": 0, "tekrar": 0, "ip_ret": 0, "ip_insan": 0, "kalite_ret": 0, "tasarim": 0}
-    adaylar, hatali = ifade_uret.uret(nis, adet, _kacinilacak(c, nis))
+    from matbaa import performans
+
+    adaylar, hatali = ifade_uret.uret(nis, adet, _kacinilacak(c, nis), satanlar=performans.satanlar(c, nis))
     sayac["uretilen"], sayac["bicim_hatali"] = len(adaylar) + len(hatali), len(hatali)
     ust_uste = 0
     for a in adaylar:
@@ -313,14 +315,17 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
     elif not uspto_tamam:
         nis_sayisi = 0
         yazdir("marka verisi kullanılamıyor: bugün yeni üretim yok")
-    # Kuyrukta en az tasarımı olan nişler önce: büyüme nişler arasında dengeli olsun.
+    # Faz 13: niş sırası mağaza verisinden (ilan başına satış/favori/görüntülenme + keşif payı); veri azken kuyrukta en az
+    # tasarımı olan niş önce (dengeli büyüme).
     sayim = dict(
         c.execute(
             """SELECT i.nis, count(*) FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
                WHERE t.durum IN ('kalite_ok', 'metin_ok', 'onay_bekliyor', 'onaylandi') GROUP BY i.nis"""
         ).fetchall()
     )
-    for n in sorted(ifade_uret.nisler(), key=lambda n: sayim.get(n, 0))[:nis_sayisi]:
+    from matbaa import performans
+
+    for n in performans.uretim_sirasi(c, list(ifade_uret.nisler()), sayim)[:nis_sayisi]:
         yazdir(f"== {n}")
         _adim(rapor, f"uret_{n}", lambda n=n: uret(n, adet, c, yazdir), yazdir)
     _adim(rapor, "metin", lambda: metin(c, yazdir=yazdir), yazdir)
@@ -338,6 +343,8 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
 
             e = Etsy()
             _adim(rapor, "etsy", lambda: yayin.etsy_esle(c, p, e, yazdir), yazdir)
+            # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
+            _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir)
             s = _adim(rapor, "siparis", lambda: siparis.izle(c, e, p, yazdir=yazdir), yazdir)
             alarmlar += (s or {}).get("alarm", [])
             rapor["kar_30g"] = siparis.ozet(c)

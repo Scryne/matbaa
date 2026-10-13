@@ -94,7 +94,7 @@ def nisler() -> dict:
     return tomllib.loads((CONFIG / "nisler.toml").read_text(encoding="utf-8"))
 
 
-def istem(nis: str, adet: int, kacinilacak: list[str], gun: date | None = None) -> str:
+def istem(nis: str, adet: int, kacinilacak: list[str], gun: date | None = None, satanlar: list[str] | None = None) -> str:
     k = nisler()[nis]
     satirlar = [
         f"Niche: {k['ad']}",
@@ -116,14 +116,21 @@ def istem(nis: str, adet: int, kacinilacak: list[str], gun: date | None = None) 
         satirlar.append(
             f"- Make about {n} of them gift slogans for the upcoming {m['ad']}, still clearly for this niche's buyer."
         )
+    if satanlar:  # Faz 13: mağazada gerçekten satanlar; kopya değil, aynı açıdan yeni fikir
+        satirlar.append(
+            f"- These slogans from this shop are selling: {' | '.join(satanlar)}. Write about {max(1, adet // 3)} fresh slogans "
+            "that hit the same buyer and angle with different wording and jokes; never reuse their key phrase."
+        )
     if kacinilacak:
         satirlar.append("- Do not repeat or closely echo these earlier or rejected slogans: " + " | ".join(kacinilacak[:80]))
     return "\n".join(satirlar)
 
 
-def uret(nis: str, adet: int = 15, kacinilacak: list[str] | None = None) -> tuple[list[Aday], list[tuple[Aday, str]]]:
+def uret(
+    nis: str, adet: int = 15, kacinilacak: list[str] | None = None, satanlar: list[str] | None = None
+) -> tuple[list[Aday], list[tuple[Aday, str]]]:
     """(geçerli adaylar, [(biçim hatalı aday, neden)])."""
-    ham = llm.yapilandirilmis(istem(nis, adet, kacinilacak or []), SISTEM, SEMA)
+    ham = llm.yapilandirilmis(istem(nis, adet, kacinilacak or [], satanlar=satanlar), SISTEM, SEMA)
     gecerli, hatali = [], []
     for s in ham.get("slogans", []):
         a = Aday(
