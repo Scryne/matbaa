@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
+from . import ikon as ikonlar
 from .yazi import Satir, font
 
 TUVAL_G, TUVAL_Y = 4500, 5400
@@ -50,10 +51,12 @@ class Cizim:
     def svg(self, murekkep: str, vurgu: str | None = None) -> str:
         """`vurgu` verilmezse tasarım tek renk basılır (vurgu öğeleri de ana mürekkeple)."""
         defs = f"<defs>{''.join(self.tanimlar)}</defs>" if self.tanimlar else ""
-        ikinci = f'<g fill="{vurgu or murekkep}">{"".join(self.vurgu_parcalar)}</g>' if self.vurgu_parcalar else ""
+        v = vurgu or murekkep
+        # `color`: çizimlerin çizgi öğeleri `currentColor` ile grubun rengini alır.
+        ikinci = f'<g fill="{v}" color="{v}">{"".join(self.vurgu_parcalar)}</g>' if self.vurgu_parcalar else ""
         return (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{TUVAL_G}" height="{TUVAL_Y}" '
-            f'viewBox="0 0 {TUVAL_G} {TUVAL_Y}">{defs}<g fill="{murekkep}">{"".join(self.parcalar)}</g>{ikinci}</svg>'
+            f'viewBox="0 0 {TUVAL_G} {TUVAL_Y}">{defs}<g fill="{murekkep}" color="{murekkep}">{"".join(self.parcalar)}</g>{ikinci}</svg>'
         )
 
 
@@ -438,4 +441,96 @@ def el_yazisi(ana: list[Yazi], el: Yazi, ustte: bool, aci: float = -5.0) -> Cizi
     )
     if not ustte:
         c.alt = yc + h_don / 2
+    return c
+
+
+IKON_ORAN = 0.5  # çizim yüksekliği / yazı bloğu yüksekliği
+IKON_MIN, IKON_MAKS = 620.0, 1400.0  # px; ince çizgi kapısı IKON_MIN'de ölçülür, üstü yazıyla yarışır
+IKON_YIGIN_MIN = 950.0  # ikon_yigin'de çizim bundan küçük kalmaz: ilk panoda 620 px'lik kanca/şamandıra kayboluyordu
+
+
+def ikon_yigin(ikon: str, satirlar: list[Yazi], vurgu: bool = True) -> Cizim:
+    """Çizim üstte ortada, altında yazı bloğu (yığın). Çizim varsayılan vurgu renginde: iki renkli retro görünüm."""
+    deneme = yigin(satirlar)
+    h_i = min(IKON_MAKS, max(IKON_YIGIN_MIN, (deneme.alt - UST_PAY) * IKON_ORAN))
+    ara = h_i * 0.2
+    parca, _, h = ikonlar.yerlestir(ikon, TUVAL_G / 2, UST_PAY, h_i, genislik_maks=ICERIK_G * 0.6)
+    c = yigin(satirlar, ust=UST_PAY + h + ara, yukseklik_maks=ICERIK_Y_MAKS - h - ara)
+    (c.vurgu_parcalar if vurgu else c.parcalar).insert(0, parca)
+    return c
+
+
+GUNES_SERITLER = (
+    (0.38, 0.030),
+    (0.55, 0.040),
+    (0.69, 0.052),
+    (0.81, 0.064),
+    (0.91, 0.076),
+)  # (tepeden oran, boşluk kalınlığı / R)
+
+
+def gunes(ikon: str, satirlar: list[Yazi]) -> Cizim:
+    """Retro gün batımı: vurgu renginde çizgili yarım güneş, önünde mürekkep renginde niş çizimi (güneşten boşlukla ayrık), altında yazı.
+
+    Tek renkte de okunur: çizimin çevresi güneşten `bosluk` kadar kesilir (maske + genişletme süzgeci).
+    """
+    R = ICERIK_G * 0.30
+    cx, taban = TUVAL_G / 2, UST_PAY + R
+    c = Cizim()
+    kid, mid, fid = f"gk{id(c)}", f"gm{id(c)}", f"gf{id(c)}"
+    bantlar, y = [], UST_PAY
+    for oran, bosluk in GUNES_SERITLER:
+        y1 = UST_PAY + oran * R
+        bantlar.append(f'<rect x="{cx - R:.1f}" y="{y:.1f}" width="{2 * R:.1f}" height="{y1 - y:.1f}"/>')
+        y = y1 + bosluk * R
+    bantlar.append(f'<rect x="{cx - R:.1f}" y="{y:.1f}" width="{2 * R:.1f}" height="{taban - y:.1f}"/>')
+    h_i = R * 0.92
+    parca, _, h = ikonlar.yerlestir(ikon, cx, taban - h_i, h_i, genislik_maks=R * 1.25)
+    # Maske için ikinci kopya: çizimin kendi tanımları (clip/mask kimlikleri) her çağrıda yeni kimlik alır, çakışmaz.
+    maske_parca, _, _ = ikonlar.yerlestir(ikon, cx, taban - h_i, h_i, genislik_maks=R * 1.25)
+    ara = max(CIZGI_MIN * 1.6, R * 0.035)
+    c.tanimlar.append(
+        f'<clipPath id="{kid}"><path d="M{cx - R:.1f},{taban:.1f} A{R:.1f},{R:.1f} 0 0 1 {cx + R:.1f},{taban:.1f} Z"/></clipPath>'
+        f'<filter id="{fid}" x="-20%" y="-20%" width="140%" height="140%"><feMorphology operator="dilate" radius="{ara:.1f}"/></filter>'
+        f'<mask id="{mid}" maskUnits="userSpaceOnUse" x="0" y="0" width="{TUVAL_G}" height="{TUVAL_Y}">'
+        f'<rect width="{TUVAL_G}" height="{TUVAL_Y}" fill="#fff"/><g fill="#000" color="#000" filter="url(#{fid})">{maske_parca}</g></mask>'
+    )
+    c.vurgu_parcalar.append(f'<g clip-path="url(#{kid})" mask="url(#{mid})">{"".join(bantlar)}</g>')
+    c.parcalar.append(parca)
+    ust_yazi = taban + R * 0.16
+    yazi = yigin(satirlar, ust=ust_yazi, yukseklik_maks=ICERIK_Y_MAKS - (ust_yazi - UST_PAY))
+    c.parcalar += yazi.parcalar
+    c.vurgu_parcalar += yazi.vurgu_parcalar
+    c.okunacak, c.en_kucuk_yazi, c.alt = yazi.okunacak, yazi.en_kucuk_yazi, yazi.alt
+    return c
+
+
+def kavis_ikon(ikon: str, ust: Yazi, orta: Yazi, alt: Yazi | None = None, yay_derece: float = 80.0) -> Cizim:
+    """Kolej tarzı yay + yayın içinde çizim + büyük düz satır + küçük alt satır."""
+    fu = font(ust.font)
+    su, so = fu.satir(ust.metin, ust.harf_araligi), font(orta.font).satir(orta.metin, orta.harf_araligi)
+    yay = math.radians(yay_derece)
+    olcek_u = min(ICERIK_G * 0.92 * yay / (2 * math.sin(yay / 2) * su.ilerleme), ICERIK_G * 0.12 / fu.buyuk_harf)
+    r = su.ilerleme * olcek_u / yay
+    buyuk = fu.buyuk_harf * olcek_u
+    cy = UST_PAY + r + buyuk
+    c = Cizim()
+    for p_ in _kavisli(su, olcek_u, TUVAL_G / 2, cy, r):
+        c.yazi(p_, buyuk, vurgu=True)
+    ikon_ust = UST_PAY + buyuk * 1.45
+    y_uc = cy - r * math.cos(yay / 2) + buyuk * math.sin(yay / 2) * 0.35
+    h_i = min(IKON_MAKS, max(IKON_MIN * 1.3, ICERIK_G * 0.22))
+    parca, _, h = ikonlar.yerlestir(ikon, TUVAL_G / 2, ikon_ust, h_i, genislik_maks=2 * r * math.sin(yay / 2) * 0.55)
+    c.parcalar.append(parca)
+    orta_ust = max(y_uc + buyuk * 0.35, ikon_ust + h + h * 0.18)
+    olcek_o = min(ICERIK_G * 0.86 * orta.oran / so.genislik, buyuk * 2.4 / so.yukseklik)
+    p_, h_o = _yol(so, olcek_o, TUVAL_G / 2, orta_ust)
+    c.yazi(p_, h_o, so.metin)
+    c.alt = orta_ust + h_o
+    if alt:
+        sa = font(alt.font).satir(alt.metin, alt.harf_araligi)
+        olcek_a = _kucuk(sa, h_o * 0.3, ICERIK_G * 0.7 * alt.oran)
+        p_, h2 = _yol(sa, olcek_a, TUVAL_G / 2, c.alt + 0.2 * h_o)
+        c.yazi(p_, h2, sa.metin, vurgu=True)
+        c.alt += 0.2 * h_o + h2
     return c

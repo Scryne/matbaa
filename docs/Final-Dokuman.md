@@ -126,6 +126,13 @@ iade kararı.
   "Navy" sanılıyordu), katalog araması "Comfort Colors®" yazımına dayanıklı.
 
 
+- **K-26 Çizimli şablonlar (2026-10-13):** İlk onay turunda yalnız yazılı tasarımların %23'ü reddedildi, Scryne 15'ten 6'sına "çirkin" dedi;
+  Etsy'de satan retro tişört dili (gün batımı amblemi, kavisli başlık, niş simgesi) motorda yoktu. Aria'nın kendi inşası 16 vektör çizim
+  (`tasarim/ikon.py`, stok/ikon seti değil: lisans sorusu yok) ve üç şablon (`ikon_yigin`, `gunes`, `kavis_ikon`) eklendi; nişin çizimi
+  varsa çizimli şablonlar önce denenir, yazılı şablonlar sırada +2 kullanım cezalı (çeşitlilik sürer). Noel kelimesi geçen ifadede ağaç/kar/
+  hediye öne gelir. Çizimler en küçük boyda ince çizgi kapısından, şablonlar tek ve iki renkte bütün kapılardan geçer (testli).
+  Kanıt: aynı 44 ifade yeniden çizildi, 34 aday tasarımın 22'si çizimli; ret 0.
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.

@@ -13,8 +13,23 @@ from dataclasses import dataclass
 
 from PIL import Image
 
-from . import kapilar, render
-from .sablonlar import Cizim, Yazi, ayirici, cerceve, dengeli_bol, egik, el_yazisi, kavis, madalyon, rozet, yigin
+from . import ikon, kapilar, render
+from .sablonlar import (
+    Cizim,
+    Yazi,
+    ayirici,
+    cerceve,
+    dengeli_bol,
+    egik,
+    el_yazisi,
+    gunes,
+    ikon_yigin,
+    kavis,
+    kavis_ikon,
+    madalyon,
+    rozet,
+    yigin,
+)
 
 KOYU_MUREKKEP, ACIK_MUREKKEP = "#1d1d1f", "#f3ead8"
 
@@ -53,6 +68,10 @@ def gecerli_paletler() -> list[str]:
 
 CESITLILIK_PENCERE = 5  # (şablon, ana font) çifti bu kadar tasarımda bir kez
 SABLON_PENCERE = 12  # şablon dengesi: son bu kadar tasarımda en az kullanılan şablon önce denenir
+# Çizimli şablonlar (2026-10-13): yalnız yazılı tasarımlar onay turunda %23 ret aldı; nişin çizimi varsa çizimli şablonlar
+# önce denenir, yazılı şablonlar sıralamada bu kadar "kullanılmış" sayılır (tamamen kaybolmazlar, çeşitlilik sürer).
+IKONLU = {"ikon_yigin", "gunes", "kavis_ikon"}
+YAZILI_CEZA = 2
 
 # Şablon–font uyum tablosu (Faz 2). Roller: ana = büyük blok satır; kucuk = büyük harfli ikincil satır;
 # kavis = yay üstü yazı (dar ve düzgün kenarlı); el = el yazısı, yalnız ikincil satırda ve kendi büyük/küçük harfiyle.
@@ -117,7 +136,7 @@ class Secim:
 Kurucu = Callable[[str, random.Random], tuple[list[str], Callable[[], Cizim]] | None]
 
 
-def _kurucular(ust: str, ana: list[str], alt: str) -> dict[str, Kurucu]:
+def _kurucular(ust: str, ana: list[str], alt: str, nis: str | None = None) -> dict[str, Kurucu]:
     """Şablon adı → (ana font, rnd) → (fontlar, çizim kurucu) ya da None (şablon bu yapıya uymuyor)."""
     tek = len(ana) == 1
 
@@ -186,7 +205,32 @@ def _kurucular(ust: str, ana: list[str], alt: str) -> dict[str, Kurucu]:
         e = rnd.choice(EL_FONTLAR)
         return [f, e], lambda: el_yazisi(blok(f, vurgulu=False), Yazi(el, e), ustte=not alt)
 
-    return {
+    ikonlar = ikon.adaylar(nis, " ".join([ust, *ana, alt])) if nis else []
+
+    def ikon_yigin_k(f, rnd):
+        k, ik = rnd.choice(KUCUK_FONTLAR), rnd.choice(ikonlar)
+        u, a = kucukler(k)
+        return [f, k], lambda: ikon_yigin(ik, [x for x in (u, *blok(f), a) if x])
+
+    gunes_ikonlari = [i for i in ikonlar if i not in ikon.GUNESSIZ]
+
+    def gunes_k(f, rnd):
+        if not gunes_ikonlari:
+            return None
+        k, ik = rnd.choice(KUCUK_FONTLAR), rnd.choice(gunes_ikonlari)
+        u, a = kucukler(k)
+        return [f, k], lambda: gunes(ik, [x for x in (u, *blok(f, vurgulu=False), a) if x])
+
+    def kavis_ikon_k(f, rnd):
+        if not (tek and ust):
+            return None
+        kf, k, ik = rnd.choice(KAVIS_FONTLAR), rnd.choice(KUCUK_FONTLAR), rnd.choice(ikonlar)
+        return [kf, f, k], lambda: kavis_ikon(
+            ik, Yazi(ust.upper(), kf, 0.06), Yazi(ana[0], f), Yazi(alt.upper(), k, 0.12) if alt else None
+        )
+
+    ikonlu = {"ikon_yigin": ikon_yigin_k, "gunes": gunes_k, "kavis_ikon": kavis_ikon_k} if ikonlar else {}
+    return ikonlu | {
         "yigin": yigin_k,
         "egik": egik_k,
         "ayirici": ayirici_k,
@@ -199,7 +243,7 @@ def _kurucular(ust: str, ana: list[str], alt: str) -> dict[str, Kurucu]:
 
 
 def _adaylar(
-    ust: str, ana: list[str], alt: str, rnd: random.Random, son: list[tuple[str, str]], tur: int = 2
+    ust: str, ana: list[str], alt: str, rnd: random.Random, son: list[tuple[str, str]], tur: int = 2, nis: str | None = None
 ) -> list[tuple[str, list[str], Callable[[], Cizim]]]:
     """Şablonlar son kullanımı en az olandan başlar; her şablona yakın zamanda onunla kullanılmamış bir ana font düşer.
 
@@ -209,8 +253,9 @@ def _adaylar(
     sayim: dict[str, int] = {}
     for s, _ in son[-SABLON_PENCERE:]:
         sayim[s] = sayim.get(s, 0) + 1
-    kurucular = _kurucular(ust, ana, alt)
-    sira = sorted(kurucular, key=lambda s: (sayim.get(s, 0), rnd.random()))
+    kurucular = _kurucular(ust, ana, alt, nis)
+    ceza = YAZILI_CEZA if IKONLU & set(kurucular) else 0
+    sira = sorted(kurucular, key=lambda s: (sayim.get(s, 0) + (0 if s in IKONLU else ceza), rnd.random()))
     turlar: list[list] = [[] for _ in range(tur)]
     for s in sira:
         fontlar = sorted(rnd.sample(ANA_FONTLAR, len(ANA_FONTLAR)), key=lambda f, s=s: (s, f) in yakin)
@@ -227,11 +272,11 @@ def _adaylar(
 
 
 def sec(
-    ust: str, ana: list[str], alt: str, son_kullanilan: list[tuple[str, str]], tohum: int, deneme: int = 8
+    ust: str, ana: list[str], alt: str, son_kullanilan: list[tuple[str, str]], tohum: int, deneme: int = 8, nis: str | None = None
 ) -> tuple[Secim | None, list[str]]:
     """İlk kapılardan geçen tasarımı döner; geçemezse (None, ret nedenleri). `son_kullanilan`: eskiden yeniye (şablon, ana font)."""
     rnd = random.Random(tohum)
-    adaylar = _adaylar(ust, ana, alt, rnd, son_kullanilan)
+    adaylar = _adaylar(ust, ana, alt, rnd, son_kullanilan, nis=nis)
     paletler = gecerli_paletler()
     palet = paletler[tohum % len(paletler)]  # deterministik: aynı ifade aynı paleti alır
     vurgu = PALETLER[palet]

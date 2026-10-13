@@ -28,6 +28,14 @@ def test_etiket_temizlik_tekrar_ve_uzunluk():
     assert len(set(i.etiketler)) == len(i.etiketler) == 13
 
 
+def test_etiket_asili_kelimeyle_bitmez():
+    """20 karaktere kısalan "christmas gift for you" → "christmas gift"; tek kısa kelime kalırsa atılır."""
+    ham = ["christmas gift for you", "gift for", "fishing tee for the", *ETIKETLER]
+    i = dogrula(Ilan("Fishing Shirt", ham, ACIKLAMA, "alt"))
+    assert i.etiketler[:2] == ["christmas gift", "fishing tee"]
+    assert not any(t.split()[-1] in ("for", "the", "to", "of", "and") for t in i.etiketler)
+
+
 def test_eksik_etiket_sorun_olur():
     assert "geçerli etiket" in " ".join(dogrula(Ilan("Fishing Shirt", ETIKETLER[:5], ACIKLAMA, "alt")).sorunlar)
 

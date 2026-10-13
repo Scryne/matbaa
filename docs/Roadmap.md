@@ -33,7 +33,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 ### Durum notu (2026-10-13, ikinci tur)
 - Faz 3 ✅: 7 niş, mevsim takvimi, talebe bağlı üretim; ilk iki günlük koşuda 72 slogan → 44 tasarım (6 USPTO reddi).
 - Faz 4 ✅: 132 ilan (44 tasarım × 3 ürün) doğrulayıcıdan geçti; etiketler marka süzgecinden, eksik etiket niş yedekleriyle.
-- Faz 5 🔄: panel hazır ve görsel doğrulamadan geçti (4 genişlik, 0 sorun). 2026-10-13: Scryne seçimi Aria'ya bıraktı; 44 tasarımdan 17 onay (yayın sırası 3,18,28,38,35,4,31,23,40,5,17,21,34,2,25,14,30), 10 ret (gerekçeli), 17 yedek. Yayın, Etsy kilidi (üretim ortağı + kargo profili) açılınca başlar.
+- Faz 5 🔄: panel hazır ve görsel doğrulamadan geçti (4 genişlik, 0 sorun). 2026-10-13: Scryne seçimi Aria'ya bıraktı; 44 tasarımdan 17 onay (yayın sırası 3,18,28,38,35,4,31,23,40,5,17,21,34,2,25,14,30), 10 ret (gerekçeli), 17 yedek. Yayın, Etsy kilidi (üretim ortağı + kargo profili) açılınca başlar. Aynı gün ikinci tur (K-26 çizimli motor): 34 aday yeniden çizildi (22'si çizimli), onay geri alınıp yeniden seçildi: 20 onay (yayın sırası 2,21,18,40,31,4,25,15,42,33,9,28,14,38,35,5,23,34,3,44), 14 yedek, 10 ret. 16 ilanda 20 karaktere kesilip edatla biten etiket ("christmas gift for") düzeltildi; doğrulayıcı artık asılı kelimeyi atıyor.
 - Faz 6–7 ⛔ Faz 0'a bağlı: istemciler resmî dokümandan doğrulanmış uç noktalarla yazıldı, sahte HTTP ile test edildi (mükerrer ürün
   koruması dahil); gerçek hesapta 3 ürün oluşturulunca ✅.
 - Faz 8 🔄 (üçüncü tur): kod tamam: sipariş defteri, TCMB kuru (`veri/kur.json`, günlük), aylık özet (`matbaa ozet`: sipariş neti −
@@ -79,6 +79,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   el_yazisi 6, kavis 1 (önce 43/44 `yigin`). Göz kontrolü panosu iki kumaşta `calisma/faz2/pano_{koyu,acik}_{0,1}.png`: üç tur, bulunan
   üç kusur (çizgi yazıya yapışık, büyük harfli el yazısı, kısa küçük satırın devleşmesi) düzeltildi, testle bağlandı. 18 yeni test;
   yeni tavan/rapor/şablon testleri kod bilerek bozulunca düşüyor (mutasyon kontrolü).
+- **Sonra (K-26, 2026-10-13):** 16 vektör niş çizimi + üç çizimli şablon (`ikon_yigin`, `gunes`, `kavis_ikon`); bkz. Final-Dokuman K-26.
 - **Notlar:** `madalyon` yalnız başlık + tek kısa ana satır + alt satır yapısında aday; kuyrukta henüz çıkmadı. Son göz Scryne'ın panel
   kullanımında (Faz 5). Yeniden çizim 44 tasarımda ~9 dk (OCR kapısı).
 

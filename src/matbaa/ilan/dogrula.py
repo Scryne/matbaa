@@ -17,9 +17,20 @@ ETIKET_MAKS = 20
 YASAK_BASLIK = re.compile(r"[!$^*{}<>\[\]~`]|(\b[A-Z]{4,}\b.*){3,}")  # sembol yığını ya da baştan sona büyük harf
 
 
+# Etiket bu kelimelerle bitemez: 20 karaktere kısaltılınca "christmas gift for" gibi yarım ifade kalıyordu (ilk 44 ilan).
+ASILI_KELIME = {"for", "to", "of", "and", "or", "the", "a", "an", "with", "in", "on", "at", "my", "your", "from", "by", "who", "is"}
+
+
 def _etiket_temizle(t: str) -> str:
     t = re.sub(r"[^A-Za-z0-9 '\-]", "", t).strip().lower()
     return re.sub(r"\s+", " ", t)
+
+
+def _asiliyi_at(t: str) -> str:
+    k = t.split()
+    while k and k[-1] in ASILI_KELIME:
+        k.pop()
+    return " ".join(k)
 
 
 def dogrula(ilan: Ilan) -> Ilan:
@@ -48,6 +59,9 @@ def dogrula(ilan: Ilan) -> Ilan:
             if len(kisa.split()) < 2:
                 continue
             t = kisa
+        t = _asiliyi_at(t)
+        if len(t.split()) < 2 and len(t) < 6:
+            continue  # tek kısa kelime alıcı araması değil
         if t not in etiketler:
             etiketler.append(t)
     etiketler = etiketler[:ETIKET_SAYI]

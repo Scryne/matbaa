@@ -76,11 +76,11 @@ def yeniden_ciz(c=None, yazdir=print) -> dict:
     # Çeşitlilik penceresi yeniden çizim sırasına göre yürür: veritabanındaki eski şablonlar zaten değişecek.
     son: list[tuple[str, str]] = []
     for r in c.execute(
-        """SELECT t.id, t.ifade_id, i.yapi, i.satirlar FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
+        """SELECT t.id, t.ifade_id, i.yapi, i.satirlar, i.nis FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
            WHERE t.durum IN ('kalite_ok', 'metin_ok', 'onay_bekliyor') ORDER BY t.id"""
     ).fetchall():
         y = _yapi(r)
-        secim, nedenler = sec.sec(y["ust"], y["ana"], y["alt"], son, tohum=r["ifade_id"])
+        secim, nedenler = sec.sec(y["ust"], y["ana"], y["alt"], son, tohum=r["ifade_id"], nis=r["nis"])
         if secim is None:
             db.gecis(c, r["id"], "ret", f"yeniden çizim kapılardan geçmedi: {nedenler[-1][:200] if nedenler else ''}")
             sayac["ret"] += 1
@@ -132,7 +132,7 @@ def uret(nis: str, adet: int, c=None, yazdir=print) -> dict:
         if k.karar == "insan":  # K-13: tasarıma girer, panelde işaretli; karar Scryne'ın onayında
             sayac["ip_insan"] += 1
             yazdir(f"  IP insan (panelde işaretli): {' / '.join(a.satirlar)} — {'; '.join(k.nedenler)[:120]}")
-        secim, nedenler = sec.sec(a.ust, list(a.ana), a.alt, _son_ciftler(c), tohum=ifade_id)
+        secim, nedenler = sec.sec(a.ust, list(a.ana), a.alt, _son_ciftler(c), tohum=ifade_id, nis=nis)
         if secim is None:
             sayac["kalite_ret"] += 1
             yazdir(f"  kalite ret: {' / '.join(a.satirlar)} — {nedenler[-1][:120] if nedenler else ''}")
