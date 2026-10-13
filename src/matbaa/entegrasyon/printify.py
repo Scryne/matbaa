@@ -84,11 +84,12 @@ class Printify:
         return self._i("GET", "/shops.json")
 
     def blueprint_bul(self, aranan: str) -> list[dict]:
-        a = aranan.lower()
+        """ "Comfort Colors 1717" → marka + tam model eşleşmesi ("Comfort Colors®" yazımı ve "1717Y" gibi çocuk modelleri ayrılır)."""
+        *marka, model = aranan.split()
         return [
             b
             for b in self._i("GET", "/catalog/blueprints.json")
-            if a in f"{b.get('brand', '')} {b.get('model', '')} {b.get('title', '')}".lower()
+            if _sade(b.get("brand", "")) == _sade(" ".join(marka)) and str(b.get("model", "")).lower() == model.lower()
         ]
 
     def saglayicilar(self, blueprint_id: int) -> list[dict]:
@@ -135,10 +136,15 @@ class Printify:
         return sonuc
 
 
+def _sade(metin: str) -> str:
+    return " ".join("".join(ch for ch in metin.lower() if ch.isalnum() or ch == " ").split())
+
+
 def varyant_sec(varyantlar: list[dict], renkler: list[dict], bedenler: list[str]) -> dict[str, list[dict]]:
     """Katalog renk/beden listesine uyan varyantlar, mürekkep grubuna göre ("koyu" | "acik").
 
-    Printify renk adları sağlayıcıya göre "Solid Black" gibi önek alabilir; ad bitişiyle eşlenir.
+    Eşleşme tam addır; yalnız "Solid Black" gibi "Solid " öneki tolere edilir. Bitiş eşleşmesi "Heather Sport Dark Navy"yi
+    "Navy" sanıyordu (2026-10-13 sağlayıcı taraması): başka bir renk yanlış mürekkeple basılırdı.
     """
     gruplar: dict[str, list[dict]] = {"koyu": [], "acik": []}
     for v in varyantlar:
@@ -146,9 +152,7 @@ def varyant_sec(varyantlar: list[dict], renkler: list[dict], bedenler: list[str]
         renk, beden = str(o.get("color", "")), str(o.get("size", ""))
         if beden not in bedenler:
             continue
-        eslesen = next(
-            (r for r in renkler if renk.lower() == r["ad"].lower() or renk.lower().endswith(" " + r["ad"].lower())), None
-        )
+        eslesen = next((r for r in renkler if renk.lower() in (r["ad"].lower(), "solid " + r["ad"].lower())), None)
         if eslesen:
             gruplar[eslesen["murekkep"]].append(v)
     return gruplar

@@ -117,6 +117,13 @@ iade kararı.
   profili API ile açılır (`matbaa etsy-kargo-profili`) ve her ilana eşlemede bağlanır. Piyasa medyanına (tişört ~$22, sweatshirt
   ~$37, RankHero 2026) inmek TR ücret yığınıyla (~%25) zarar: fiyatı tahmin değil satış verisi düşürür (Faz 13). Offsite Ads açık
   kalır: atfedilen satışta net hâlâ pozitif ($1.6–3.2) ve yeni mağazaya trafik getirir; net negatife dönerse kapatılır.
+- **K-24 Sağlayıcılar gerçek maliyetle (2026-10-13, Printify hesabı açıldı):** 7 ABD sağlayıcısı geçici (yayınlanmamış, sonra silinen)
+  ürünle tarandı. Her ürüne en ucuz ve renkleri tutan: tişört **Monster Digital** ($13.04, kargo $4.49; SwiftPOD $15.65), sweatshirt
+  **SwiftPOD** ($18.70, kargo $7.99), hoodie **Printful** ($19.86, kargo $7.99; Monster $23.55). Monster'da "True Navy" ve "Sage" yok:
+  Navy onun yerine, Sage çıktı ($2.61/tişört farkı bir renge değmez). Büyük beden eki maliyet farkı / 0,75. Satış başına net:
+  tişört ~$8.8, sweatshirt ~$11.4, hoodie ~$15.5. Proje koduyla gerçek hesapta üç ürün oluşturuldu (36/42/30 varyant, 13 etiket,
+  doğru fiyat), mockup'larda baskı yeri ve mürekkep doğru; ürünler silindi. Renk eşleme tam ada çekildi ("Heather Sport Dark Navy"
+  "Navy" sanılıyordu), katalog araması "Comfort Colors®" yazımına dayanıklı.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

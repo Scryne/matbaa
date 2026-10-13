@@ -5,9 +5,10 @@ isinma = [[0, 7, 1], [7, 21, 2], [21, 45, 4], [45, 90, 6], [90, 100000, 8]]
 
 [printify]
 # Kataloğu ilk bağlantıda eşleyip doldurmak için: `uv run matbaa printify-kesif`. Sağlayıcı keşif çıktısından seçilip kilitlenir (K-2, K-20: numune yok).
-tisort = { blueprint_ara = "Comfort Colors 1717", blueprint_id = 0, saglayici_id = 0 }
-sweatshirt = { blueprint_ara = "Gildan 18000", blueprint_id = 0, saglayici_id = 0 }
-hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 0, saglayici_id = 0 }
+# K-24 (2026-10-13): ABD sağlayıcıları gerçek maliyet + renk kapsamıyla seçildi (her ürüne en ucuz, renkleri tutan).
+tisort = { blueprint_ara = "Comfort Colors 1717", blueprint_id = 706, saglayici_id = 29 }    # Monster Digital, FL
+sweatshirt = { blueprint_ara = "Gildan 18000", blueprint_id = 49, saglayici_id = 39 }        # SwiftPOD, CA
+hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 77, saglayici_id = 410 }           # Printful, NC
 
 [etsy]
 uretim_ortagi_id = 0   # etsy_yetki.py çıktısındaki Printify ortağının kimliği

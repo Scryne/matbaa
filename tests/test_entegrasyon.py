@@ -469,3 +469,26 @@ def test_kargo_profili_kurulur_config_yazilir_ilana_baglanir(ortam, tmp_path, mo
     e3 = SahteEtsy()
     yayin.etsy_esle(ortam, p, e3, yazdir=lambda *_: None)
     assert all(al["shipping_profile_id"] == 777 for _, al in e3.guncellenen) and e3.guncellenen
+
+
+def test_varyant_sec_benzer_adli_baska_rengi_almaz():
+    vs = [
+        {"id": 1, "options": {"color": "Navy", "size": "M"}},
+        {"id": 2, "options": {"color": "Heather Sport Dark Navy", "size": "M"}},
+        {"id": 3, "options": {"color": "Heather Navy", "size": "M"}},
+        {"id": 4, "options": {"color": "Solid Navy", "size": "L"}},
+    ]
+    g = pf.varyant_sec(vs, [{"ad": "Navy", "murekkep": "acik"}], ["M", "L"])
+    assert [v["id"] for v in g["acik"]] == [1, 4]
+
+
+def test_blueprint_bul_marka_isareti_ve_tam_model():
+    katalog = [
+        {"id": 706, "brand": "Comfort Colors®", "model": "1717", "title": "Unisex Garment-Dyed T-shirt"},
+        {"id": 2743, "brand": "Comfort Colors®", "model": "1745Y", "title": "Youth"},
+        {"id": 49, "brand": "Gildan", "model": "18000", "title": "Unisex Heavy Blend™ Crewneck Sweatshirt"},
+        {"id": 1256, "brand": "Gildan", "model": "18000B", "title": "Youth Crewneck Sweatshirt"},
+    ]
+    p = pf.Printify("tok", "s", http=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json=katalog))))
+    assert [b["id"] for b in p.blueprint_bul("Comfort Colors 1717")] == [706]
+    assert [b["id"] for b in p.blueprint_bul("Gildan 18000")] == [49]

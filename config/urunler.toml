@@ -1,4 +1,5 @@
-# Ürün kataloğu (K-11). Maliyetler Printify'dan tahmin (araştırma 02, 06); Faz 6'da katalog API'sinden gerçek değerle güncellenir.
+# Ürün kataloğu (K-11). Maliyet ve kargo Printify'dan gerçek değer (K-24, 2026-10-13: geçici ürünle okundu, S–XL bedeni;
+# kargo ABD ilk ürün). Büyük beden eki = maliyet farkı / ~0,75 (Etsy ücretleri eki de keser): net beden başına korunur.
 # Renk adları Printify varyant adlarıdır; "murekkep" o renkte hangi baskı dosyasının kullanılacağını söyler.
 # Fiyat K-23 (2026-10-13): ABD kargosu fiyata gömülü, ilan "FREE shipping" (Etsy ABD aramasında ücretsiz/≤$6 kargo öncelikli).
 # Alıcının ödediği toplam eskisiyle aynı (28.99+4.99 → 33.99), net değişmez. Piyasa medyanına (tişört ~$22, sweatshirt ~$37) inmek
@@ -10,17 +11,16 @@ blank = "Comfort Colors 1717"
 etsy_turu = "T-shirt"
 fiyat = 33.99
 kargo = 0.0
-buyuk_beden_ek = { "2XL" = 2.00, "3XL" = 3.00 }
+buyuk_beden_ek = { "2XL" = 2.00, "3XL" = 4.50 }   # Monster Digital: 2XL +$1.24, 3XL +$3.40
 bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
-tahmini_maliyet = 12.65
-tahmini_abd_kargo = 4.29
-renkler = [
+tahmini_maliyet = 13.04    # Monster Digital (29)
+tahmini_abd_kargo = 4.49
+renkler = [   # Monster Digital'de "Sage" ve "True Navy" yok (K-24): Navy onun yerine
   { ad = "White", murekkep = "koyu", hex = "#ffffff" },
   { ad = "Ivory", murekkep = "koyu", hex = "#f0e8d6" },
   { ad = "Butter", murekkep = "koyu", hex = "#f3dfa2" },
-  { ad = "Sage", murekkep = "koyu", hex = "#a8b49a" },
   { ad = "Black", murekkep = "acik", hex = "#1b1b1b" },
-  { ad = "True Navy", murekkep = "acik", hex = "#1f2a44" },
+  { ad = "Navy", murekkep = "acik", hex = "#1f2a44" },
   { ad = "Pepper", murekkep = "acik", hex = "#4a4a48" },
 ]
 detay = "Garment-dyed, heavyweight 100% ring-spun cotton (6.1 oz) with a soft, lived-in feel and relaxed fit."
@@ -31,10 +31,10 @@ blank = "Gildan 18000"
 etsy_turu = "Sweatshirt"
 fiyat = 48.99
 kargo = 0.0
-buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 4.00 }
+buyuk_beden_ek = { "2XL" = 4.00, "3XL" = 5.50 }   # SwiftPOD: 2XL +$2.80, 3XL +$4.18
 bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
-tahmini_maliyet = 17.87
-tahmini_abd_kargo = 8.79
+tahmini_maliyet = 18.70    # SwiftPOD (39)
+tahmini_abd_kargo = 7.99
 renkler = [
   { ad = "White", murekkep = "koyu", hex = "#ffffff" },
   { ad = "Sand", murekkep = "koyu", hex = "#d9c7a6" },
@@ -52,10 +52,10 @@ blank = "Gildan 18500"
 etsy_turu = "Hoodie"
 fiyat = 55.99
 kargo = 0.0
-buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 4.00 }
+buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 6.00 }   # Printful: 2XL +$2.21, 3XL +$4.45
 bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
-tahmini_maliyet = 23.11
-tahmini_abd_kargo = 8.79
+tahmini_maliyet = 19.86    # Printful (410)
+tahmini_abd_kargo = 7.99
 renkler = [
   { ad = "White", murekkep = "koyu", hex = "#ffffff" },
   { ad = "Sand", murekkep = "koyu", hex = "#d9c7a6" },
