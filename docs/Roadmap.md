@@ -59,10 +59,10 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   hesabı ve Seller App kaydı (Aria yönlendirir).
 - **Bitti Kriteri:** tablodaki gibi.
 - **Notlar:** Kod fazları (1–5, 8) buna bağlı değil, paralel ilerler. Faz 6–7 ve 10 buna bağlı.
-- **Durum (2026-10-13 16:40):** Etsy hesabı açıldı, ödeme/IBAN bilgisi girildi, kimlik onaylandı; billing tamam (kurulum ücreti $19 ödendi, Etsy Plus teklifi reddedildi:
+- **Durum (2026-10-13 16:58):** Etsy hesabı açıldı, ödeme/IBAN bilgisi girildi, kimlik onaylandı; billing tamam (kurulum ücreti $19 ödendi, Etsy Plus teklifi reddedildi:
   6 ay × $10 ile 937 TL kredi zararlı); **mağaza 16:40 açıldı (HobbyHeartPrints)**. Printify hesabı + kart + token tamam (`.env`); Printify mağazası "My new store"
-  (29308592) henüz Etsy'ye bağlı değil. 2FA açık; ilk ilan yok (deaktive gerekmedi); production partner (Printify, "Partners you work with") ve iade politikası ("No returns or exchanges") kuruldu. Kalan: mağaza logosu (Aria) → Printify'da "Connect your Etsy store" →
-  Etsy geliştirici uygulaması → (Aria) `scripts/etsy_yetki.py`, `matbaa printify-kesif` (PRINTIFY_SHOP_ID), `matbaa etsy-kargo-profili`,
+  (29308592) Etsy'ye bağlandı (API: sales_channel=etsy, PRINTIFY_SHOP_ID `.env`'de). 2FA açık; ilk ilan yok (deaktive gerekmedi); production partner (Printify, "Partners you work with") ve iade politikası ("No returns or exchanges") kuruldu. Kalan: Printify mağaza ayarları (otomatik onay) → mağaza logosu (Aria) →
+  Etsy geliştirici uygulaması → (Aria) `scripts/etsy_yetki.py`, `matbaa etsy-kargo-profili`,
   ilk 3 ilan. Müşavir sorusu ve panel onayı (Faz 5) henüz yapılmadı.
 
 ### Faz 1: İskelet ve sağlık ✅ (2026-10-13)
