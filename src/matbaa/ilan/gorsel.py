@@ -206,23 +206,37 @@ def ilan_gorselleri(urun: str, dosyalar: dict[str, Path], tohum: int = 0) -> lis
     return sonuc
 
 
-def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohum: int = 0, maks: int = 10, indir=None) -> dict:
-    """Vitrin rengindeki mockup'ı başa alır, yakın planı 2. sıraya, diğer kendi görsellerimizi sona ekler (toplam `maks`)."""
+def sira_kur(etsy, listing_id: int, sira: list[int]) -> None:
+    """Görselleri verilen sırayla 1..n'e yazar. Etsy tek görselin rank'ini değiştirince diğerlerini kaydırmıyor (aynı rank'te iki
+    görsel kalıyordu, 2026-10-13 canlı ilan): sıra her seferinde baştan sona açıkça kurulur."""
+    for rank, gid in enumerate(sira, start=1):
+        etsy.gorsel_sirala(listing_id, gid, rank)
+
+
+def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohum: int = 0, maks: int = 20, indir=None) -> dict:
+    """Kendi görsellerimizi ekler ve galeriyi kurar: vitrin rengindeki mockup, yakın plan, diğer mockup'lar, beden/renk/güven kartları.
+
+    Etsy 11. görseli kabul etti (2026-10-13): sınır 10 değil (araştırma: 20). Görseller önce sona yüklenir, sonra sıra tek seferde kurulur.
+    """
     import httpx
 
     indir = indir or (lambda url: Image.open(io.BytesIO(httpx.get(url, timeout=60).content)))
     u = urunler()[urun]
     mevcut = etsy.ilan_gorselleri(listing_id)
-    sonuc = {"vitrin": None, "eklenen": []}
+    sonuc: dict = {"vitrin": None, "eklenen": []}
+    vitrin = None
     if (renk := u.get("vitrin_rengi")) and len(mevcut) > 1:
         hedef = next((r["hex"] for r in u["renkler"] if r["ad"] == renk), None)
-        if hedef and (sec := vitrin_sec([(g, indir(g["url_570xN"])) for g in mevcut], hedef)) and sec["rank"] != 1:
-            etsy.gorsel_sirala(listing_id, sec["listing_image_id"], 1)
-            sonuc["vitrin"] = sec["listing_image_id"]
-    yer = maks - len(mevcut)
-    kendi = ilan_gorselleri(urun, dosyalar, tohum)
-    for i, (ad, img, alt) in enumerate(kendi[: max(yer, 0)]):
-        rank = 2 if ad == "yakin-plan" else len(mevcut) + i + 1
-        etsy.gorsel_yukle(listing_id, _jpeg(img), rank, f"{ad}.jpg", alt)
+        if hedef:
+            vitrin = vitrin_sec([(g, indir(g["url_570xN"])) for g in mevcut], hedef)
+    kendi: dict[str, int] = {}
+    for ad, img, alt in ilan_gorselleri(urun, dosyalar, tohum)[: max(maks - len(mevcut), 0)]:
+        y = etsy.gorsel_yukle(listing_id, _jpeg(img), len(mevcut) + len(kendi) + 1, f"{ad}.jpg", alt)
+        kendi[ad] = (y or {}).get("listing_image_id")
         sonuc["eklenen"].append(ad)
+    mockuplar = [g["listing_image_id"] for g in mevcut if not vitrin or g["listing_image_id"] != vitrin["listing_image_id"]]
+    bas = ([vitrin["listing_image_id"]] if vitrin else mockuplar[:1]) + ([kendi["yakin-plan"]] if kendi.get("yakin-plan") else [])
+    sira = bas + [g for g in mockuplar if g not in bas] + [gid for ad, gid in kendi.items() if gid and ad != "yakin-plan"]
+    sira_kur(etsy, listing_id, sira)
+    sonuc["vitrin"] = vitrin["listing_image_id"] if vitrin else None
     return sonuc

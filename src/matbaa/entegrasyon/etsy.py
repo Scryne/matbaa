@@ -119,3 +119,6 @@ class Etsy:
             f"/shops/{self.shop_id}/listings/{listing_id}/images",
             data={"listing_image_id": str(listing_image_id), "rank": str(rank)},
         )
+
+    def gorsel_sil(self, listing_id: int, listing_image_id: int) -> dict:
+        return self._i("DELETE", f"/shops/{self.shop_id}/listings/{listing_id}/images/{listing_image_id}")
