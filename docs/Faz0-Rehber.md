@@ -51,7 +51,7 @@ o durumda modeli birlikte değiştiririz.
    Numune sipariş etmiyoruz (K-20): kartın çalıştığı ilk gerçek siparişte belli olur, ödeme düşmezse gecikme alarmı bildirim olarak gelir.
 
 ## 4. Etsy geliştirici uygulaması (~10 dk)
-1. etsy.com/developers/register → uygulama oluştur:
+1. **etsy.com/developers/register-seller-app** → Seller App oluştur (yalnız kendi mağaza, dakikalar içinde otomatik onay). `developers/register` DEĞİL: o "Personal app" açar, elle incelenir (günler–haftalar) ve hesapta bir uygulama olduktan sonra Seller App açılamaz (2026-10-13 yaşandı):
    - Name: `HHP Shop Tools` (adda "Etsy" geçemez) · "Who will be the users": **Just myself or colleagues** · commercial: **No**
    - Callback URL: `http://localhost:3003/callback`
 2. **Your apps** sayfasındaki **Keystring** ve **Shared secret** → `.env`: `ETSY_KEYSTRING=`, `ETSY_SHARED_SECRET=`
