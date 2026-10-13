@@ -12,7 +12,7 @@ import tomllib
 from datetime import UTC, datetime
 from functools import cache
 
-from matbaa import db
+from matbaa import db, tavan
 from matbaa.ayar import CONFIG, KOK
 from matbaa.entegrasyon import printify as pf
 from matbaa.fiyat import urunler
@@ -95,6 +95,12 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
             (t["id"],),
         ).fetchall()
         for (urun,) in bekleyen:
+            try:
+                tavan.ilan_kontrol(c)
+            except tavan.TavanAsildi as e:  # para harcamadan dur; kalan ürünler sonraki ay/onaydan sonra açılır
+                sayac["tavan"] = str(e)
+                yazdir(f"  {e}")
+                return sayac
             k, il = katalog[urun], c.execute("SELECT * FROM ilan WHERE tasarim_id = ? AND urun = ?", (t["id"], urun)).fetchone()
             try:
                 if c.execute("SELECT durum FROM urun WHERE tasarim_id = ? AND urun = ?", (t["id"], urun)).fetchone()[0] == "hata":

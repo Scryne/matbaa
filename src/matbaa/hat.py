@@ -11,7 +11,7 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from matbaa import db
+from matbaa import db, tavan
 from matbaa.ayar import KOK
 from matbaa.fiyat import urunler
 from matbaa.ifade import uret as ifade_uret
@@ -30,9 +30,10 @@ def _kacinilacak(c, nis: str) -> list[str]:
 
 def _son_ciftler(c) -> list[tuple[str, str]]:
     r = c.execute(
-        "SELECT sablon, fontlar FROM tasarim WHERE durum != 'ret' ORDER BY id DESC LIMIT ?", (sec.CESITLILIK_PENCERE,)
+        "SELECT sablon, fontlar FROM tasarim WHERE durum != 'ret' ORDER BY id DESC LIMIT ?",
+        (max(sec.CESITLILIK_PENCERE, sec.SABLON_PENCERE),),
     ).fetchall()
-    return [(s, json.loads(f)[0 if s == "yigin" else 1]) for s, f in reversed(r)]
+    return [(s, sec.ana_font(s, json.loads(f))) for s, f in reversed(r)]
 
 
 def _dosyalari_yaz(c, t: int, secim) -> None:
@@ -71,17 +72,20 @@ def yeniden_ciz(c=None, yazdir=print) -> dict:
     """Onaylanmamış tasarımları güncel motorla yeniden çizer (palet, yerleşim iyileşince). Onaylı/yayındakine dokunmaz."""
     c = c or db.baglan()
     sayac = {"cizildi": 0, "ret": 0}
+    # Çeşitlilik penceresi yeniden çizim sırasına göre yürür: veritabanındaki eski şablonlar zaten değişecek.
+    son: list[tuple[str, str]] = []
     for r in c.execute(
         """SELECT t.id, t.ifade_id, i.yapi, i.satirlar FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
            WHERE t.durum IN ('kalite_ok', 'metin_ok', 'onay_bekliyor') ORDER BY t.id"""
     ).fetchall():
         y = _yapi(r)
-        secim, nedenler = sec.sec(y["ust"], y["ana"], y["alt"], _son_ciftler(c), tohum=r["ifade_id"])
+        secim, nedenler = sec.sec(y["ust"], y["ana"], y["alt"], son, tohum=r["ifade_id"])
         if secim is None:
             db.gecis(c, r["id"], "ret", f"yeniden çizim kapılardan geçmedi: {nedenler[-1][:200] if nedenler else ''}")
             sayac["ret"] += 1
         else:
             _dosyalari_yaz(c, r["id"], secim)
+            son.append((secim.sablon, sec.ana_font(secim.sablon, secim.fontlar)))
             db.olay(c, "tasarim", r["id"], None, "yeniden_cizildi", f"{secim.sablon} palet={secim.palet}")
             sayac["cizildi"] += 1
         c.commit()
@@ -94,6 +98,12 @@ def uret(nis: str, adet: int, c=None, yazdir=print) -> dict:
     adaylar, hatali = ifade_uret.uret(nis, adet, _kacinilacak(c, nis))
     sayac["uretilen"], sayac["bicim_hatali"] = len(adaylar) + len(hatali), len(hatali)
     for a in adaylar:
+        try:
+            tavan.ip_kontrol(c)
+        except tavan.TavanAsildi as e:
+            sayac["tavan"] = str(e)
+            yazdir(f"  {e}")
+            break
         ifade_id = db.ifade_ekle(c, nis, a.satirlar, yapi={"ust": a.ust, "ana": list(a.ana), "alt": a.alt})
         if ifade_id is None:
             sayac["tekrar"] += 1
@@ -190,7 +200,8 @@ def metin(c=None, sinir: int = 50, yazdir=print) -> dict:
     return sayac
 
 
-USPTO_TAZELIK_GUN = 35
+USPTO_YENILEME_GUN = 30  # aylık yenileme (K-13)
+USPTO_TAZELIK_GUN = 35  # yenileme başarısız olsa da bu yaştan eski veriyle hat durur
 KUYRUK_TABAN = 20  # onay + yayın bekleyen en az tasarım
 KUYRUK_GUN = 14  # kuyruk, günlük yayın sınırının bu kadar gününü karşılasın
 
@@ -211,12 +222,23 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
 
     env_yukle()
     rapor: dict = {}
-    if uspto_tazelik() > USPTO_TAZELIK_GUN:
-        yazdir(f"USPTO verisi {uspto_tazelik()} günlük: yenileniyor (K-13)")
+    if uspto_tazelik() > USPTO_YENILEME_GUN:
+        yazdir(f"USPTO verisi {uspto_tazelik()} günlük: aylık yenileme (K-13)")
         import runpy
 
-        runpy.run_path(str(KOK / "scripts" / "uspto_guncelle.py"), run_name="__main__")
-        marka.dizin.cache_clear()
+        try:
+            runpy.run_path(str(KOK / "scripts" / "uspto_guncelle.py"), run_name="__main__")
+            marka.dizin.cache_clear()
+        except Exception as e:
+            if uspto_tazelik() > USPTO_TAZELIK_GUN:
+                raise RuntimeError(f"USPTO yenilenemedi ve veri {uspto_tazelik()} günlük: hat durdu (K-13)") from e
+            yazdir(f"  USPTO yenilenemedi ({e}); veri {uspto_tazelik()} günlük, {USPTO_TAZELIK_GUN}. güne kadar sürer")
+    from matbaa import fiyat
+
+    try:
+        rapor["kur"] = fiyat.kur_guncelle()
+    except Exception as e:  # kur alınamazsa son taze kur ya da config değeri kullanılır
+        rapor["kur"] = f"güncellenemedi ({type(e).__name__}); kullanılan {fiyat.try_usd()}"
     c = db.baglan()
     from matbaa import yayin
 
@@ -257,6 +279,16 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
     else:
         rapor["yayin"] = "Printify anahtarı yok (Faz 0): yayın atlandı"
     rapor["durum"] = durum(c)
+    from matbaa import rapor as haftalik_rapor
+
+    if not haftalik_rapor.bu_hafta_var_mi():
+        e = None
+        if os.environ.get("ETSY_KEYSTRING") and os.environ.get("ETSY_SHOP_ID"):
+            from matbaa.entegrasyon.etsy import Etsy
+
+            e = Etsy()
+        rapor["haftalik_rapor"] = haftalik_rapor.yaz(*haftalik_rapor.haftalik(c, e))
+        yazdir(f"haftalık rapor: {rapor['haftalik_rapor']}")
     return rapor
 
 
@@ -278,6 +310,9 @@ def main(argv: list[str] | None = None) -> None:
     m = alt.add_parser("metin", help="kalite_ok tasarımlara ilan metni → onay kuyruğu")
     m.add_argument("--sinir", type=int, default=50)
     alt.add_parser("durum", help="kuyruk özeti")
+    oz = alt.add_parser("ozet", help="aylık kâr özeti (sipariş neti − ilan ücreti)")
+    oz.add_argument("--ay", help="YYYY-MM (varsayılan bu ay)")
+    alt.add_parser("rapor", help="haftalık raporu şimdi üret (calisma/rapor/)")
     g = alt.add_parser("gunluk", help="günlük koşu: üretim → metin → yayın (Windows görevi bunu çağırır)")
     g.add_argument("--nis-sayisi", type=int, default=2)
     g.add_argument("--adet", type=int, default=12)
@@ -316,5 +351,24 @@ def main(argv: list[str] | None = None) -> None:
 
         print(f"Onay paneli: http://127.0.0.1:{a.port}")
         calistir(a.port)
+    elif a.komut == "ozet":
+        from matbaa import siparis
+
+        print(json.dumps(siparis.aylik(db.baglan(), a.ay), ensure_ascii=False, indent=1))
+    elif a.komut == "rapor":
+        import os
+
+        from matbaa import rapor as haftalik_rapor
+        from matbaa.ayar import env_yukle
+
+        env_yukle()
+        e = None
+        if os.environ.get("ETSY_KEYSTRING") and os.environ.get("ETSY_SHOP_ID"):
+            from matbaa.entegrasyon.etsy import Etsy
+
+            e = Etsy()
+        veri, rapor_metni = haftalik_rapor.haftalik(db.baglan(), e)
+        print(rapor_metni)
+        print(f"→ {haftalik_rapor.yaz(veri, rapor_metni)}")
     elif a.komut == "durum":
         print(json.dumps(durum(), ensure_ascii=False, indent=1))

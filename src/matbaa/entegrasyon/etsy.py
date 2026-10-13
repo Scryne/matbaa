@@ -82,3 +82,13 @@ class Etsy:
         if min_son_degisim:
             params["min_last_modified"] = min_son_degisim
         return self._i("GET", f"/shops/{self.shop_id}/receipts", params=params)["results"]
+
+    def aktif_ilanlar(self) -> list[dict]:
+        """Mağazanın aktif ilanları; `views` günde bir kez sayılan toplam görüntülenme, `num_favorers` favori (şema 2026-10-13)."""
+        sonuc, ofset = [], 0
+        while True:
+            sayfa = self._i("GET", f"/shops/{self.shop_id}/listings", params={"state": "active", "limit": 100, "offset": ofset})
+            sonuc += sayfa["results"]
+            ofset += 100
+            if ofset >= sayfa.get("count", 0) or not sayfa["results"]:
+                return sonuc

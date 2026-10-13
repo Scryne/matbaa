@@ -13,7 +13,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | --- | --- | --- | --- |
 | 0 | Hesaplar ve para (Scryne) | 🔄 Devam Ediyor | S1 müşavir cevabı yazıldı; Etsy mağazası açık (kimlik + banka doğrulandı); Printify hesabı + kart çalışıyor; 2 numune elde ve fotoğraflı değerlendirildi; Printify token + Etsy Seller App anahtarı `.env`'de |
 | 1 | İskelet ve sağlık | ✅ Tamamlandı | Private repo GitHub'da; CI (ruff + pytest) varsayılan dalda yeşil; `.github/dependabot.yml`; model kimlikleri `config/modeller.toml`'da; `.env.example`; SQLite şeması + durum makinesi testli |
-| 2 | Tasarım motoru v1 | 🔄 Devam Ediyor | En az 6 şablon, 20+ OFL font, çeşitlilik kuralı; 3 niş × 10 ifade → 30 tasarımın hepsi kapılardan geçiyor ve göz kontrolünde 30/30 yayınlanabilir; mutasyon testleri yeşil |
+| 2 | Tasarım motoru v1 | ✅ Tamamlandı | En az 6 şablon, 20+ OFL font, çeşitlilik kuralı; 3 niş × 10 ifade → 30 tasarımın hepsi kapılardan geçiyor ve göz kontrolünde 30/30 yayınlanabilir; mutasyon testleri yeşil |
 | 3 | İfade üretimi + IP kapısı | ✅ Tamamlandı | Niş kartları `config/nisler.toml`'da; Claude ile niş başına 30 aday → USPTO + Jev kapısı; 90 adayın kapı kayıtları SQLite'ta; Aria'nın kör örneklemesinde (30 temiz ifade) riskli kaçak 0; USPTO verisi 35 günlük tazelik kontrolüyle |
 | 4 | İlan metni | ✅ Tamamlandı | Başlık, 13 etiket (≤ 20 karakter), açıklama (AI beyanı + üretim ortağı + beden/bakım), öznitelikler; Etsy kural doğrulayıcı testli; 30 ilan metni doğrulayıcıdan geçiyor |
 | 5 | Onay paneli | 🔄 Devam Ediyor | Yerel panel: tasarım önizleme (koyu/açık kumaş), ifade, kapı nedenleri, ilan metni; onayla/reddet/düzelt durum makinesine yazıyor; 30 tasarımlık kuyruk 10 dakikada bitirilebiliyor (Scryne'ın ilk kullanımı) |
@@ -33,9 +33,12 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 - Faz 5 🔄: panel hazır ve görsel doğrulamadan geçti (4 genişlik, 0 sorun); bitti kriteri Scryne'ın ilk 10 dakikalık kullanımı.
 - Faz 6–7 ⛔ Faz 0'a bağlı: istemciler resmî dokümandan doğrulanmış uç noktalarla yazıldı, sahte HTTP ile test edildi (mükerrer ürün
   koruması dahil); gerçek hesapta 3 ürün oluşturulunca ✅.
-- Faz 8 🔄: sipariş defteri + gecikme alarmı kodlu ve testli; gerçek sipariş yok.
-- Faz 9 🔄: `Matbaa-Gunluk` Windows görevi kurulu, her gün 10:30, Görev Zamanlayıcı'dan elle tetiklendi (çıkış 0, UTF-8 günlük
-  `calisma/gunluk/gunluk.log`). Eksik: haftalık rapor.
+- Faz 8 🔄 (üçüncü tur): kod tamam: sipariş defteri, TCMB kuru (`veri/kur.json`, günlük), aylık özet (`matbaa ozet`: sipariş neti −
+  listeleme ücreti), harcama tavanları (`config/tavanlar.toml`, K-19; tavanda yayın para harcamadan durur). Kalan: Scryne'ın tavan
+  onayı ve ilk gerçek siparişte netin Etsy/Printify ekstresiyle tutması.
+- Faz 9 🔄 (üçüncü tur): `Matbaa-Gunluk` Windows görevi kurulu (her gün 10:30); haftalık rapor (`matbaa rapor`, haftanın ilk koşusunda
+  otomatik; ilan, Etsy görüntülenme farkı, satış, net, gecikme/hata en üstte); USPTO 30. günde yenilenir, 35 günü geçerse hat durur.
+  Kalan: Faz 0 anahtarlarıyla günlük koşunun yayın + Etsy + sipariş adımlarını gerçek hesapta uçtan uca koşması.
 
 ### Faz 0: Hesaplar ve para (Scryne)
 - **İşler:** S1 müşavir; S2 Etsy mağazası (Aria ekran ekran yönlendirir); S3 Printify + kart + 2 numune; Printify token; Etsy geliştirici
@@ -48,13 +51,17 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   `.env.example`; `src/matbaa/db.py` SQLite şeması + durum makinesi + olay günlüğü (6 test: onaysız yayın yok, temiz olmayan ifadeden tasarım yok).
 - **Notlar:** `gh` token'ında `workflow` kapsamı yok; push Git Credential Manager ile çalışıyor (`gh repo create --push` workflow dosyasında reddedildi).
 
-### Faz 2: Tasarım motoru v1
-- **Durum (10-13):** `tasarim/sec.py` slogan yapısından (üst/ana/alt) şablon + font seçiyor, çeşitlilik penceresi 5; yığında ana satır yükseklik
-  tavanı (en kısa ana satırın 1,5 katı) ve `dengeli_bol` (modelin satır sonları tercihli, kısa yalnız kelime / pankart en-boy cezası).
-  İlk 30 tasarımın panosu (`calisma/pano30b.png`) göz kontrolünde kabul edilebilir taban; eksik: ikinci renk/vurgu, yeni şablonlar, font havuzu.
-- **İşler:** yeni şablonlar (çerçeveli rozet, iki satır + ayırıcı ikon yok/çizgi, eğik blok, yay + alt yay); font havuzu 20+ OFL; şablon–font
-  uyum tablosu (el yazısı yalnız ikincil satırda); çeşitlilik kuralı; `el_yazisi_blok` düzeltme ya da çıkarma.
-- **Notlar:**
+### Faz 2: Tasarım motoru v1 ✅ (2026-10-13)
+- **Yapılan:** 8 şablon (`yigin`, `kavis`, `rozet` + yeni `cerceve`, `ayirici`, `egik`, `madalyon`, `el_yazisi`); `el_yazisi_blok` kaldırıldı
+  (yerine çakışmasız `el_yazisi`). Font havuzu 28 OFL (google/fonts, lisans dosyalarıyla); rol tablosu `sec.FONTLAR` (ana / küçük / yay /
+  el yazısı; el yazısı yalnız ikincil satırda ve yalnız karışık harfli metinde). Çeşitlilik: (şablon, ana font) çifti 5 tasarımda bir kez,
+  şablonlar son 12 tasarımda en az kullanılandan başlar. Küçük satır en kısa ana satırın 0,45 katını aşmaz.
+- **Kanıt:** onay kuyruğundaki 44 tasarım yeniden çizildi, 44/44 kapılardan geçti (ret 0); dağılım cerceve 10, ayirici 10, egik 9, yigin 8,
+  el_yazisi 6, kavis 1 (önce 43/44 `yigin`). Göz kontrolü panosu iki kumaşta `calisma/faz2/pano_{koyu,acik}_{0,1}.png`: üç tur, bulunan
+  üç kusur (çizgi yazıya yapışık, büyük harfli el yazısı, kısa küçük satırın devleşmesi) düzeltildi, testle bağlandı. 18 yeni test;
+  yeni tavan/rapor/şablon testleri kod bilerek bozulunca düşüyor (mutasyon kontrolü).
+- **Notlar:** `madalyon` yalnız başlık + tek kısa ana satır + alt satır yapısında aday; kuyrukta henüz çıkmadı. Son göz Scryne'ın panel
+  kullanımında (Faz 5). Yeniden çizim 44 tasarımda ~9 dk (OCR kapısı).
 
 ### Faz 3: İfade üretimi + IP kapısı
 - **Durum (10-13):** `config/nisler.toml` (3 niş kartı), `ifade/uret.py` (`claude -p`, JSON şeması, ~5–20 sn/12 slogan), `hat.py` (`matbaa uret`,

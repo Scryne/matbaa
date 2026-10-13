@@ -95,6 +95,12 @@ CREATE TABLE IF NOT EXISTS olay (
     eski TEXT, yeni TEXT,
     aciklama TEXT
 );
+CREATE TABLE IF NOT EXISTS goruntulenme (    -- Etsy aktif ilan anlık görüntüsü; haftalık fark = görüntülenme
+    tarih TEXT NOT NULL,              -- YYYY-MM-DD
+    etsy_listing_id TEXT NOT NULL,
+    views INTEGER, favori INTEGER,
+    PRIMARY KEY (tarih, etsy_listing_id)
+);
 CREATE INDEX IF NOT EXISTS tasarim_durum ON tasarim(durum);
 """
 

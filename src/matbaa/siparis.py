@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from matbaa import db, fiyat
+from matbaa import db, fiyat, tavan
 
 GECIKME_IS_GUNU = 5
 
@@ -75,3 +75,29 @@ def ozet(c, gun: int = 30) -> dict:
         "SELECT count(*), coalesce(sum(brut), 0), coalesce(sum(net), 0) FROM siparis WHERE olusturma >= ?", (bas,)
     ).fetchone()
     return {"gun": gun, "siparis": r[0], "brut_usd": round(r[1], 2), "net_usd": round(r[2], 2)}
+
+
+def aylik(c, ay: str | None = None) -> dict:
+    """Takvim ayı özeti (Faz 8): sipariş, brüt, sipariş başı net toplamı, o ay açılan ilanların listeleme ücreti ve kalan net.
+
+    Sipariş netinde Etsy satış/ödeme/kur ücretleri ve Printify maliyeti düşülmüştür (`fiyat.hesap`); ilan açma ücreti ayrı kalemdir.
+    """
+    ay = ay or datetime.now(UTC).strftime("%Y-%m")
+    yil, a = map(int, ay.split("-"))
+    bas = datetime(yil, a, 1, tzinfo=UTC)
+    son = datetime(yil + (a == 12), a % 12 + 1, 1, tzinfo=UTC)
+    r = c.execute(
+        "SELECT count(*), coalesce(sum(brut), 0), coalesce(sum(net), 0) FROM siparis WHERE olusturma >= ? AND olusturma < ?",
+        (bas.isoformat(), son.isoformat()),
+    ).fetchone()
+    ilan = tavan.ilan_ucreti(c, bas.isoformat(), son.isoformat())
+    return {
+        "ay": ay,
+        "siparis": r[0],
+        "brut_usd": round(r[1], 2),
+        "siparis_net_usd": round(r[2], 2),
+        "ilan_ucreti_usd": ilan,
+        "net_usd": round(r[2] - ilan, 2),
+        "ilan_tavani_usd": tavan.tavanlar()["aylik_ilan_ucreti_usd"],
+        "kur_try_usd": fiyat.try_usd(),
+    }

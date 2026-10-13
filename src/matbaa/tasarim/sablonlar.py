@@ -67,30 +67,59 @@ def _yol(satir: Satir, olcek: float, x_merkez: float, y_ust: float, ek: str = ""
 
 
 ANA_YUKSEKLIK_SINIRI = 1.5  # bir ana satır, ana satırların en kısasının bu katından yüksek olamaz
+KUCUK_YUKSEKLIK_SINIRI = 0.45  # küçük (üst/alt) satır, en kısa ana satırın bu katından yüksek olamaz
 
 
-def yigin(satirlar: list[Yazi], bosluk: float = 0.14) -> Cizim:
+CIZGI_MIN = 28.0  # px; baskıda çizgi/çerçeve kalınlığının alt sınırı (~2,4 mm, DTG'de güvenli)
+
+
+def yigin(
+    satirlar: list[Yazi],
+    bosluk: float = 0.14,
+    genislik: float = ICERIK_G,
+    ust: float = UST_PAY,
+    yukseklik_maks: float = ICERIK_Y_MAKS,
+    ayrac_sonra: int | None = None,
+) -> Cizim:
     """Satırlar alt alta, her biri kendi genişlik oranına ölçeklenir (klasik blok tişört).
 
     Tam genişliğe yayılan kısa satır devleşir ("MY", "WIP"); ana satırların yüksekliği en kısa ana satırın
     `ANA_YUKSEKLIK_SINIRI` katıyla sınırlanır, aşan satır daralıp ortalanır (S5 sonrası pano: hiyerarşi kayboluyordu).
+    `ayrac_sonra` verilirse o satırın altına vurgu renginde yatay bir çizgi girer (`ayirici` şablonu).
     """
     olculer = [font(y.font).satir(y.metin, y.harf_araligi) for y in satirlar]
-    olcekler = [ICERIK_G * y.oran / s.genislik for y, s in zip(satirlar, olculer, strict=True)]
+    olcekler = [genislik * y.oran / s.genislik for y, s in zip(satirlar, olculer, strict=True)]
     ana = [s.yukseklik * k for y, s, k in zip(satirlar, olculer, olcekler, strict=True) if not y.kucuk]
     if ana:
         tavan = min(ana) * ANA_YUKSEKLIK_SINIRI
-        olcekler = [k if y.kucuk else min(k, tavan / s.yukseklik) for y, s, k in zip(satirlar, olculer, olcekler, strict=True)]
+        # Kısa küçük satır ("EST. 2027") genişliğe ölçeklenince ana satır boyuna çıkıyordu (pano #41): küçük satır en kısa ana satırın
+        # `KUCUK_YUKSEKLIK_SINIRI` katını aşamaz.
+        kucuk_tavan = min(ana) * KUCUK_YUKSEKLIK_SINIRI
+        olcekler = [
+            min(k, max(kucuk_tavan, KUCUK_YAZI) / s.yukseklik) if y.kucuk else min(k, tavan / s.yukseklik)
+            for y, s, k in zip(satirlar, olculer, olcekler, strict=True)
+        ]
     yukseklikler = [s.yukseklik * k for s, k in zip(olculer, olcekler, strict=True)]
     ara = bosluk * sum(yukseklikler) / len(yukseklikler)
-    toplam = sum(yukseklikler) + ara * (len(satirlar) - 1)
-    kucult = min(1.0, ICERIK_Y_MAKS / toplam)
+    kalinlik = max(CIZGI_MIN, 0.05 * sum(yukseklikler) / len(yukseklikler))
+    # Çizginin üstü ve altı: satır arasıyla aynı olursa çizgi alt çizgi gibi yazıya yapışık durur (pano: "MOM SERVES").
+    ayrac_ara = 0.45 * sum(yukseklikler) / len(yukseklikler)
+    toplam = sum(yukseklikler) + ara * (len(satirlar) - 1) + (2 * ayrac_ara - ara + kalinlik if ayrac_sonra is not None else 0)
+    kucult = min(1.0, yukseklik_maks / toplam)
     c = Cizim()
-    y = UST_PAY
-    for yz, s, k in zip(satirlar, olculer, olcekler, strict=True):
+    y = ust
+    for i, (yz, s, k) in enumerate(zip(satirlar, olculer, olcekler, strict=True)):
         parca, h = _yol(s, k * kucult, TUVAL_G / 2, y)
         c.yazi(parca, h, s.metin, vurgu=yz.kucuk or yz.vurgu)
         y += h + ara * kucult
+        if i == ayrac_sonra:
+            y += (ayrac_ara - ara) * kucult
+            kal = max(CIZGI_MIN, kalinlik * kucult)
+            g = genislik * 0.42
+            c.vurgu_parcalar.append(
+                f'<rect x="{(TUVAL_G - g) / 2:.1f}" y="{y:.1f}" width="{g:.1f}" height="{kal:.1f}" rx="{kal / 2:.1f}"/>'
+            )
+            y += kal + ayrac_ara * kucult
     c.alt = y - ara * kucult
     return c
 
@@ -233,32 +262,180 @@ def rozet(ust: Yazi, orta: Yazi, alt: Yazi | None = None) -> Cizim:
     return c
 
 
-def el_yazisi_blok(blok: Yazi, el: Yazi, aci: float = -6.0, oyma: float = 60.0) -> Cizim:
-    """Büyük blok kelimenin alt kenarına binen eğik el yazısı; el yazısının çevresi bloktan oyulur.
-
-    El yazısı bloğun ortasına konursa blok okunmaz (S5 ilk tur: "TEACH" → "TEASH"); alt kenara biner,
-    bloğun üst yarısı harfleri tanıtmaya yeter.
-    """
-    sb = font(blok.font).satir(blok.metin, blok.harf_araligi)
-    se = font(el.font).satir(el.metin, el.harf_araligi)
-    olcek_b = ICERIK_G * 0.92 * blok.oran / sb.genislik
-    h_b = sb.yukseklik * olcek_b
-    olcek_e = min(ICERIK_G * 0.62 * el.oran / se.genislik, h_b * 0.9 / se.yukseklik)
-    h_e = se.yukseklik * olcek_e
-    ust = UST_PAY
-    blok_parca, _ = _yol(sb, olcek_b, TUVAL_G / 2, ust)
-    merkez_y = ust + h_b * 0.98
-    tx = TUVAL_G / 2 - (se.x0 + se.genislik / 2) * olcek_e
-    ty = merkez_y - (se.y0 + se.yukseklik / 2) * olcek_e
-    don = f"rotate({aci} {TUVAL_G / 2} {merkez_y:.1f})"
-    el_yol = f'd="{se.yol}" transform="{don} translate({tx:.2f} {ty:.2f}) scale({olcek_e:.5f})"'
-    c = Cizim()
-    c.tanimlar.append(
-        f'<mask id="oyma" maskUnits="userSpaceOnUse" x="0" y="0" width="{TUVAL_G}" height="{TUVAL_Y}">'
-        f'<rect width="{TUVAL_G}" height="{TUVAL_Y}" fill="#fff"/>'
-        f'<path {el_yol} fill="#000" stroke="#000" stroke-width="{oyma / olcek_e:.2f}" stroke-linejoin="round"/></mask>'
+def _yuvarlak_dortgen(x: float, y: float, g: float, y_: float, r: float) -> str:
+    return (
+        f"M{x + r:.1f},{y:.1f} H{x + g - r:.1f} A{r:.1f},{r:.1f} 0 0 1 {x + g:.1f},{y + r:.1f} V{y + y_ - r:.1f} "
+        f"A{r:.1f},{r:.1f} 0 0 1 {x + g - r:.1f},{y + y_:.1f} H{x + r:.1f} A{r:.1f},{r:.1f} 0 0 1 {x:.1f},{y + y_ - r:.1f} "
+        f"V{y + r:.1f} A{r:.1f},{r:.1f} 0 0 1 {x + r:.1f},{y:.1f} Z"
     )
-    c.yazi(f'<g mask="url(#oyma)">{blok_parca}</g>', h_b, sb.metin)
-    c.yazi(f"<path {el_yol}/>", h_e, se.metin)
-    c.alt = max(ust + h_b, merkez_y + h_e / 2)
+
+
+def _daire(cx: float, cy: float, r: float) -> str:
+    return f"M{cx - r:.1f},{cy:.1f} A{r:.1f},{r:.1f} 0 1 0 {cx + r:.1f},{cy:.1f} A{r:.1f},{r:.1f} 0 1 0 {cx - r:.1f},{cy:.1f} Z"
+
+
+def cerceve(ana: list[Yazi], ust: Yazi | None = None, alt: Yazi | None = None) -> Cizim:
+    """Yuvarlak köşeli çerçeve içinde ana satırlar; küçük satırlar çerçevenin üst/alt kenarını keserek üstüne oturur.
+
+    Çerçeve dolgu yoludur (iç ve dış dörtgen, evenodd): kalınlığı baskı sınırının epey üstünde, renk vurgu.
+    Kenardaki boşluk maskeyle açılır; yazı çizgiye değmez.
+    """
+    kal = 44.0
+    dis_g = ICERIK_G * 0.96
+    ic_pay = ICERIK_G * 0.06
+    x0 = (TUVAL_G - dis_g) / 2
+    olcu_u = font(ust.font).satir(ust.metin, ust.harf_araligi) if ust else None
+    olcu_a = font(alt.font).satir(alt.metin, alt.harf_araligi) if alt else None
+    olcek_u = _kucuk(olcu_u, 230, dis_g * 0.6) if olcu_u else 0
+    olcek_a = _kucuk(olcu_a, 200, dis_g * 0.6) if olcu_a else 0
+    h_u = olcu_u.yukseklik * olcek_u if olcu_u else 0
+    h_a = olcu_a.yukseklik * olcek_a if olcu_a else 0
+    ust_kenar = UST_PAY + max(h_u / 2 - kal / 2, 0)
+    ic_ust = ust_kenar + kal + ic_pay + h_u / 2
+    pay_alt = ic_pay + kal + h_a / 2
+    c = yigin(
+        ana,
+        genislik=dis_g - 2 * (kal + ic_pay),
+        ust=ic_ust,
+        yukseklik_maks=ICERIK_Y_MAKS - (ic_ust - UST_PAY) - pay_alt - h_a / 2,
+    )
+    alt_kenar = c.alt + ic_pay + h_a / 2 + kal
+    yuk = alt_kenar - ust_kenar
+    r = kal * 3
+    yol = (
+        _yuvarlak_dortgen(x0, ust_kenar, dis_g, yuk, r)
+        + " "
+        + _yuvarlak_dortgen(x0 + kal, ust_kenar + kal, dis_g - 2 * kal, yuk - 2 * kal, r - kal)
+    )
+    kesikler = []
+    for olcu, olcek, h, y_orta in ((olcu_u, olcek_u, h_u, ust_kenar + kal / 2), (olcu_a, olcek_a, h_a, alt_kenar - kal / 2)):
+        if not olcu:
+            continue
+        g = olcu.genislik * olcek + 2 * h * 0.6
+        kesikler.append(
+            f'<rect x="{(TUVAL_G - g) / 2:.1f}" y="{y_orta - h:.1f}" width="{g:.1f}" height="{2 * h:.1f}" fill="#000"/>'
+        )
+        parca, h2 = _yol(olcu, olcek, TUVAL_G / 2, y_orta - h / 2)
+        c.yazi(parca, h2, olcu.metin, vurgu=True)
+    if kesikler:
+        c.tanimlar.append(
+            f'<mask id="kesik" maskUnits="userSpaceOnUse" x="0" y="0" width="{TUVAL_G}" height="{TUVAL_Y}">'
+            f'<rect width="{TUVAL_G}" height="{TUVAL_Y}" fill="#fff"/>{"".join(kesikler)}</mask>'
+        )
+    maske = ' mask="url(#kesik)"' if kesikler else ""
+    c.vurgu_parcalar.append(f'<path d="{yol}" fill-rule="evenodd"{maske}/>')
+    c.alt = alt_kenar + max(h_a / 2 - kal / 2, 0)
+    return c
+
+
+def ayirici(ust: Yazi | None, ana: list[Yazi], alt: Yazi | None = None) -> Cizim:
+    """Yığının bir çeşidi: başlığın (yoksa ilk ana satırın) altında vurgu renginde ayırıcı çizgi."""
+    satirlar = ([ust] if ust else []) + ana + ([alt] if alt else [])
+    if not ust and len(ana) < 2:
+        raise ValueError("ayirici: başlık ya da en az iki ana satır gerekir")
+    return yigin(satirlar, bosluk=0.16, ayrac_sonra=0)
+
+
+def egik(satirlar: list[Yazi], aci: float = -5.0) -> Cizim:
+    """Yığın bütün halinde hafifçe yukarı eğilir (spor/retro tişört): döndürülmüş blok içerik genişliğine sığacak kadar küçülür."""
+    c = yigin(satirlar)
+    h = c.alt - UST_PAY
+    t = math.radians(abs(aci))
+    g2, h2 = ICERIK_G * math.cos(t) + h * math.sin(t), ICERIK_G * math.sin(t) + h * math.cos(t)
+    s = min(1.0, ICERIK_G / g2, ICERIK_Y_MAKS / h2)
+    don = (
+        f"translate({TUVAL_G / 2:.1f} {UST_PAY + s * h2 / 2:.1f}) rotate({aci}) scale({s:.5f}) "
+        f"translate({-TUVAL_G / 2:.1f} {-(UST_PAY + h / 2):.1f})"
+    )
+    c.parcalar = [f'<g transform="{don}">{"".join(c.parcalar)}</g>']
+    if c.vurgu_parcalar:
+        c.vurgu_parcalar = [f'<g transform="{don}">{"".join(c.vurgu_parcalar)}</g>']
+    c.en_kucuk_yazi *= s
+    c.alt = UST_PAY + s * h2
+    return c
+
+
+def _kavisli_alt(satir: Satir, olcek: float, cx: float, cy: float, r: float) -> list[str]:
+    """Glifleri dairenin alt yayına dik okunacak şekilde dizer: taban çizgisi r'de, harflerin tepesi merkeze bakar."""
+    yay = satir.ilerleme * olcek / r
+    parcalar = []
+    for g in satir.glifler:
+        orta = (g.x + g.ilerleme / 2) * olcek
+        fi = -yay / 2 + orta / r
+        px, py = cx + r * math.sin(fi), cy + r * math.cos(fi)
+        parcalar.append(
+            f'<path d="{g.yol}" transform="translate({px:.2f} {py:.2f}) rotate({-math.degrees(fi):.3f}) '
+            f'translate({-g.ilerleme / 2 * olcek:.2f} 0) scale({olcek:.5f})"/>'
+        )
+    return parcalar
+
+
+MADALYON_YAY = math.radians(140)  # üst ve alt yazının en geniş açısı; iki yanda ayırıcı noktalara yer kalır
+
+
+def madalyon(ust: Yazi, orta: Yazi, alt: Yazi) -> Cizim:
+    """Yuvarlak rozet: dış halka, üst yayda başlık, alt yayda alt satır (dik okunur), iki yanda nokta, ortada büyük kelime."""
+    R = ICERIK_G * 0.47
+    cx, cy = TUVAL_G / 2, UST_PAY + R
+    kal = max(CIZGI_MIN + 10, R * 0.022)
+    bosluk = R * 0.045
+    bant = R * 0.12
+    r_dis = R - kal - bosluk  # bant yazısının dış sınırı
+    r_ic = r_dis - bant  # iç sınır
+    c = Cizim()
+    c.vurgu_parcalar.append(f'<path d="{_daire(cx, cy, R)} {_daire(cx, cy, R - kal)}" fill-rule="evenodd"/>')
+    kal2 = max(CIZGI_MIN, kal * 0.65)
+    c.vurgu_parcalar.append(
+        f'<path d="{_daire(cx, cy, r_ic - bosluk)} {_daire(cx, cy, r_ic - bosluk - kal2)}" fill-rule="evenodd"/>'
+    )
+    for yazi, ustte in ((ust, True), (alt, False)):
+        f = font(yazi.font)
+        s = f.satir(yazi.metin, yazi.harf_araligi)
+        r_taban = r_ic if ustte else r_dis
+        olcek = min(bant / f.buyuk_harf, MADALYON_YAY * r_taban / s.ilerleme)
+        h = f.buyuk_harf * olcek
+        # Küçülen yazı bandın ortasına otursun.
+        r_taban += (bant - h) / 2 * (1 if ustte else -1)
+        for parca in (_kavisli if ustte else _kavisli_alt)(s, olcek, cx, cy, r_taban):
+            c.yazi(parca, h, vurgu=True)
+    r_nokta = bant * 0.16
+    for isaret in (-1, 1):
+        c.vurgu_parcalar.append(f'<circle cx="{cx + isaret * (r_ic + bant / 2):.1f}" cy="{cy:.1f}" r="{r_nokta:.1f}"/>')
+    so = font(orta.font).satir(orta.metin, orta.harf_araligi)
+    r_orta = (r_ic - bosluk - kal2) - R * 0.07
+    oran = so.genislik / so.yukseklik
+    h_o = 2 * r_orta / math.sqrt(oran**2 + 1) * orta.oran
+    if h_o < R * 0.16:
+        raise ValueError(f"madalyon: orta satır ({orta.metin!r}) daireye ancak {h_o:.0f} px sığıyor")
+    parca, h = _yol(so, h_o / so.yukseklik, cx, cy - h_o / 2)
+    c.yazi(parca, h, so.metin)
+    c.alt = cy + R
+    return c
+
+
+def el_yazisi(ana: list[Yazi], el: Yazi, ustte: bool, aci: float = -5.0) -> Cizim:
+    """Blok ana satırların üstünde ya da altında, hafif eğik el yazısı satırı (vurgu renginde).
+
+    Eski `el_yazisi_blok` el yazısını bloğun üstüne bindiriyordu ve okunurluk kapısında tutarsızdı (S5, K-10);
+    burada iki öğe çakışmaz: döndürülmüş el yazısının sınır kutusu kadar yer ayrılır.
+    """
+    se = font(el.font).satir(el.metin, el.harf_araligi)
+    olcek = min(ICERIK_G * 0.74 * el.oran / se.genislik, 620 / se.yukseklik)
+    w, h = se.genislik * olcek, se.yukseklik * olcek
+    t = math.radians(abs(aci))
+    h_don = h * math.cos(t) + w * math.sin(t)
+    ara = h * 0.25
+    blok_ust = UST_PAY + (h_don + ara if ustte else 0)
+    c = yigin(ana, ust=blok_ust, yukseklik_maks=ICERIK_Y_MAKS - h_don - ara)
+    yc = UST_PAY + h_don / 2 if ustte else c.alt + ara + h_don / 2
+    tx = TUVAL_G / 2 - (se.x0 + se.genislik / 2) * olcek
+    ty = yc - (se.y0 + se.yukseklik / 2) * olcek
+    c.yazi(
+        f'<path d="{se.yol}" transform="rotate({aci} {TUVAL_G / 2} {yc:.1f}) translate({tx:.2f} {ty:.2f}) scale({olcek:.5f})"/>',
+        h,
+        se.metin,
+        vurgu=True,
+    )
+    if not ustte:
+        c.alt = yc + h_don / 2
     return c

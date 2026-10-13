@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import json
+import re
+import time
 import tomllib
 from dataclasses import dataclass
 from functools import cache
 
-from matbaa.ayar import CONFIG
+from matbaa.ayar import CONFIG, VERI
+
+KUR_DOSYASI = VERI / "kur.json"
+KUR_TAZELIK_GUN = 7
+TCMB = "https://www.tcmb.gov.tr/kurlar/today.xml"
 
 
 @cache
@@ -17,6 +24,32 @@ def ucretler() -> dict:
 @cache
 def urunler() -> dict:
     return tomllib.loads((CONFIG / "urunler.toml").read_text(encoding="utf-8"))
+
+
+def kur_guncelle(http=None) -> float:
+    """TCMB günlük USD döviz satış kuru → veri/kur.json. Etsy'nin TRY sabit ödeme ücreti (14 TRY) bu kurla USD'ye çevrilir."""
+    import httpx
+
+    r = (http or httpx.Client(timeout=30)).get(TCMB)
+    r.raise_for_status()
+    m = re.search(r'Kod="USD".*?<ForexSelling>([\d.]+)</ForexSelling>', r.text, re.S)
+    if not m:
+        raise ValueError("TCMB yanıtında USD satış kuru yok")
+    kur = float(m.group(1))
+    VERI.mkdir(exist_ok=True)
+    KUR_DOSYASI.write_text(json.dumps({"try_usd": kur, "zaman": int(time.time()), "kaynak": TCMB}))
+    return kur
+
+
+def try_usd() -> float:
+    """Taze (≤ 7 gün) TCMB kuru varsa o, yoksa config'teki elle girilmiş değer."""
+    try:
+        k = json.loads(KUR_DOSYASI.read_text())
+        if time.time() - k["zaman"] <= KUR_TAZELIK_GUN * 86400:
+            return float(k["try_usd"])
+    except (OSError, ValueError, KeyError):
+        pass
+    return ucretler()["try_usd"]
 
 
 @dataclass(frozen=True)
@@ -41,7 +74,7 @@ def hesap(fiyat: float, kargo: float, uretim: float, offsite: bool = False, ilan
         u["listeleme_usd"]
         + u["islem_orani"] * gelir
         + u["odeme_orani"] * vergi_dahil
-        + u["odeme_sabit_try"] / u["try_usd"]
+        + u["odeme_sabit_try"] / try_usd()
         + u["rof_orani"] * gelir
         + (0.0 if ilan_try else u["kur_donusum_orani"] * gelir)
     )

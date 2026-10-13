@@ -65,8 +65,10 @@ iade kararı.
 - **Gizli bilgiler** `.env`'de (git dışı): `TYPESAFE_API_KEY`, `PRINTIFY_TOKEN`, `ETSY_KEYSTRING`, `ETSY_REFRESH_TOKEN`.
 
 ## Kararlar (Proje-Fikri'ye ek)
-- **K-10 Tasarım dili v1:** tek renk tipografik; şablonlar `yigin`, `kavis`, `rozet` (+ Faz 2'de yeni şablonlar). `el_yazisi_blok` okunurluk
-  kapısında tutarsız (S5) → düzeltilene kadar havuz dışı.
+- **K-10 Tasarım dili v1:** tipografik; 8 şablon: `yigin`, `kavis`, `rozet`, `cerceve`, `ayirici`, `egik`, `madalyon` (yay + alt yay),
+  `el_yazisi`. `el_yazisi_blok` (el yazısı bloğun üstüne biner) okunurluk kapısında tutarsızdı (S5) → kaldırıldı; yerine el yazısı
+  bloğun üstünde/altında çakışmasız `el_yazisi` (Faz 2). Font havuzu 28 OFL font, rol tablosu `tasarim/sec.py` `FONTLAR`'da; el yazısı
+  yalnız ikincil satırda ve yalnız büyük/küçük harf karışık metinde. Şablon seçimi son 12 tasarımda en az kullanılandan başlar.
 - **K-11 Ürün ve fiyat:** Comfort Colors 1717 tişört, liste fiyatı $26,99 + alıcı kargosu; Gildan 18000 sweatshirt $39,99. Maliyet ~$17 /
   ~$21 (ürün + ABD kargo). Kâr hesabı Faz 8'de gerçek ücretlerle (TR: %6,5 + %6,5 + 14 TRY + %1,67 + $0,20; S7).
 - **K-12 Nişler v1:** balıkçılık (baba/dede, Aralık + Babalar Günü), pickleball (Aralık), örgü/tığ işi (yükselen). Sezon varyantları niş
@@ -83,6 +85,9 @@ iade kararı.
   haftalık yayın kapasitesinin altına inmedikçe yeni üretim yok (Claude kullanımı boşa gitmez).
 - **K-18 İki renk:** tasarımın küçük satırları/yayı/çizgileri ya da bir ana satırı vurgu renginde; palet her satılan kumaş rengine karşı
   kontrast kapısından geçer (kiremit ve hardal koyulaştırıldı).
+- **K-19 Harcama tavanları (K-7'nin uygulanışı):** `config/tavanlar.toml`: aylık Etsy listeleme ücreti $60 (ısınma eğrisinin ilk ayı
+  ~$42), günlük IP denetimi 120 ifade (TypeSafe). Sayım olay günlüğünden; tavanda hat para harcamadan durur, ürünü hataya düşürmez.
+  Değerler Scryne onayı bekliyor. Kur TCMB'den günlük (`veri/kur.json`), alınamazsa config değeri.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve numune Scryne'ın Faz 0 işlerine bağlı.

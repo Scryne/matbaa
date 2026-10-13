@@ -1,0 +1,11 @@
+# Para harcayan her kod yolu burada sabit bir tavanla durur (K-7). Tavanı Scryne onaylar; aşılınca hat o adımı atlar, günlüğe yazar.
+# Kodda Etsy Ads, Etsy Plus/Premium ya da ücretli reklam çağrısı yoktur; onlar için tavan gerekmez (eklenirse buraya).
+# ONAY BEKLİYOR (2026-10-13): aşağıdaki değerler Aria'nın önerisi, Scryne onaylayınca bu satır silinir.
+
+# Etsy listeleme ücreti ($0,20 / ilan, ucretler.toml). Isınma eğrisinin ilk ayı ~210 ilan ≈ $42; ikinci ay ~$100.
+# Takvim ayı içinde Printify'a açılan ürün sayısı × listeleme ücreti bu tavanı aşamaz. Otomatik yenilemeler (4 ayda bir) dahil değil.
+aylik_ilan_ucreti_usd = 60.0
+
+# TypeSafe/Jev (IP kapısının anlamsal katmanı): günde en çok bu kadar ifade denetlenir (ifade başına 1–2 çağrı).
+# Günlük koşu talebe bağlı en çok 2 niş × 12 ifade üretir; tavan ani bir döngü hatasına karşı.
+gunluk_ip_denetim = 120

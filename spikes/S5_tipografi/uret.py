@@ -2,6 +2,8 @@
 
 Çalıştır: uv run python spikes/S5_tipografi/uret.py
 Çıktı: calisma/S5/ (git dışı)
+
+Kayıt olarak duruyor: `el_yazisi_blok` ve GreatVibes Faz 2'de kaldırıldı; yeniden koşturmak için `git checkout 311682e`.
 """
 
 from __future__ import annotations
