@@ -1,0 +1,18 @@
+# Niş radarı (Faz 15) adayları: ABD'de hediye tişörtü alınan hobi, meslek ve aile rolleri. Her aday "<kelime> shirt" olarak Etsy
+# API'siyle ölçülür (findAllListingsActive: toplam ilan = rekabet, üst 100 ilanın günlük görüntülenme hızı = talep). Etsy sitesinden
+# kazıma yok: yalnız resmî API (mağaza riski). Mevcut nişler (config/nisler.toml) kıyas için ölçülür, aday sayılmaz.
+# Doymuş olduğu bilinenler (araştırma 06: teacher, nurse, dad, grandma, dog mom) bilinçli olarak listede yok.
+
+adaylar = [
+  "golf", "disc golf", "camping", "hiking", "kayaking", "cycling", "hunting", "fly fishing",
+  "gardening", "bird watching", "beekeeping", "chicken", "horse", "woodworking", "quilting", "sewing",
+  "book club", "board game", "chess", "baking", "bbq", "rv camping", "sourdough",
+  "firefighter", "truck driver", "mechanic", "farmer", "welder", "electrician", "librarian",
+  "drummer", "guitar", "choir", "dance mom", "cheer mom", "baseball mom", "soccer mom", "softball mom", "volleyball mom",
+  "hockey mom", "wrestling mom", "uncle", "godfather", "new dad", "retirement", "pharmacist", "dental hygienist",
+]
+mevcut = ["fishing", "pickleball", "knitting", "running", "aunt", "band mom", "bowling"]   # 2026-10-13: band mom ve bowling radardan nişe geçti; crochet knitting kartında
+ek = "shirt"
+ust_ilan = 100        # talep ölçülen üst ilan sayısı (score sıralı, alıcının gördüğü)
+min_yas_gun = 14      # bundan genç ilanın görüntülenme hızı gürültülü: hesaba girmez
+min_medyan_fiyat = 12.0   # altı: sonuçlar giysi değil desen/dijital ürün ("crochet shirt" medyanı $5.99 çıktı, 2026-10-13)

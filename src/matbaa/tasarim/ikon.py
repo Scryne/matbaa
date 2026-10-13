@@ -213,6 +213,34 @@ def dag(_: str) -> str:
     )
 
 
+def lobut(_: str) -> str:
+    """Bowling: lobut (baş, boyun, gövde) ve önünde üç parmak delikli top, aralarında boşluk."""
+    x = 290
+    lobut_ = (
+        f"M{x},110 C{x + 82},110 {x + 86},250 {x + 30},322 C{x + 140},420 {x + 142},660 {x + 72},870 "
+        f"L{x - 72},870 C{x - 142},660 {x - 140},420 {x - 30},322 C{x - 86},250 {x - 82},110 {x},110 Z"
+    )
+    serit = f"M{x - 27},288 H{x + 27} V314 H{x - 27} Z M{x - 33},334 H{x + 33} V358 H{x - 33} Z"  # boyun şeritleri (negatif)
+    delikler = " ".join(_daire(cx, cy, 34) for cx, cy in ((640, 540), (720, 515), (685, 610)))
+    return f'<path fill-rule="evenodd" d="{lobut_} {serit}"/><path fill-rule="evenodd" d="{_daire(680, 640, 250)} {delikler}"/>'
+
+
+def trampet(_: str) -> str:
+    """Bando: trampet (gövde, üst çember halkası, gergi çizgileri negatif) ve çapraz iki baget."""
+    govde = "M180,470 V740 A320,95 0 0 0 820,740 V470 A320,95 0 0 1 180,470 Z"
+    gergi = " ".join(
+        f"M{x},{y0} L{x + 46},{y0 + 110} L{x},{y0 + 220} L{x - 46},{y0 + 110} Z" for x, y0 in ((330, 520), (500, 545), (670, 520))
+    )
+    kid = f"trampet{next(_SAYAC)}"
+    return (
+        f'<defs><clipPath id="{kid}"><path d="{govde}"/></clipPath></defs>'
+        f'<path fill-rule="evenodd" d="{govde} {gergi}" clip-path="url(#{kid})"/>'
+        f'<path fill-rule="evenodd" d="M180,400 A320,95 0 1 0 820,400 A320,95 0 1 0 180,400 Z M240,400 A260,62 0 1 0 760,400 A260,62 0 1 0 240,400 Z"/>'
+        f'<path {C} stroke-width="44" d="M190,90 L560,330 M810,90 L440,330"/>'
+        f'<path d="{_daire(190, 90, 42)} {_daire(810, 90, 42)}"/>'
+    )
+
+
 def kamyon(_: str) -> str:
     """Kargo kamyonu: kasa, kabin (camı negatif), iki tekerlek (göbeği negatif), aralarında boşluk."""
     kasa = "M60,300 H600 V700 H60 Z"
@@ -224,7 +252,7 @@ def kamyon(_: str) -> str:
 IKONLAR = {
     "balik": balik, "igne": igne, "mantar": mantar, "kurek": kurek, "top": top, "yumak": yumak,
     "kronometre": kronometre, "madalya": madalya, "kalp": kalp, "parilti": parilti, "hediye": hediye,
-    "agac": agac, "kar": kar, "kep": kep, "tac": tac, "dag": dag, "kamyon": kamyon,
+    "agac": agac, "kar": kar, "kep": kep, "tac": tac, "dag": dag, "kamyon": kamyon, "lobut": lobut, "trampet": trampet,
 }  # fmt: skip
 
 NIS_IKONLARI = {
@@ -235,6 +263,8 @@ NIS_IKONLARI = {
     "aunt": ["kalp", "parilti"],
     "milestone": ["tac", "parilti"],
     "senior_mom": ["kep", "kalp"],
+    "band_mom": ["trampet", "kalp"],
+    "bowling": ["lobut"],
 }
 MEVSIM_IKONLARI = ["agac", "kar", "hediye"]
 GUNESSIZ = {"dag"}  # kendi güneşi olan manzara: güneş amblemine konursa iç içe güneş olur

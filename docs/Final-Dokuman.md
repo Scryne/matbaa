@@ -141,6 +141,13 @@ iade kararı.
   gelince `mod = "api"`: `etsy-kargo-profili` aynı adlı profili yeniden kullanır, `etsy-esle` mevcut ilanları eşler; kayıp yok. Elle modda
   sipariş defteri ve görüntülenme verisi (Faz 8/13) yok, o yüzden API yolu hâlâ hedef.
 
+- **K-28 Niş radarı ve ilk iki yeni niş (2026-10-13, Faz 15):** Kaynak yalnız resmî Etsy API'si (`findAllListingsActive`): Etsy sitesinden
+  kazıma mağaza riski. Aday başına "<kelime> shirt": rekabet = aktif ilan sayısı, talep = score sıralı üst 100 ilanın günlük görüntülenme
+  hızı medyanı (14 günden genç ilan dışarıda), fırsat = talep / log10(rekabet). Marka kapısı ve "giysi mi" süzgeci (medyan fiyat < $12 →
+  desen/dijital; "crochet shirt" $5.99 çıktı). İlk tarama: mevcut nişlerin fırsat medyanı 0.0185; band mom 0.46 (9.7 bin ilan, sezon
+  sonbahar), bowling 0.25 (12 bin ilan, yıl boyu). İkisi nişe alındı (kart + çizim: trampet, lobut). Radar haftalık raporla yenilenir
+  (`calisma/radar/`); seçim Aria'nın, radar yalnız sıralar.
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.

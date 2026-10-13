@@ -70,3 +70,25 @@ roller = ["Senior Mom", "Senior Dad", "Grad Mom", "Proud Mom", "Proud Dad", "Gra
 kacin = ["school names, mascots or team names", "'Proud Mom Of A 2027 Graduate' word for word (very common)", "brand names", "song lyrics or movie lines"]
 yedek_etiketler = ["senior mom shirt", "class of 2027", "graduation gift", "grad mom shirt", "senior mom gift", "graduation shirt", "proud mom shirt", "senior night shirt", "2027 graduate", "senior dad shirt", "grad family shirt", "graduation party", "senior year gift"]
 ornek_ton = ["Senior Mom: Running On Tissues And Coffee", "I Raised A Graduate (With Snacks)", "Loudest Cheer In The Stands"]
+
+# Faz 15 niş radarı (2026-10-13, calisma/radar/2026-10-13.md): fırsat mevcut nişlerin medyanının ~25 (band mom) ve ~13 (bowling) katı;
+# marka kapısı temiz. Band mom sezonu sonbahar (bando gösterileri, yarışmalar); bowling yıl boyu, baba/dede hediyesi kalıbı.
+[band_mom]
+ad = "Marching band and band parents"
+alici = "American parents (mostly moms, also dads and grandparents) of middle and high school marching band and concert band kids; they wear shirts at football-game halftime shows, competitions and concerts, and buy gifts for band boosters. Peak Aug-Dec."
+ton = "proud, funny insider band-parent humor: early call times, long rehearsals, hauling instruments, band camp, competition season, cheering loudest in the stands"
+jargon = ["marching band", "halftime", "band camp", "drumline", "color guard", "pit crew", "section leader", "drum major", "competition season", "band booster", "band kid", "sousaphone", "clarinet", "trumpet", "flute", "snare", "uniform", "bus ride", "Friday night lights", "concert season"]
+roller = ["Band Mom", "Band Dad", "Band Grandma", "Band Parent", "Band Booster", "Drumline Mom"]
+kacin = ["school names, mascots or team names", "song titles or lyrics", "instrument brand names (Yamaha, Conn, Pearl)", "'Band Mom' with a school name", "crude humor"]
+yedek_etiketler = ["band mom shirt", "marching band mom", "band parent gift", "band mom gift", "drumline mom", "band booster shirt", "marching band gift", "color guard mom", "band dad shirt", "band camp shirt", "concert band gift", "band season shirt", "halftime show shirt"]
+ornek_ton = ["Loud And Proud Band Mom", "I Survived Band Camp (Barely)", "Halftime Is My Kickoff"]
+
+[bowling]
+ad = "Bowling (league bowlers, dads and grandpas)"
+alici = "American league and casual bowlers and the people shopping for them: dads, grandpas, moms, teammates buying matching team shirts; gifts for birthdays, Father's Day, Christmas and league nights."
+ton = "retro, punny bowling-alley humor: strikes, spares, gutter balls, league night, rented shoes, being on a roll, friendly team rivalry"
+jargon = ["strike", "spare", "gutter ball", "split", "turkey", "league night", "bowling alley", "pins", "lane", "300 game", "perfect game", "bowling shoes", "on a roll", "ten pin", "handicap", "frame", "pocket"]
+roller = ["Dad", "Grandpa", "Papa", "Mom", "Team Captain", "League Champ"]
+kacin = ["brand names (Brunswick, Storm, Ebonite, AMF)", "'The Big Lebowski' or any movie references and quotes", "bowling alley or league names", "alcohol-centered jokes", "crude innuendo (ball jokes)"]
+yedek_etiketler = ["bowling shirt", "bowling gift", "bowling team shirt", "bowler gift", "league night shirt", "funny bowling tee", "bowling dad shirt", "bowling grandpa", "retro bowling shirt", "bowling lover gift", "gift for bowler", "strike shirt", "bowling league gift"]
+ornek_ton = ["I'm Here For The Strikes", "Spare Me The Advice", "League Night Is My Therapy"]

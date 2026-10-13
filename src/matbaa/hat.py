@@ -377,6 +377,18 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
 
         if _adim(rapor, "haftalik_rapor", haftalik, yazdir):
             yazdir(f"haftalık rapor: {rapor['haftalik_rapor']}")
+        if _etsy_hazir():  # Faz 15: niş radarı haftada bir, raporla birlikte (calisma/radar/)
+
+            def radar_tara():
+                from matbaa import radar
+                from matbaa.entegrasyon.etsy import Etsy
+                from matbaa.ip import marka
+
+                s = radar.tara(Etsy(), marka.dizin(), yazdir=yazdir)
+                radar.kaydet(s)
+                return s["one_cikan"]
+
+            _adim(rapor, "radar", radar_tara, yazdir)
     rapor["alarmlar"] = alarmlar
     rapor["sure_sn"] = round(time.time() - bas)
     SON_KOSU.parent.mkdir(parents=True, exist_ok=True)
