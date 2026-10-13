@@ -64,3 +64,24 @@ renkler = [
   { ad = "Dark Heather", murekkep = "acik", hex = "#3d3f43" },
 ]
 detay = "Cozy 50/50 cotton-poly hoodie with a double-lined hood, front pouch pocket and soft fleece lining."
+
+[kupa]
+# Faz 14 (2026-10-13): yalnız satışı olan tasarımlara açılır (`yalniz_satan`); her tasarıma kupa ilanı ve metni üretilmez.
+# Printify 478 "Ceramic Mug (11oz, 15oz)", SwiftPOD (39): maliyet geçici ürünle okundu (11oz $5.75, 15oz $6.24), ABD kargo $6.69.
+# Fiyat: ücretsiz kargolu hobi kupaları ~$20–25; $22.99'da net ~$5.11 (Offsite'tan gelen satışta ~$0.97, pozitif).
+ad = "White Ceramic Mug"
+blank = "Ceramic Mug"
+etsy_turu = "Mug"
+fiyat = 22.99
+kargo = 0.0
+buyuk_beden_ek = { "15oz" = 2.00 }
+bedenler = ["11oz", "15oz"]
+tahmini_maliyet = 5.75
+tahmini_abd_kargo = 6.69
+renkler = [{ ad = "White", murekkep = "koyu", hex = "#ffffff" }]
+detay = "Glossy white ceramic mug in 11oz or 15oz, with the design printed on both sides."
+yalniz_satan = true
+govde_etiketi = "Mug"
+yuzey = "mug"
+beden_metni = "Sizes: 11oz is the classic coffee mug size, 15oz holds a bigger pour. The design is printed on both sides of the mug."
+bakim_metni = "Care: hand washing is recommended to keep the print bright for longer."

@@ -91,3 +91,22 @@ def test_cizimli_sablonlar_nis_varken_once_denenir():
     assert adaylar[0][0] in sec.IKONLU
     yazili = sec._adaylar("", ["THE BIGGER", "ONE GOT AWAY"], "", random.Random(5), [])
     assert not {a[0] for a in yazili} & sec.IKONLU
+
+
+def test_kupa_gorseli_iki_kopya_ve_baski_alanina_sigar(tmp_path):
+    """Faz 14: kupa görseli 2475x1155, tasarım iki kopya (sol/sağ yarıda), kenarlarda pay."""
+    from PIL import Image
+
+    from matbaa.tasarim import kupa
+
+    c = ORNEKLER["ikon_yigin"]()
+    yol = tmp_path / "koyu.png"
+    render.goruntu(c.svg(KOYU, VURGU)).save(yol)
+    img = kupa.kupa_gorseli(yol)
+    assert img.size == (kupa.KUPA_G, kupa.KUPA_Y)
+    a = np.asarray(img.getchannel("A")) > 0
+    sol, sag = a[:, : kupa.KUPA_G // 2], a[:, kupa.KUPA_G // 2 :]
+    assert sol.sum() == pytest.approx(sag.sum(), rel=0.02) and sol.any()
+    ys, xs = np.nonzero(a)
+    assert xs.min() > 50 and xs.max() < kupa.KUPA_G - 50 and ys.min() > 40 and ys.max() < kupa.KUPA_Y - 40
+    assert isinstance(img, Image.Image)

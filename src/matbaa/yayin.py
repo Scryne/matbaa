@@ -11,6 +11,7 @@ import re
 import tomllib
 from datetime import UTC, datetime
 from functools import cache
+from pathlib import Path
 
 from matbaa import db, tavan
 from matbaa.ayar import CONFIG, KOK
@@ -50,6 +51,8 @@ def printify_kesif(p: pf.Printify) -> dict:
     """Katalog eşlemesi: her ürün için blueprint ve ABD sağlayıcı adayları. Seçim (K-20: numunesiz) config'e yazılır."""
     sonuc = {}
     for urun, a in ayar()["printify"].items():
+        if not a.get("blueprint_ara"):  # markasız katalog ürünü (kupa): blueprint elle seçildi
+            continue
         bps = p.blueprint_bul(a["blueprint_ara"])
         sonuc[urun] = []
         for b in bps[:3]:
@@ -64,7 +67,17 @@ def printify_kesif(p: pf.Printify) -> dict:
     return sonuc
 
 
-def _gorseller(p: pf.Printify, tasarim_id: int, dosyalar: dict, onbellek: dict) -> dict:
+def _gorseller(p: pf.Printify, tasarim_id: int, dosyalar: dict, onbellek: dict, urun: str = "") -> dict:
+    if urun == "kupa":  # Faz 14: yatay sarma görseli, tişörtün açık zemin sürümünden üretilir
+        from matbaa.tasarim import kupa
+
+        anahtar = (tasarim_id, "kupa")
+        if anahtar not in onbellek:
+            yol = KOK / Path(dosyalar["koyu_png"]).parent / "kupa.png"
+            if not yol.exists():
+                kupa.kaydet(KOK / dosyalar["koyu_png"], yol)
+            onbellek[anahtar] = {"koyu": p.gorsel_yukle(yol, f"matbaa-{tasarim_id:05d}-kupa.png")}
+        return onbellek[anahtar]
     if tasarim_id not in onbellek:
         onbellek[tasarim_id] = {
             m: p.gorsel_yukle(KOK / dosyalar[f"{m}_png"], f"matbaa-{tasarim_id:05d}-{m}.png") for m in ("koyu", "acik")
@@ -83,6 +96,39 @@ def _yayin_bekleyen(c, tasarim_id: int) -> list[tuple[str, str]]:
         if adim in YAYIN_ADIMLARI:
             sonuc.append((urun, adim))
     return sonuc
+
+
+def kupa_ac(c, ilan_yaz, yazdir=print) -> dict:
+    """Faz 14: satışı olan (iptal değil) tasarıma `yalniz_satan` ürünleri (kupa) açar: ilan metni + `urun` satırı; yayını `yayinla` yapar.
+
+    `ilan_yaz(satirlar, nis, urun) -> Ilan`: hat'ın marka süzgeçli ilan yazıcısı (döngüsel içe aktarmayı önlemek için dışarıdan).
+    """
+    from matbaa import siparis
+
+    kosullu = [u for u, p in urunler().items() if p.get("yalniz_satan")]
+    sayac = {"acilan": 0}
+    for urun in kosullu:
+        for t_id, sat, nis in c.execute(
+            f"""SELECT DISTINCT t.id, i.satirlar, i.nis FROM siparis s JOIN tasarim t ON t.id = s.tasarim_id JOIN ifade i ON i.id = t.ifade_id
+                WHERE {siparis.GECERLI.replace("coalesce(durum", "coalesce(s.durum")} AND t.durum = 'yayinda'
+                AND NOT EXISTS (SELECT 1 FROM urun u WHERE u.tasarim_id = t.id AND u.urun = ?)""",
+            (urun,),
+        ).fetchall():
+            ilan = ilan_yaz(json.loads(sat), nis, urun)
+            if [x for x in ilan.sorunlar if not x.startswith("markaya çarpan")]:
+                yazdir(f"  {urun} ilanı yazılamadı ({t_id}): {ilan.sorunlar}")
+                continue
+            p_ = urunler()[urun]
+            c.execute(
+                "INSERT OR REPLACE INTO ilan (tasarim_id, urun, baslik, etiketler, aciklama, alt_metin, fiyat, kargo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (t_id, urun, ilan.baslik, json.dumps(ilan.etiketler), ilan.aciklama, ilan.alt_metin, p_["fiyat"], p_["kargo"]),
+            )
+            c.execute("INSERT OR IGNORE INTO urun (tasarim_id, urun) VALUES (?, ?)", (t_id, urun))
+            db.olay(c, "urun", t_id, None, f"{urun}:bekliyor", "satan tasarım (Faz 14)")
+            c.commit()
+            sayac["acilan"] += 1
+            yazdir(f"  {urun} açıldı: tasarım {t_id}")
+    return sayac
 
 
 def etsy_eksik() -> list[str]:
@@ -110,7 +156,11 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
         yazdir(f"  günlük sınır doldu ({sayac['sinir']} tasarım, mağaza yaşı {magaza_yasi(c)} gün)")
         return sayac
     katalog, ycfg = urunler(), ayar()["printify"]
-    eksik = [u for u in katalog if not ycfg.get(u, {}).get("blueprint_id")]
+    # Koşullu ürün (kupa) yalnız bekleyen satırı varsa eşleme ister: eşlenmemiş kupa tişört yayınını durdurmasın.
+    bekleyen = {r[0] for r in c.execute("SELECT DISTINCT urun FROM urun WHERE durum IN ('bekliyor', 'olusturuldu', 'hata')")}
+    eksik = [
+        u for u in katalog if not ycfg.get(u, {}).get("blueprint_id") and (not katalog[u].get("yalniz_satan") or u in bekleyen)
+    ]
     if eksik:
         raise RuntimeError(f"Printify kataloğu eşlenmemiş: {eksik} → `uv run matbaa printify-kesif`, sonra config/yayin.toml")
     varyant_onbellek: dict[str, dict] = {}
@@ -118,7 +168,9 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
     # Yalnız yayın bekleyen ürünü olan tasarımlar günlük sınırdan pay alır: Etsy eşlemesini bekleyen tasarım yer tutmaz.
     tasarimlar = [
         (t, b)
-        for t in c.execute("SELECT id, dosyalar FROM tasarim WHERE durum = 'onaylandi' ORDER BY durum_zamani").fetchall()
+        for t in c.execute(
+            "SELECT id, dosyalar FROM tasarim WHERE durum IN ('onaylandi', 'yayinda') ORDER BY durum = 'onaylandi', durum_zamani"
+        ).fetchall()
         if (b := _yayin_bekleyen(c, t["id"]))
     ][:kalan]
     for t, bekleyen in tasarimlar:
@@ -140,7 +192,7 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
                         varyant_onbellek[urun] = pf.varyant_sec(p.varyantlar(bp, sg), k["renkler"], k["bedenler"])
                     govde = pf.urun_govdesi(
                         il["baslik"], il["aciklama"], json.loads(il["etiketler"]), bp, sg,
-                        varyant_onbellek[urun], _gorseller(p, t["id"], dosyalar, gorsel_onbellek), il["fiyat"], k.get("buyuk_beden_ek", {}),
+                        varyant_onbellek[urun], _gorseller(p, t["id"], dosyalar, gorsel_onbellek, urun), il["fiyat"], k.get("buyuk_beden_ek", {}),
                     )  # fmt: skip
                     urun_id = p.urun_olustur(govde)["id"]
                     # Kimlik yayından önce kaydedilir: yayın düşerse sonraki koşu aynı ürünü yayınlar, ikincisini açmaz.

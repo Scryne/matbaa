@@ -179,7 +179,7 @@ def metin(c=None, sinir: int = 50, yazdir=print) -> dict:
     """kalite_ok tasarımlar → her ürün için ilan metni → onay kuyruğu."""
     c = c or db.baglan()
     sayac = {"tasarim": 0, "ilan": 0, "ret": 0}
-    urun_adlari = list(urunler())
+    urun_adlari = [u for u, p in urunler().items() if not p.get("yalniz_satan")]  # kupa: yalnız satan tasarıma (Faz 14)
     satirlar = c.execute(
         "SELECT t.id, i.satirlar, i.nis FROM tasarim t JOIN ifade i ON i.id = t.ifade_id WHERE t.durum = 'kalite_ok' ORDER BY t.id LIMIT ?",
         (sinir,),
@@ -334,6 +334,7 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
         from matbaa.entegrasyon.printify import Printify
 
         p = Printify()
+        _adim(rapor, "kupa", lambda: yayin.kupa_ac(c, _ilan_yaz, yazdir), yazdir)
         _adim(
             rapor, "yayin", lambda: yayin.yayinla(c, p, yazdir), yazdir
         )  # tavanda durmak beklenen davranış: alarm değil, kayıtta

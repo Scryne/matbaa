@@ -65,7 +65,7 @@ def istem(satirlar: list[str], nis: str, urun: str) -> str:
     k, u = nisler()[nis], urunler()[urun]
     return "\n".join(
         [
-            f"Design text printed on the garment: {' / '.join(satirlar)}",
+            f"Design text printed on the {u.get('yuzey', 'garment')}: {' / '.join(satirlar)}",
             f"Product: {u['ad']} ({u['etsy_turu']})",
             f"Niche and buyer: {k['ad']}. {k['alici']}",
             f"Useful search vocabulary: {', '.join(k['jargon'][:10])}; roles: {', '.join(k['roller'])}",
@@ -84,9 +84,9 @@ def olustur(satirlar: list[str], nis: str, urun: str) -> Ilan:
         [
             ham["intro"].strip(),
             f"Printed text: {' / '.join(satirlar)}",
-            f"Garment: {u['ad']}. {u['detay']}",
-            BEDEN,
-            BAKIM,
+            f"{u.get('govde_etiketi', 'Garment')}: {u['ad']}. {u['detay']}",
+            u.get("beden_metni", BEDEN),
+            u.get("bakim_metni", BAKIM),
             URETIM_SURESI,
             URETIM_ORTAGI,
             AI_BEYANI,

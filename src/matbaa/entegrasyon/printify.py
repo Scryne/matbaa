@@ -158,6 +158,8 @@ def varyant_sec(varyantlar: list[dict], renkler: list[dict], bedenler: list[str]
         if beden not in bedenler:
             continue
         eslesen = next((r for r in renkler if renk.lower() in (r["ad"].lower(), "solid " + r["ad"].lower())), None)
+        if not renk and len(renkler) == 1:  # renk seçeneği olmayan ürün (kupa: yalnız "size") katalogdaki tek renktir
+            eslesen = renkler[0]
         if eslesen:
             gruplar[eslesen["murekkep"]].append(v)
     return gruplar

@@ -279,6 +279,24 @@ def test_printify_siparis_defteri_net_iptal_ve_gecikme(ortam):  # K-27, Faz 8-9 
     assert toplam == 2  # iptal gelirden düşer
 
 
+def test_kupa_yalniz_satan_tasarima_acilir(ortam):  # Faz 14
+    from matbaa.entegrasyon.printify import varyant_sec
+    from matbaa.ilan.metin import Ilan
+
+    assert [
+        v["id"]
+        for v in varyant_sec([{"id": 1, "options": {"size": "11oz"}}], [{"ad": "White", "murekkep": "koyu"}], ["11oz"])["koyu"]
+    ] == [1]
+    yaz = lambda s, n, u: Ilan("Funny Fishing Mug", [f"fishing mug {i}" for i in range(13)], "a", "alt")  # noqa: E731
+    assert yayin.kupa_ac(ortam, yaz, yazdir=lambda *_: None)["acilan"] == 0  # satış yok
+    ortam.execute("UPDATE tasarim SET durum = 'yayinda' WHERE id = 1")
+    ortam.execute("INSERT INTO siparis (etsy_receipt_id, tasarim_id, brut, net, durum) VALUES ('r1', 1, 33.99, 9, 'paid')")
+    ortam.execute("INSERT INTO siparis (etsy_receipt_id, tasarim_id, brut, net, durum) VALUES ('r2', 2, 33.99, 9, 'canceled')")
+    assert yayin.kupa_ac(ortam, yaz, yazdir=lambda *_: None)["acilan"] == 1  # iptal edilen tasarım 2'ye açılmaz
+    assert ortam.execute("SELECT durum FROM urun WHERE tasarim_id = 1 AND urun = 'kupa'").fetchone()[0] == "bekliyor"
+    assert yayin.kupa_ac(ortam, yaz, yazdir=lambda *_: None)["acilan"] == 0  # ikinci kez açılmaz
+
+
 def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
     p = SahtePrintify(dus={2})  # sweatshirt düşer
     yayin.yayinla(ortam, p, yazdir=lambda *_: None)
