@@ -14,7 +14,7 @@ hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 77, saglayici_id = 410
 [etsy]
 # K-27: "api" = kendi Etsy uygulamamızla eşleme (aşağıdaki iki kimlik); "elle" = API onayı gelmeden yedek yol: Printify yayınlar,
 # üretim ortağını kendisi bağlar, kargo profili Etsy'de elle kurulan "Free US shipping" (elle_kargo_hazir = true olunca yayın açılır).
-mod = "elle"
+mod = "api"  # 2026-10-13 21:20: Etsy kişisel uygulama onaylandı, OAuth alındı
 elle_kargo_hazir = true  # 2026-10-13: Etsy'de "Free US shipping" (33014, yalnız ABD, ücretsiz) + "Made to order (3-5 days)" kuruldu
-uretim_ortagi_id = 0   # etsy_yetki.py çıktısındaki Printify ortağının kimliği; 0 iken yayın durur
+uretim_ortagi_id = 5837094   # Etsy "Printify" üretim ortağı (vitrin başlığı "A print-on-demand print shop"); 0 iken yayın durur
 kargo_profili_id = 317951156022   # Etsy "Free US shipping" (elle kuruldu 2026-10-13); `uv run matbaa etsy-kargo-profili` açar ve yazar: ABD'ye ücretsiz kargo (K-23); 0 iken yayın durur

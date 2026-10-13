@@ -112,6 +112,9 @@ def main() -> None:
         .get("results", [])
     )
     printify = [p for p in ortaklar if "printify" in str(p.get("partner_name", "")).lower()]
+    # API ortağı vitrindeki "Descriptive title" ile döndürüyor ("A print-on-demand print shop", 2026-10-13): tek ortak varsa odur.
+    if not printify and len(ortaklar) == 1:
+        printify = ortaklar
     if len(printify) == 1:
         ortak_yaz(int(printify[0]["production_partner_id"]))
         print(f"Üretim ortağı: {printify[0].get('partner_name')} ({printify[0]['production_partner_id']}) → config/yayin.toml")
