@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -35,6 +37,16 @@ def test_kuyruk(istemci):
     assert [t["id"] for t in d["tasarimlar"]] == [1, 2]
     assert d["tasarimlar"][0]["ilanlar"]["tisort"]["net"] > 0
     assert d["tasarimlar"][0]["kanit"]["aday_markalar"] == ["SLOGAN"]
+
+
+def test_sayfanin_okudugu_her_alan_apide_var(istemci):
+    """Sayfa `veri.<alan>` okur; API'de olmayan alan sayfayı "yükleniyor…"da dondurur (02c149c'de `kar` böyle kaldı)."""
+    import matbaa.panel.app as panel
+
+    alanlar = set(re.findall(r"\bveri\.(\w+)", Path(panel.SAYFA).read_text(encoding="utf-8")))
+    d = istemci.get("/api/kuyruk").json()
+    assert alanlar and alanlar <= set(d), alanlar - set(d)
+    assert {"siparis", "net_usd"} <= set(d["kar"])
 
 
 def test_onay_ret_ve_cifte_karar(istemci):

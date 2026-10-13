@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from PIL import Image
 from pydantic import BaseModel
 
-from matbaa import db, fiyat
+from matbaa import db, fiyat, siparis
 from matbaa.ayar import KOK
 
 SAYFA = Path(__file__).with_name("index.html")
@@ -98,6 +98,7 @@ def kuyruk() -> dict:
         "urun_adlari": {u: p["etsy_turu"] for u, p in urun_kat.items()},
         "ret_nedenleri": RET_NEDENLERI,
         "ozet": ozet,
+        "kar": siparis.ozet(c),
     }
 
 
