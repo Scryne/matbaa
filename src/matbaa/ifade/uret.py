@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import re
 import tomllib
 from dataclasses import dataclass
 from datetime import date
@@ -26,7 +27,10 @@ SEMA = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "top": {"type": "string", "description": "optional small line above, max 22 chars, or empty"},
+                    "top": {
+                        "type": "string",
+                        "description": "optional small printed line above (role, year, place), max 22 chars, or empty; never a gift label or occasion description",
+                    },
                     "main": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 3},
                     "bottom": {"type": "string", "description": "optional small line below, max 30 chars, or empty"},
                     "why": {"type": "string", "description": "one short sentence: who buys it and why it lands"},
@@ -42,8 +46,12 @@ SISTEM = (
     "You write original, sellable T-shirt slogans for an Etsy print-on-demand shop that sells to American buyers. "
     "Every slogan must be your own wording: never reuse a famous slogan, song lyric, band name, movie or TV line, brand name, "
     "team name, or celebrity reference, and never parody them with a word swap. Puns on everyday idioms are fine. "
-    "Keep it kind and gift-friendly; no crude, sexual, political, or alcohol-centered jokes."
+    "Keep it kind and gift-friendly; no crude, sexual, political, or alcohol-centered jokes. "
+    "Every line is printed on the shirt: never write shop or listing language such as 'Gift for Dad', 'Thank-You Gift', "
+    "'Pregnancy Reveal' or 'Christmas Present' as a line; the gift angle belongs in the joke, not in a label."
 )
+# Basılı satırda ilan dili: ilk iki turda "PREGNANCY REVEAL" ve "Booster Thank-You Gift" tişörte basılacaktı (2026-10-13).
+ILAN_DILI = re.compile(r"\b(gift|gifts|present|reveal|announcement|shirt|tee|t-shirt)\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -68,6 +76,8 @@ class Aday:
             return f"ana mesaj > {MAKS_ANA_KELIME} kelime"
         if sum(len(s.split()) for s in self.satirlar) > MAKS_KELIME:
             return f"> {MAKS_KELIME} kelime"
+        if any(ILAN_DILI.search(s) for s in (self.ust, self.alt)):
+            return "küçük satırda ilan dili (gift/reveal/shirt): tişörte basılacak yazı değil"
         return None
 
 

@@ -70,3 +70,14 @@ def test_mevsim_pencereleri_yil_donumu_ve_nis_filtresi():
     assert "Graduation" in adlar("senior_mom", date(2027, 4, 20))
     assert "Graduation" not in adlar("fishing", date(2027, 4, 20))  # niş filtresi
     assert adlar("fishing", date(2027, 7, 20)) == set()
+
+
+@pytest.mark.parametrize(
+    ("ust", "alt", "hatali"),
+    [("Booster Thank-You Gift", "", True), ("PREGNANCY REVEAL", "", True), ("", "Best gift ever", True),
+     ("EST. 2026", "Snacks Provided", False), ("Santa's Helper", "", False)],
+)  # fmt: skip
+def test_kucuk_satirda_ilan_dili_basilmaz(ust, alt, hatali):
+    from matbaa.ifade.uret import Aday
+
+    assert (Aday(ust, ("FISHING BUDDY",), alt, "").bicim_hatasi() is not None) == hatali
