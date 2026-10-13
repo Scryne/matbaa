@@ -59,6 +59,11 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   hesabı ve Seller App kaydı (Aria yönlendirir).
 - **Bitti Kriteri:** tablodaki gibi.
 - **Notlar:** Kod fazları (1–5, 8) buna bağlı değil, paralel ilerler. Faz 6–7 ve 10 buna bağlı.
+- **Durum (2026-10-13 öğleden sonra):** Etsy hesabı açıldı, ödeme/IBAN bilgisi girildi, kimlik doğrulaması (Persona) Etsy
+  incelemesinde (1–3 gün, e-posta gelecek). Printify hesabı + kart + token tamam (`.env`); Printify mağazası "My new store"
+  (29308592) henüz Etsy'ye bağlı değil. Kalan: Etsy onayı → billing + 2FA adımları → Printify'da "Connect your Etsy store" →
+  Etsy geliştirici uygulaması → (Aria) `scripts/etsy_yetki.py`, `matbaa printify-kesif` (PRINTIFY_SHOP_ID), `matbaa etsy-kargo-profili`,
+  ilk 3 ilan. Müşavir sorusu ve panel onayı (Faz 5) henüz yapılmadı.
 
 ### Faz 1: İskelet ve sağlık ✅ (2026-10-13)
 - **Yapılan:** private `Scryne/matbaa`, `main`; CI (ruff check + format + pytest) main'de yeşil; Dependabot (uv + actions), güvenlik uyarıları açık;
