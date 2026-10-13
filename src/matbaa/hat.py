@@ -61,7 +61,10 @@ def _yapi(satir) -> dict:
     s = json.loads(satir["satirlar"])
     alt = s[-1] if len(s) > 2 and s[-1] != s[-1].upper() else ""
     govde = [x for x in s if x != alt] if alt else s
-    return {"ust": "", "ana": govde, "alt": alt}
+    ust = ""
+    if len(govde) > 3 or (len(govde) > 1 and govde[0] != govde[0].upper() and all(x == x.upper() for x in govde[1:])):
+        ust, govde = govde[0], govde[1:]  # "Papa's Rules / 1. CAST / 2. WAIT / 3. REPEAT": ilk satır başlık
+    return {"ust": ust, "ana": govde, "alt": alt}
 
 
 def yeniden_ciz(c=None, yazdir=print) -> dict:
@@ -245,7 +248,12 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
         if os.environ.get("ETSY_KEYSTRING"):
             from matbaa.entegrasyon.etsy import Etsy
 
-            rapor["etsy"] = yayin.etsy_esle(c, p, Etsy(), yazdir)
+            e = Etsy()
+            rapor["etsy"] = yayin.etsy_esle(c, p, e, yazdir)
+            from matbaa import siparis
+
+            rapor["siparis"] = siparis.izle(c, e, p, yazdir=yazdir)
+            rapor["kar_30g"] = siparis.ozet(c)
     else:
         rapor["yayin"] = "Printify anahtarı yok (Faz 0): yayın atlandı"
     rapor["durum"] = durum(c)

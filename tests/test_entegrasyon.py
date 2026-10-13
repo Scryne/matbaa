@@ -220,3 +220,63 @@ def test_uretim_ortagi_yoksa_etsy_esle_durur(ortam, monkeypatch):
     monkeypatch.setattr(yayin, "ayar", lambda: {"isinma": [], "printify": {}, "etsy": {"uretim_ortagi_id": 0}})
     with pytest.raises(RuntimeError, match="uretim_ortagi_id"):
         yayin.etsy_esle(ortam, SahtePrintify(), SahteEtsy())
+
+
+# --- sipariş defteri ---
+
+
+class SahteEtsyMakbuz:
+    def __init__(self, makbuzlar):
+        self.m = makbuzlar
+
+    def makbuzlar(self, min_son_degisim=None):
+        return self.m
+
+
+class SahtePrintifySiparis:
+    def siparisler(self, sayfa):
+        return {
+            "data": [
+                {
+                    "id": "po1",
+                    "metadata": {"shop_order_id": 111},
+                    "total_price": 1265,
+                    "total_shipping": 429,
+                    "total_tax": 0,
+                    "shipments": [{"number": "1Z999"}],
+                }
+            ]
+        }
+
+
+def test_siparis_net_ve_gecikme_alarmi(tmp_path, monkeypatch):
+    from datetime import UTC, datetime
+
+    from matbaa import siparis
+
+    monkeypatch.setattr(db, "DB", tmp_path / "s.db")
+    c = db.baglan()
+    simdi = datetime(2026, 11, 20, tzinfo=UTC)
+    para = lambda x: {"amount": round(x * 100), "divisor": 100}  # noqa: E731
+    makbuzlar = [
+        {"receipt_id": 111, "grandtotal": para(35.98), "total_tax_cost": para(2.0), "total_vat_cost": para(0), "total_shipping_cost": para(4.99),
+         "create_timestamp": int(datetime(2026, 11, 18, tzinfo=UTC).timestamp()), "status": "Paid", "is_shipped": False},
+        {"receipt_id": 222, "grandtotal": para(33.98), "total_tax_cost": para(0), "total_vat_cost": para(0), "total_shipping_cost": para(4.99),
+         "create_timestamp": int(datetime(2026, 11, 9, tzinfo=UTC).timestamp()), "status": "Paid", "is_shipped": False},
+    ]  # fmt: skip
+    s = siparis.izle(c, SahteEtsyMakbuz(makbuzlar), SahtePrintifySiparis(), simdi, yazdir=lambda *_: None)
+    assert s["yeni"] == 2
+    assert s["alarm"] == ["makbuz 222: 9 iş günü, takip yok"]  # 111'in takibi var ve yeni
+    r = c.execute("SELECT printify_order_id, brut, net, takip FROM siparis WHERE etsy_receipt_id = '111'").fetchone()
+    assert tuple(r)[:2] == ("po1", 33.98) and r[3] == "1Z999"
+    assert r[2] == pytest.approx(33.98 - 16.94 - (33.98 - 16.94 - r[2]), abs=0.01) and 5 < r[2] < 12
+    assert siparis.izle(c, SahteEtsyMakbuz(makbuzlar), SahtePrintifySiparis(), simdi, yazdir=lambda *_: None)["guncel"] == 2
+    assert siparis.ozet(c, gun=100000)["siparis"] == 2
+
+
+def test_is_gunu_farki():
+    from datetime import datetime
+
+    from matbaa.siparis import is_gunu_farki
+
+    assert is_gunu_farki(datetime(2026, 11, 13), datetime(2026, 11, 16)) == 1  # Cuma → Pazartesi

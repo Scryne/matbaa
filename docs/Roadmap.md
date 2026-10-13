@@ -14,18 +14,28 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 0 | Hesaplar ve para (Scryne) | 🔄 Devam Ediyor | S1 müşavir cevabı yazıldı; Etsy mağazası açık (kimlik + banka doğrulandı); Printify hesabı + kart çalışıyor; 2 numune elde ve fotoğraflı değerlendirildi; Printify token + Etsy Seller App anahtarı `.env`'de |
 | 1 | İskelet ve sağlık | ✅ Tamamlandı | Private repo GitHub'da; CI (ruff + pytest) varsayılan dalda yeşil; `.github/dependabot.yml`; model kimlikleri `config/modeller.toml`'da; `.env.example`; SQLite şeması + durum makinesi testli |
 | 2 | Tasarım motoru v1 | 🔄 Devam Ediyor | En az 6 şablon, 20+ OFL font, çeşitlilik kuralı; 3 niş × 10 ifade → 30 tasarımın hepsi kapılardan geçiyor ve göz kontrolünde 30/30 yayınlanabilir; mutasyon testleri yeşil |
-| 3 | İfade üretimi + IP kapısı | 🔄 Devam Ediyor | Niş kartları `config/nisler.toml`'da; Claude ile niş başına 30 aday → USPTO + Jev kapısı; 90 adayın kapı kayıtları SQLite'ta; Aria'nın kör örneklemesinde (30 temiz ifade) riskli kaçak 0; USPTO verisi 35 günlük tazelik kontrolüyle |
-| 4 | İlan metni | ⏳ Bekliyor | Başlık, 13 etiket (≤ 20 karakter), açıklama (AI beyanı + üretim ortağı + beden/bakım), öznitelikler; Etsy kural doğrulayıcı testli; 30 ilan metni doğrulayıcıdan geçiyor |
-| 5 | Onay paneli | ⏳ Bekliyor | Yerel panel: tasarım önizleme (koyu/açık kumaş), ifade, kapı nedenleri, ilan metni; onayla/reddet/düzelt durum makinesine yazıyor; 30 tasarımlık kuyruk 10 dakikada bitirilebiliyor (Scryne'ın ilk kullanımı) |
-| 6 | Printify entegrasyonu | ⏳ Bekliyor | Faz 0 sonrası: görsel yükle → 1717/18000 ürün (kilitli sağlayıcı, renkler, varyant fiyatları) → mockup; Etsy'ye publish; 429/hata yeniden denemesi; gerçek hesapta 3 ürün oluşturuldu ve Etsy'de taslak göründü |
-| 7 | Etsy entegrasyonu | ⏳ Bekliyor | Seller App OAuth (refresh token yenileme); `production_partner_ids` + `state=active`; günde ≤ 5 tavanı; receipts + takip okuma; gerçek mağazada 3 ilan aktif ve kurallara uygun |
-| 8 | Fiyat ve kâr defteri | ⏳ Bekliyor | Fiyatlar `config/`'te; sipariş başına gerçek net (Etsy TR ücretleri + Printify maliyeti + kur) hesaplanıyor; aylık özet; harcama tavanları kodla korunuyor |
-| 9 | Zamanlama ve izleme | ⏳ Bekliyor | Günlük Windows görevi uçtan uca koşuyor; takip numarası 5 iş gününde düşmeyen sipariş için alarm; haftalık rapor (ilan, görüntülenme, satış, net); USPTO aylık yenileme görevi |
+| 3 | İfade üretimi + IP kapısı | ✅ Tamamlandı | Niş kartları `config/nisler.toml`'da; Claude ile niş başına 30 aday → USPTO + Jev kapısı; 90 adayın kapı kayıtları SQLite'ta; Aria'nın kör örneklemesinde (30 temiz ifade) riskli kaçak 0; USPTO verisi 35 günlük tazelik kontrolüyle |
+| 4 | İlan metni | ✅ Tamamlandı | Başlık, 13 etiket (≤ 20 karakter), açıklama (AI beyanı + üretim ortağı + beden/bakım), öznitelikler; Etsy kural doğrulayıcı testli; 30 ilan metni doğrulayıcıdan geçiyor |
+| 5 | Onay paneli | 🔄 Devam Ediyor | Yerel panel: tasarım önizleme (koyu/açık kumaş), ifade, kapı nedenleri, ilan metni; onayla/reddet/düzelt durum makinesine yazıyor; 30 tasarımlık kuyruk 10 dakikada bitirilebiliyor (Scryne'ın ilk kullanımı) |
+| 6 | Printify entegrasyonu | ⛔ Engelli | Faz 0 sonrası: görsel yükle → 1717/18000 ürün (kilitli sağlayıcı, renkler, varyant fiyatları) → mockup; Etsy'ye publish; 429/hata yeniden denemesi; gerçek hesapta 3 ürün oluşturuldu ve Etsy'de taslak göründü |
+| 7 | Etsy entegrasyonu | ⛔ Engelli | Seller App OAuth (refresh token yenileme); `production_partner_ids` + `state=active`; günde ≤ 5 tavanı; receipts + takip okuma; gerçek mağazada 3 ilan aktif ve kurallara uygun |
+| 8 | Fiyat ve kâr defteri | 🔄 Devam Ediyor | Fiyatlar `config/`'te; sipariş başına gerçek net (Etsy TR ücretleri + Printify maliyeti + kur) hesaplanıyor; aylık özet; harcama tavanları kodla korunuyor |
+| 9 | Zamanlama ve izleme | 🔄 Devam Ediyor | Günlük Windows görevi uçtan uca koşuyor; takip numarası 5 iş gününde düşmeyen sipariş için alarm; haftalık rapor (ilan, görüntülenme, satış, net); USPTO aylık yenileme görevi |
 | 10 | Gerçek kullanım (v1) | ⏳ Bekliyor | 30 ilan Scryne onayıyla canlı; numune kalitesi doğrulandı; ilk gerçek siparişte Etsy → Printify → takip zinciri elle dokunulmadan çalıştı (ya da 4 hafta dolup v1 "30 ilan + numune" ile kapandı); bulgular roadmap'e işlendi |
 | 11 | Kişiselleştirme — Class of 2027 (koşullu) | ⏳ Bekliyor | v1 kapandıysa ve Ocak 2027 geldiyse: Etsy kişiselleştirme alanı → sipariş anında tasarım → Printify API siparişi; 5 test siparişi doğru basıldı |
 | 12 | Shopify (koşullu) | ⏳ Bekliyor | Etsy'de ≥ 30 satış ve TR ödeme yolu (iyzico ya da LLC) netleştiyse: aynı Printify kataloğu Shopify'a; ilk sipariş zinciri çalıştı |
 
 ## Faz Detayları
+
+### Durum notu (2026-10-13, ikinci tur)
+- Faz 3 ✅: 7 niş, mevsim takvimi, talebe bağlı üretim; ilk iki günlük koşuda 72 slogan → 44 tasarım (6 USPTO reddi).
+- Faz 4 ✅: 132 ilan (44 tasarım × 3 ürün) doğrulayıcıdan geçti; etiketler marka süzgecinden, eksik etiket niş yedekleriyle.
+- Faz 5 🔄: panel hazır ve görsel doğrulamadan geçti (4 genişlik, 0 sorun); bitti kriteri Scryne'ın ilk 10 dakikalık kullanımı.
+- Faz 6–7 ⛔ Faz 0'a bağlı: istemciler resmî dokümandan doğrulanmış uç noktalarla yazıldı, sahte HTTP ile test edildi (mükerrer ürün
+  koruması dahil); gerçek hesapta 3 ürün oluşturulunca ✅.
+- Faz 8 🔄: sipariş defteri + gecikme alarmı kodlu ve testli; gerçek sipariş yok.
+- Faz 9 🔄: `Matbaa-Gunluk` Windows görevi kurulu, her gün 10:30, Görev Zamanlayıcı'dan elle tetiklendi (çıkış 0, UTF-8 günlük
+  `calisma/gunluk/gunluk.log`). Eksik: haftalık rapor.
 
 ### Faz 0: Hesaplar ve para (Scryne)
 - **İşler:** S1 müşavir; S2 Etsy mağazası (Aria ekran ekran yönlendirir); S3 Printify + kart + 2 numune; Printify token; Etsy geliştirici

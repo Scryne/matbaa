@@ -76,6 +76,13 @@ iade kararı.
 - **K-14 Metin üretimi Claude:** ifadeler ve ilan metni `claude -p` ile; çıktı JSON şemasıyla doğrulanır, hatalıysa bir kez yeniden üretilir.
   Gerekçe: yaratıcı İngilizce kelime oyunu yerel 4B modelin üstünde. Jev metin üretmez (global kural).
 - **K-15 Hat yerelde koşar** (Windows görev). Makine kapalıysa o gün atlanır; kuyruğa bir şey olmaz.
+- **K-16 Mağaza:** adı `HobbyHeartPrints` (marka kontrolü temiz; yedek KindredHobbyCo, HobbyProudGoods); para birimi USD (Printify USD,
+  %2,5 kur ücreti kabul — TRY fiyat yönetimi kur riski getirir).
+- **K-17 Büyütme (Scryne 2026-10-13: "pek çok ürün, büyüt"):** her tasarım 3 ürün (tişört, sweatshirt, hoodie); 7 niş; mevsim takvimi
+  (`config/takvim.toml`). Hız ısınma eğrisiyle: günde 1 → 2 → 4 → 6 → 8 tasarım (`config/yayin.toml`). Üretim talebe bağlı: kuyruk iki
+  haftalık yayın kapasitesinin altına inmedikçe yeni üretim yok (Claude kullanımı boşa gitmez).
+- **K-18 İki renk:** tasarımın küçük satırları/yayı/çizgileri ya da bir ana satırı vurgu renginde; palet her satılan kumaş rengine karşı
+  kontrast kapısından geçer (kiremit ve hardal koyulaştırıldı).
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve numune Scryne'ın Faz 0 işlerine bağlı.

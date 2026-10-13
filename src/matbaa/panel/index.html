@@ -143,7 +143,8 @@ function ilanlar(t) {
 
 function ciz() {
   const o = veri.ozet;
-  $("#ozet").textContent = `kuyruk ${veri.tasarimlar.length} · onaylı ${o.onaylandi || 0} · yayında ${o.yayinda || 0} · ret ${o.ret || 0}`;
+  const k = veri.kar;
+  $("#ozet").textContent = `kuyruk ${veri.tasarimlar.length} · onaylı ${o.onaylandi || 0} · yayında ${o.yayinda || 0} · ret ${o.ret || 0} · 30 gün: ${k.siparis} sipariş, net $${k.net_usd.toFixed(2)}`;
   const ana = $("#ana");
   if (!veri.tasarimlar.length) {
     ana.innerHTML = `<p class="bos">Kuyruk boş. Yeni tasarım için: <code>uv run matbaa uret --nis …</code> ve <code>uv run matbaa metin</code>.</p>`;
