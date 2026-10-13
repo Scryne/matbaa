@@ -61,7 +61,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 - **Notlar:** Kod fazları (1–5, 8) buna bağlı değil, paralel ilerler. Faz 6–7 ve 10 buna bağlı.
 - **Durum (2026-10-13 16:40):** Etsy hesabı açıldı, ödeme/IBAN bilgisi girildi, kimlik onaylandı; billing tamam (kurulum ücreti $19 ödendi, Etsy Plus teklifi reddedildi:
   6 ay × $10 ile 937 TL kredi zararlı); **mağaza 16:40 açıldı (HobbyHeartPrints)**. Printify hesabı + kart + token tamam (`.env`); Printify mağazası "My new store"
-  (29308592) henüz Etsy'ye bağlı değil. Kalan: ilk ilanı deaktive et → 2FA → production partner + iade politikası → Printify'da "Connect your Etsy store" →
+  (29308592) henüz Etsy'ye bağlı değil. 2FA açık. Kalan: ilk ilanı deaktive et → production partner + iade politikası → Printify'da "Connect your Etsy store" →
   Etsy geliştirici uygulaması → (Aria) `scripts/etsy_yetki.py`, `matbaa printify-kesif` (PRINTIFY_SHOP_ID), `matbaa etsy-kargo-profili`,
   ilk 3 ilan. Müşavir sorusu ve panel onayı (Faz 5) henüz yapılmadı.
 
