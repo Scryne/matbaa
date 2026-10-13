@@ -344,6 +344,7 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print) -> dict:
 
             e = Etsy()
             _adim(rapor, "etsy", lambda: yayin.etsy_esle(c, p, e, yazdir), yazdir)
+            _adim(rapor, "gorsel", lambda: yayin.gorselleri_tamamla(c, e, yazdir=yazdir), yazdir)
             # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
             _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir)
             s = _adim(rapor, "siparis", lambda: siparis.izle(c, e, p, yazdir=yazdir), yazdir)

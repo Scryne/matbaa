@@ -100,3 +100,22 @@ class Etsy:
             ofset += 100
             if ofset >= sayfa.get("count", 0) or not sayfa["results"]:
                 return sonuc
+
+    def ilan_gorselleri(self, listing_id: int) -> list[dict]:
+        """getListingImages: rank sıralı görseller (`listing_image_id`, `rank`, `url_570xN`)."""
+        return sorted(self._i("GET", f"/listings/{listing_id}/images")["results"], key=lambda g: g["rank"])
+
+    def gorsel_yukle(self, listing_id: int, png: bytes, rank: int, ad: str = "gorsel.jpg", alt_metin: str = "") -> dict:
+        """uploadListingImage (multipart `image`): yeni görsel `rank` sırasına girer, sonrakiler kayar."""
+        veri = {"rank": str(rank)} | ({"alt_text": alt_metin[:500]} if alt_metin else {})
+        return self._i(
+            "POST", f"/shops/{self.shop_id}/listings/{listing_id}/images", files={"image": (ad, png, "image/jpeg")}, data=veri
+        )
+
+    def gorsel_sirala(self, listing_id: int, listing_image_id: int, rank: int) -> dict:
+        """Var olan görseli yeniden yüklemeden sıraya taşır (uploadListingImage + `listing_image_id`)."""
+        return self._i(
+            "POST",
+            f"/shops/{self.shop_id}/listings/{listing_id}/images",
+            data={"listing_image_id": str(listing_image_id), "rank": str(rank)},
+        )

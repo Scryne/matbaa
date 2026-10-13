@@ -213,10 +213,18 @@ def dag(_: str) -> str:
     )
 
 
+def kamyon(_: str) -> str:
+    """Kargo kamyonu: kasa, kabin (camı negatif), iki tekerlek (göbeği negatif), aralarında boşluk."""
+    kasa = "M60,300 H600 V700 H60 Z"
+    kabin = "M630,420 H800 L920,560 V700 H630 Z M680,460 V560 H860 L780,460 Z"
+    tekerler = " ".join(f"{_daire(x, 760, 95)} {_daire(x, 760, 38)}" for x in (220, 760))
+    return f'<path fill-rule="evenodd" d="{kasa} {kabin}"/><path fill-rule="evenodd" d="{tekerler}"/>'
+
+
 IKONLAR = {
     "balik": balik, "igne": igne, "mantar": mantar, "kurek": kurek, "top": top, "yumak": yumak,
     "kronometre": kronometre, "madalya": madalya, "kalp": kalp, "parilti": parilti, "hediye": hediye,
-    "agac": agac, "kar": kar, "kep": kep, "tac": tac, "dag": dag,
+    "agac": agac, "kar": kar, "kep": kep, "tac": tac, "dag": dag, "kamyon": kamyon,
 }  # fmt: skip
 
 NIS_IKONLARI = {

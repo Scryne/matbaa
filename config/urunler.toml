@@ -9,6 +9,7 @@
 ad = "Comfort Colors 1717 Garment-Dyed Tee"
 blank = "Comfort Colors 1717"
 etsy_turu = "T-shirt"
+vitrin_rengi = "Butter"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
 fiyat = 33.99
 kargo = 0.0
 buyuk_beden_ek = { "2XL" = 2.00, "3XL" = 4.50 }   # Monster Digital: 2XL +$1.24, 3XL +$3.40
@@ -23,12 +24,15 @@ renkler = [   # Monster Digital'de "Sage" ve "True Navy" yok (K-24): Navy onun y
   { ad = "Navy", murekkep = "acik", hex = "#1f2a44" },
   { ad = "Pepper", murekkep = "acik", hex = "#4a4a48" },
 ]
+# Ölçüler (Comfort Colors 1717 teknik föyü, ikincil iki kaynakla aynı, araştırma 2026-10-13): beden tablosu görseli (ilan/gorsel.py)
+olculer = { kesim = "relaxed unisex fit", sutunlar = ["SIZE", "WIDTH (IN)", "LENGTH (IN)"], satirlar = [["S", "18.25", "26.6"], ["M", "20.25", "28"], ["L", "22", "29.4"], ["XL", "24", "30.75"], ["2XL", "26", "31.6"], ["3XL", "27.75", "32.5"]], notlar = ["MEASURED FLAT: WIDTH 1 INCH BELOW THE ARMPITS, LENGTH FROM SHOULDER TO HEM", "MEASUREMENTS CAN VARY BY UP TO 1 INCH"] }
 detay = "Garment-dyed, heavyweight 100% ring-spun cotton (6.1 oz) with a soft, lived-in feel and relaxed fit."
 
 [sweatshirt]
 ad = "Gildan 18000 Crewneck Sweatshirt"
 blank = "Gildan 18000"
 etsy_turu = "Sweatshirt"
+vitrin_rengi = "Sand"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
 fiyat = 48.99
 kargo = 0.0
 buyuk_beden_ek = { "2XL" = 4.00, "3XL" = 5.50 }   # SwiftPOD: 2XL +$2.80, 3XL +$4.18
@@ -44,12 +48,15 @@ renkler = [
   { ad = "Forest Green", murekkep = "acik", hex = "#2f4a3a" },
   { ad = "Maroon", murekkep = "acik", hex = "#5a2330" },
 ]
+# Ölçüler (Gildan 18000, birden çok satıcı tablosu aynı, araştırma 2026-10-13): beden tablosu görseli (ilan/gorsel.py)
+olculer = { kesim = "classic unisex fit", sutunlar = ["SIZE", "WIDTH (IN)", "LENGTH (IN)"], satirlar = [["S", "20", "27"], ["M", "22", "28"], ["L", "24", "29"], ["XL", "26", "30"], ["2XL", "28", "31"], ["3XL", "30", "32"]], notlar = ["MEASURED FLAT: WIDTH 1 INCH BELOW THE ARMPITS, LENGTH FROM SHOULDER TO HEM", "MEASUREMENTS CAN VARY BY UP TO 1 INCH"] }
 detay = "Classic crewneck in a 50/50 cotton-poly blend, soft fleece inside, ribbed cuffs and waistband."
 
 [hoodie]
 ad = "Gildan 18500 Hooded Sweatshirt"
 blank = "Gildan 18500"
 etsy_turu = "Hoodie"
+vitrin_rengi = "Sand"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
 fiyat = 55.99
 kargo = 0.0
 buyuk_beden_ek = { "2XL" = 3.00, "3XL" = 6.00 }   # Printful: 2XL +$2.21, 3XL +$4.45
@@ -63,6 +70,8 @@ renkler = [
   { ad = "Navy", murekkep = "acik", hex = "#1f2a44" },
   { ad = "Dark Heather", murekkep = "acik", hex = "#3d3f43" },
 ]
+# Ölçüler (Gildan 18500, 18000 ile aynı tablo, araştırma 2026-10-13): beden tablosu görseli (ilan/gorsel.py)
+olculer = { kesim = "classic unisex fit", sutunlar = ["SIZE", "WIDTH (IN)", "LENGTH (IN)"], satirlar = [["S", "20", "27"], ["M", "22", "28"], ["L", "24", "29"], ["XL", "26", "30"], ["2XL", "28", "31"], ["3XL", "30", "32"]], notlar = ["MEASURED FLAT: WIDTH 1 INCH BELOW THE ARMPITS, LENGTH FROM SHOULDER TO HEM", "MEASUREMENTS CAN VARY BY UP TO 1 INCH"] }
 detay = "Cozy 50/50 cotton-poly hoodie with a double-lined hood, front pouch pocket and soft fleece lining."
 
 [kupa]
@@ -84,4 +93,4 @@ yalniz_satan = true
 govde_etiketi = "Mug"
 yuzey = "mug"
 beden_metni = "Sizes: 11oz is the classic coffee mug size, 15oz holds a bigger pour. The design is printed on both sides of the mug."
-bakim_metni = "Care: hand washing is recommended to keep the print bright for longer."
+bakim_metni = "Care: microwave and dishwasher safe. Lead and BPA free."   # Printify katalog 478 açıklaması (2026-10-13)

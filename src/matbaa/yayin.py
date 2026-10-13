@@ -131,6 +131,38 @@ def kupa_ac(c, ilan_yaz, yazdir=print) -> dict:
     return sayac
 
 
+def gorselleri_tamamla(c, etsy, sinir: int = 9, yazdir=print) -> dict:
+    """Etsy'de aktif ve kendi görsellerimizi (yakın plan, beden tablosu, renkler, güven kartı) henüz almamış ilanlar.
+
+    Bir kez yapılır (`olay`: "<ürün>:gorsel"); hata ilanı düşürmez, ertesi gün yeniden denenir. `sinir`: bir koşuda en çok ilan
+    (her ilan ~5 Etsy isteği; Etsy hız sınırı 5/sn).
+    """
+    from matbaa.ilan import gorsel
+
+    sayac = {"tamam": 0, "hata": 0}
+    for r in c.execute(
+        """SELECT u.tasarim_id, u.urun, u.etsy_listing_id, t.dosyalar FROM urun u JOIN tasarim t ON t.id = u.tasarim_id
+           WHERE u.durum = 'aktif' AND u.etsy_listing_id IS NOT NULL AND NOT EXISTS (
+             SELECT 1 FROM olay o WHERE o.varlik = 'urun' AND o.varlik_id = u.tasarim_id AND o.yeni = u.urun || ':gorsel')
+           ORDER BY u.guncelleme LIMIT ?""",
+        (sinir,),
+    ).fetchall():
+        ham = json.loads(r["dosyalar"])
+        dos = {k: KOK / v for k, v in ham.items() if k.endswith("_png")}
+        if r["urun"] == "kupa":
+            dos["kupa_png"] = KOK / Path(ham["koyu_png"]).parent / "kupa.png"
+        try:
+            s = gorsel.ilana_ekle(etsy, int(r["etsy_listing_id"]), r["urun"], dos, tohum=r["tasarim_id"])
+        except Exception as e:  # görsel eklenemezse ilan yine satışta; ertesi koşu yeniden dener
+            sayac["hata"] += 1
+            yazdir(f"  görsel hata {r['tasarim_id']}/{r['urun']}: {type(e).__name__}: {str(e)[:150]}")
+            continue
+        db.olay(c, "urun", r["tasarim_id"], None, f"{r['urun']}:gorsel", f"vitrin={s['vitrin']} eklenen={s['eklenen']}")
+        c.commit()
+        sayac["tamam"] += 1
+    return sayac
+
+
 def etsy_eksik() -> list[str]:
     """Yayından önce Etsy'de kurulu olması gerekenler. Biri eksikken Printify'ın açtığı ilan üretim ortağısız ve Printify'ın
     ücretli kargo profiliyle kalır; K-23 fiyatı kargoyu içerdiği için alıcı kargoyu iki kez öder."""
