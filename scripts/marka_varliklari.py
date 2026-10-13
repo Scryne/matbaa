@@ -25,7 +25,9 @@ KREM, LACIVERT, MERCAN = "#F4EDE1", "#2B3A55", "#E07A5F"
 CIKTI = KOK / "varliklar" / "marka"
 
 
-def yazi(metin: str, dosya: str, x_merkez: float, y_ust: float, yukseklik: float, renk: str, harf_araligi: float = 0.0) -> tuple[str, float]:
+def yazi(
+    metin: str, dosya: str, x_merkez: float, y_ust: float, yukseklik: float, renk: str, harf_araligi: float = 0.0
+) -> tuple[str, float]:
     """Metni büyük harf yüksekliği `yukseklik` olacak şekilde ortalı yerleştirir: (svg, genişlik)."""
     s = font(dosya).satir(metin, harf_araligi)
     k = yukseklik / s.yukseklik
@@ -60,7 +62,9 @@ def kapak(g: int = 3360, y: int = 840) -> str:
     metin_x = x0 + boy + y * 0.08 + ad_g / 2
     ad_svg, _ = yazi("HobbyHeartPrints", "AlfaSlabOne-Regular.ttf", metin_x, ust + boy * 0.04, y * 0.17, LACIVERT, 0.01)
     parcalar.append(ad_svg)
-    slogan, sl_g = yazi("RETRO TEES FOR THE HOBBIES YOU LOVE", "BebasNeue-Regular.ttf", metin_x, ust + boy * 0.47, y * 0.075, MERCAN, 0.06)
+    slogan, sl_g = yazi(
+        "RETRO TEES FOR THE HOBBIES YOU LOVE", "BebasNeue-Regular.ttf", metin_x, ust + boy * 0.47, y * 0.075, MERCAN, 0.06
+    )
     parcalar.append(slogan)
     # Niş çizimleri sırası: sloganın genişliğine eşit aralıklı, lacivert.
     adlar = ["balik", "yumak", "kurek", "kronometre", "kalp"]
