@@ -154,7 +154,7 @@ iade kararı.
   kol, yaka, kapanış, malzeme, baskı türü "Humorous saying"; tatil: basılı satır → açık hediye mevsimi → başlık → niş kartı;
   vesile: metin → niş kartı; istenen değişince yeniden yazılır, mevsimi geçen tatil silinir) ve `vitrin` (yenileme açık, niş bölümü).
   Kurallı, LLM yok: değerler ürün ve takvim gerçeği. Varyantlar Custom1/2'de olduğu için renk öznitelik olarak çakışmadan yazılır.
-  Bölüm açmak `shops_w` ister; mevcut token'da yok, yeniden yetkiye kadar yalnız yenileme yazılır. Onaylı kuyruk 5 günlük yayından
+  Bölüm açmak `shops_w` ister (yetki kapsamına eklendi, 2026-10-14 yeniden alındı); yetki yoksa yalnız yenileme yazılır. Onaylı kuyruk 5 günlük yayından
   azalır ve onay bekleyen varsa günlük alarm (yayın sessizce durmasın).
 
 ## Kapsam (v1)

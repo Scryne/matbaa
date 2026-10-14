@@ -18,6 +18,7 @@ import json
 import os
 import re
 import secrets
+import sys
 import time
 import urllib.parse
 import webbrowser
@@ -41,6 +42,7 @@ def ortak_yaz(ortak_id: int, dosya=CONFIG / "yayin.toml") -> None:
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")  # Windows konsolu cp1254: "→" token kaydından sonra betiği düşürüyordu
     env_yukle()
     if not (os.environ.get("ETSY_KEYSTRING") and os.environ.get("ETSY_SHARED_SECRET")):
         raise SystemExit(".env'de ETSY_KEYSTRING ve ETSY_SHARED_SECRET dolu olmalı (docs/Faz0-Rehber.md, 3. bölüm)")

@@ -67,8 +67,8 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 
 - İlan tamlığı (2026-10-14, K-29): canlı 6 ilan API'den denetlendi; Printify özniteliksiz, otomatik yenilemesi kapalı ve bölümsüz
   açıyordu (hoodie'de zorunlu "Clothing closure" boştu). Günlük hatta `oznitelik` ve `vitrin` adımları; 6 ilana yazıldı ve geri okundu
-  (renk, kol, yaka/kapanış, malzeme, "Humorous saying", Holiday = Christmas; `should_auto_renew` true). Mağaza bölümleri `shops_w`
-  yetkisi bekliyor (`scripts/etsy_yetki.py` bir kez yeniden çalıştırılınca kendiliğinden atanır). Onaylı kuyruk alarmı eklendi.
+  (renk, kol, yaka/kapanış, malzeme, "Humorous saying", Holiday = Christmas; `should_auto_renew` true). Aynı gün `shops_w` ile
+  yeniden yetki alındı: "Fishing" ve "Knitting & Crochet" bölümleri açıldı, 6 ilan yerleşti. Onaylı kuyruk alarmı eklendi.
 
 ### Faz 13: Performansa göre üretim 🔄 (kod 2026-10-13)
 - **Yapılan:** `performans.py`: niş puanı = ilan başına beklenen satış (görüntülenme × yumuşatılmış dönüşüm, önsel %2, favori 0,1 satış),
