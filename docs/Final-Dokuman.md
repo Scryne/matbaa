@@ -148,6 +148,15 @@ iade kararı.
   sonbahar), bowling 0.25 (12 bin ilan, yıl boyu). İkisi nişe alındı (kart + çizim: trampet, lobut). Radar haftalık raporla yenilenir
   (`calisma/radar/`); seçim Aria'nın, radar yalnız sıralar.
 
+- **K-29 İlan tamlığı: öznitelik, otomatik yenileme, mağaza bölümü (2026-10-14):** Canlı API denetimi Printify'ın ilanı üç eksikle
+  açtığını gösterdi: öznitelik yok (hoodie kategorisinde "Clothing closure" zorunlu), `should_auto_renew` false (ilan 4 ayda sona
+  erer; tavanlar.toml yenilemeyi zaten varsayıyordu), mağaza bölümü yok. Günlük hatta iki adım: `oznitelik` (renk = vitrin rengi,
+  kol, yaka, kapanış, malzeme, baskı türü "Humorous saying"; tatil: basılı satır → açık hediye mevsimi → başlık → niş kartı;
+  vesile: metin → niş kartı; istenen değişince yeniden yazılır, mevsimi geçen tatil silinir) ve `vitrin` (yenileme açık, niş bölümü).
+  Kurallı, LLM yok: değerler ürün ve takvim gerçeği. Varyantlar Custom1/2'de olduğu için renk öznitelik olarak çakışmadan yazılır.
+  Bölüm açmak `shops_w` ister; mevcut token'da yok, yeniden yetkiye kadar yalnız yenileme yazılır. Onaylı kuyruk 5 günlük yayından
+  azalır ve onay bekleyen varsa günlük alarm (yayın sessizce durmasın).
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.

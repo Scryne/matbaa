@@ -368,6 +368,7 @@ def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
     assert s["aktif"] == 2
     alanlar = e.guncellenen[0][1]
     assert alanlar["production_partner_ids"] == [55] and alanlar["state"] == "active" and alanlar["description"] == "A"
+    assert alanlar["should_auto_renew"] == "true"  # Printify kapalı açıyor: 4 ayda ilan sona ererdi
     assert [r for _, r in e.hazirlama] == [35, 35]  # Printify'ın 2-5 gün profili mağazanın 3-5 gün profiline çekilir
     assert ortam.execute("SELECT durum FROM tasarim WHERE id = 1").fetchone()[0] == "yayinda"
 
@@ -662,3 +663,18 @@ def test_blueprint_bul_marka_isareti_ve_tam_model():
     p = pf.Printify("tok", "s", http=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200, json=katalog))))
     assert [b["id"] for b in p.blueprint_bul("Comfort Colors 1717")] == [706]
     assert [b["id"] for b in p.blueprint_bul("Gildan 18000")] == [49]
+
+
+def test_onayli_kuyruk_azalinca_onay_bekleyen_varsa_alarm(ortam):
+    assert yayin.onay_pisti(ortam) is None  # 3 onaylı < 5 gün ama onay bekleyen yok: üretim kuyruğu doldurur
+    i = db.ifade_ekle(ortam, "fishing", ["Bekleyen"])
+    db.kapi_yaz(ortam, i, "temiz", [], [])
+    t = db.tasarim_ekle(ortam, i, "yigin", [])
+    for d in ("kalite_ok", "metin_ok", "onay_bekliyor"):
+        db.gecis(ortam, t, d)
+    assert "panelde 1 tasarım onay bekliyor" in yayin.onay_pisti(ortam)
+    for n in range(2):  # 3 + 2 onaylı = 5 günlük yayın
+        j = db.ifade_ekle(ortam, "fishing", [f"Ek{n}"])
+        db.kapi_yaz(ortam, j, "temiz", [], [])
+        ortam.execute("UPDATE tasarim SET durum = 'onaylandi' WHERE id = ?", (db.tasarim_ekle(ortam, j, "yigin", []),))
+    assert yayin.onay_pisti(ortam) is None  # 5 günlük yayına yetiyor

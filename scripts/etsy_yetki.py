@@ -29,7 +29,7 @@ from matbaa.ayar import CONFIG, env_yaz, env_yukle
 from matbaa.entegrasyon.etsy import TOKEN_DOSYASI, TOKEN_URL
 
 YONLENDIRME = "http://localhost:3003/callback"
-KAPSAM = "listings_r listings_w shops_r transactions_r transactions_w"
+KAPSAM = "listings_r listings_w shops_r shops_w transactions_r transactions_w"  # shops_w: mağaza bölümleri (yayin.vitrin_esitle)
 
 
 def ortak_yaz(ortak_id: int, dosya=CONFIG / "yayin.toml") -> None:

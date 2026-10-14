@@ -1,10 +1,12 @@
 # Mevsim pencereleri: bu tarih aralığında üretilen sloganların bir kısmı o özel güne yönelir (ay-gün, her yıl tekrar).
 # Etsy alıcısı 6–12 hafta önce arar (araştırma 04); pencere o yüzden günden erken açılır.
+# `etsy_tatil`: pencere açıkken ilanın Etsy "Holiday" özniteliği (hediye günleri; metinde başka tatil geçmiyorsa, ilan/oznitelik.py).
 [christmas]
 ad = "Christmas / holiday gift"
 bas = "09-01"
 son = "12-12"
 pay = 0.35
+etsy_tatil = "Christmas"
 
 [valentines]
 ad = "Valentine's Day (February 14)"
@@ -23,6 +25,7 @@ ad = "Mother's Day (second Sunday of May)"
 bas = "03-01"
 son = "05-05"
 pay = 0.4
+etsy_tatil = "Mother's Day"
 nisler = ["knitting", "aunt", "pickleball", "running", "senior_mom"]
 
 [graduation]
@@ -37,4 +40,5 @@ ad = "Father's Day (third Sunday of June)"
 bas = "04-15"
 son = "06-12"
 pay = 0.4
+etsy_tatil = "Father's Day"
 nisler = ["fishing", "pickleball", "running", "milestone"]

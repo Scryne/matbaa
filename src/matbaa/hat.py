@@ -398,6 +398,8 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             else:
                 _adim(rapor, "etsy", lambda: yayin.etsy_esle(c, p, e, yazdir), yazdir)
             _adim(rapor, "gorsel", lambda: yayin.gorselleri_tamamla(c, e, yazdir=yazdir), yazdir)
+            _adim(rapor, "oznitelik", lambda: yayin.oznitelikleri_esitle(c, e, yazdir=yazdir), yazdir)
+            _adim(rapor, "vitrin", lambda: yayin.vitrin_esitle(c, e, yazdir=yazdir), yazdir)
             # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
             goruntu_tamam = (
                 _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir) is not None
@@ -417,6 +419,8 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
     elle = c.execute("SELECT count(*) FROM urun WHERE durum = 'hata' AND hata LIKE ?", (f"%{yayin.ELLE}%",)).fetchone()[0]
     if elle:
         alarmlar.append(f"{elle} ürün yayında takıldı, Printify/Etsy panelinde elle bakılmalı")
+    if pist := yayin.onay_pisti(c):
+        alarmlar.append(pist)
     if isinstance(rapor.get("uspto"), str) and rapor["uspto"].startswith("UYARI"):
         alarmlar.append(rapor["uspto"])
     rapor["durum"] = durum(c)

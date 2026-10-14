@@ -9,6 +9,8 @@
 ad = "Comfort Colors 1717 Garment-Dyed Tee"
 blank = "Comfort Colors 1717"
 etsy_turu = "T-shirt"
+# Etsy öznitelikleri (ilan/oznitelik.py; ad ve değerler Etsy'nin adlarıyla). Primary color = vitrin rengi (ilk fotoğraf).
+oznitelik = { "Primary color" = ["Yellow"], "Sleeve length" = ["Short sleeve"], "Neckline" = ["Crew"], "Materials" = ["Cotton"] }
 vitrin_rengi = "Butter"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
 fiyat = 33.99
 kargo = 0.0
@@ -32,6 +34,7 @@ detay = "Garment-dyed, heavyweight 100% ring-spun cotton (6.1 oz) with a soft, l
 ad = "Gildan 18000 Crewneck Sweatshirt"
 blank = "Gildan 18000"
 etsy_turu = "Sweatshirt"
+oznitelik = { "Primary color" = ["Beige"], "Sleeve length" = ["Long sleeve"], "Clothing closure" = ["Pullover"], "Materials" = ["Cotton", "Polyester"] }
 vitrin_rengi = "Sand"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
 fiyat = 48.99
 kargo = 0.0
@@ -56,6 +59,7 @@ detay = "Classic crewneck in a 50/50 cotton-poly blend, soft fleece inside, ribb
 ad = "Gildan 18500 Hooded Sweatshirt"
 blank = "Gildan 18500"
 etsy_turu = "Hoodie"
+oznitelik = { "Primary color" = ["Beige"], "Sleeve length" = ["Long sleeve"], "Clothing closure" = ["Pullover"], "Materials" = ["Cotton", "Polyester"] }   # kapanış hoodie kategorisinde zorunlu
 vitrin_rengi = "Sand"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
 fiyat = 55.99
 kargo = 0.0
@@ -92,5 +96,6 @@ detay = "Glossy white ceramic mug in 11oz or 15oz, with the design printed on bo
 yalniz_satan = true
 govde_etiketi = "Mug"
 yuzey = "mug"
+oznitelik = { "Primary color" = ["White"], "Materials" = ["Ceramic"] }
 beden_metni = "Sizes: 11oz is the classic coffee mug size, 15oz holds a bigger pour. The design is printed on both sides of the mug."
 bakim_metni = "Care: microwave and dishwasher safe. Lead and BPA free."   # Printify katalog 478 açıklaması (2026-10-13)

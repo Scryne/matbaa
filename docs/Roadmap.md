@@ -65,6 +65,11 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   tutarlı DB yedeği (14 gün, `MATBAA_YEDEK_DIZINI`), SQLite WAL + 30 sn bekleme (panel ve koşu aynı anda yazabilir), panelde
   "düzelt" (Faz 5 bitti kriterindeki eksik parça: başlık/etiket, doğrulayıcı + marka süzgeciyle), adet başına yenileme ücreti.
 
+- İlan tamlığı (2026-10-14, K-29): canlı 6 ilan API'den denetlendi; Printify özniteliksiz, otomatik yenilemesi kapalı ve bölümsüz
+  açıyordu (hoodie'de zorunlu "Clothing closure" boştu). Günlük hatta `oznitelik` ve `vitrin` adımları; 6 ilana yazıldı ve geri okundu
+  (renk, kol, yaka/kapanış, malzeme, "Humorous saying", Holiday = Christmas; `should_auto_renew` true). Mağaza bölümleri `shops_w`
+  yetkisi bekliyor (`scripts/etsy_yetki.py` bir kez yeniden çalıştırılınca kendiliğinden atanır). Onaylı kuyruk alarmı eklendi.
+
 ### Faz 13: Performansa göre üretim 🔄 (kod 2026-10-13)
 - **Yapılan:** `performans.py`: niş puanı = ilan başına beklenen satış (görüntülenme × yumuşatılmış dönüşüm, önsel %2, favori 0,1 satış),
   boş nişe keşif payı; 30 aktif ilandan azken kuyruk dengesi. Satan ifadeler Claude istemine "aynı açı, yeni söz" örneği olarak girer.

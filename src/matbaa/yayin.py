@@ -47,6 +47,23 @@ def bugun_yayinlanan(c) -> int:
     ).fetchone()[0]
 
 
+ONAY_PIST_GUN = 5  # onaylı kuyruk bu kadar günlük yayından azsa ve onay bekleyen varsa alarm
+
+
+def onay_pisti(c) -> str | None:
+    """Yayın onaylı tasarımla beslenir; üretim kendiliğinden sürer ama onay insanın (panel). Onaylı kuyruk bitince yayın sessizce
+    durur: kalan gün azaldığında onay bekleyen varsa alarm (bekleyen yoksa günlük üretim kuyruğu zaten dolduruyor)."""
+    sinir = gunluk_sinir(c)
+    if not sinir:
+        return None
+    onayli, bekleyen = (
+        c.execute("SELECT count(*) FROM tasarim WHERE durum = ?", (d,)).fetchone()[0] for d in ("onaylandi", "onay_bekliyor")
+    )
+    if onayli >= sinir * ONAY_PIST_GUN or not bekleyen:
+        return None
+    return f"onaylı kuyruk {onayli} tasarım (~{onayli // sinir} günlük yayın): panelde {bekleyen} tasarım onay bekliyor"
+
+
 def printify_kesif(p: pf.Printify) -> dict:
     """Katalog eşlemesi: her ürün için blueprint ve ABD sağlayıcı adayları. Seçim (K-20: numunesiz) config'e yazılır."""
     sonuc = {}
@@ -160,6 +177,111 @@ def gorselleri_tamamla(c, etsy, sinir: int = 9, yazdir=print) -> dict:
         db.olay(c, "urun", r["tasarim_id"], None, f"{r['urun']}:gorsel", f"vitrin={s['vitrin']} eklenen={s['eklenen']}")
         c.commit()
         sayac["tamam"] += 1
+    return sayac
+
+
+def oznitelikleri_esitle(c, etsy, sinir: int = 30, gun=None, yazdir=print) -> dict:
+    """Aktif ilanların Etsy özniteliklerini istenene çeker (`ilan/oznitelik.py`); yalnız istenen değiştiyse Etsy'ye gidilir.
+
+    Son yazılan istek `olay`da ("<ürün>:oznitelik", açıklama = JSON) durur: mevsim dönünce (Christmas → yok) ilan yeniden
+    yazılır, artık istenmeyen özellik silinir. `sinir`: bir koşuda en çok ilan (ilan başına ~6 Etsy isteği)."""
+    from matbaa.ilan import oznitelik
+
+    sayac = {"yazilan": 0, "hata": 0}
+    for r in c.execute(
+        """SELECT u.tasarim_id, u.urun, u.etsy_listing_id, i.satirlar, i.nis, il.baslik FROM urun u
+           JOIN tasarim t ON t.id = u.tasarim_id JOIN ifade i ON i.id = t.ifade_id
+           LEFT JOIN ilan il ON il.tasarim_id = u.tasarim_id AND il.urun = u.urun
+           WHERE u.durum = 'aktif' AND u.etsy_listing_id IS NOT NULL ORDER BY u.tasarim_id, u.urun"""
+    ).fetchall():
+        istek = oznitelik.istenen(r["urun"], r["nis"], json.loads(r["satirlar"]), r["baslik"] or "", gun)
+        imza = json.dumps(istek, sort_keys=True, ensure_ascii=False)
+        onceki = c.execute(
+            "SELECT aciklama FROM olay WHERE varlik = 'urun' AND varlik_id = ? AND yeni = ? ORDER BY id DESC LIMIT 1",
+            (r["tasarim_id"], f"{r['urun']}:oznitelik"),
+        ).fetchone()
+        if onceki and onceki[0] == imza:
+            continue
+        if sayac["yazilan"] + sayac["hata"] >= sinir:
+            sayac["kalan"] = sayac.get("kalan", 0) + 1
+            continue
+        lid = int(r["etsy_listing_id"])
+        try:
+            ozellikler = etsy.taksonomi_ozellikleri(int(etsy.ilan(lid)["taxonomy_id"]))
+            hedef, atlanan = oznitelik.cozumle(istek, ozellikler)
+            if onceki:  # artık istenmeyen (mevsimi geçen tatil gibi) özellik silinir
+                eski, _ = oznitelik.cozumle(json.loads(onceki[0]), ozellikler)
+                for pid in eski.keys() - hedef.keys():
+                    etsy.ozellik_sil(lid, pid)
+            for pid, (ids, adlar) in hedef.items():
+                etsy.ozellik_yaz(lid, pid, ids, adlar)
+        except Exception as e:  # öznitelik yazılamazsa ilan yine satışta; ertesi koşu yeniden dener
+            sayac["hata"] += 1
+            yazdir(f"  öznitelik hata {r['tasarim_id']}/{r['urun']}: {type(e).__name__}: {str(e)[:150]}")
+            continue
+        if atlanan:
+            yazdir(f"  öznitelik {r['tasarim_id']}/{r['urun']}: kategoride yok, atlandı {atlanan}")
+        db.olay(c, "urun", r["tasarim_id"], None, f"{r['urun']}:oznitelik", imza)
+        c.commit()
+        sayac["yazilan"] += 1
+    return sayac
+
+
+YALNIZ_YENILEME = "-"  # "<ürün>:vitrin" olayında: otomatik yenileme açıldı, bölüm henüz atanamadı
+
+
+def vitrin_esitle(c, etsy, sinir: int = 30, yazdir=print) -> dict:
+    """Aktif ilanın otomatik yenilemesini açar ve ilanı niş bölümüne (Shop section, `config/nisler.toml` `vitrin_bolumu`) koyar.
+
+    Printify ikisini de boş bırakıyor (2026-10-14 canlı: bölüm yok, `should_auto_renew` false). Yenileme kapalıyken ilan 4 ayda
+    sona erer ve mağaza sessizce boşalır; yenileme ücreti ($0,20) tavanlar.toml'da zaten hesap dışı varsayılmıştı. Bölüm açmak
+    `shops_w` yetkisi ister (2026-10-14 token'ında yok, 403): o zaman yalnız yenileme yazılır, bölüm yetki gelince ya da bölüm
+    Etsy'de elle açılınca atanır. Olay "<ürün>:vitrin", açıklama = atanan bölüm (ya da `YALNIZ_YENILEME`)."""
+    from matbaa.entegrasyon.http import ApiHatasi
+    from matbaa.ifade.uret import nisler
+
+    sayac: dict = {"yazilan": 0, "hata": 0}
+    acilamayan: set[str] = set()  # bu koşuda açılamayan bölümler (aynı 403 her ilanda yinelenmez)
+    for r in c.execute(
+        """SELECT u.tasarim_id, u.urun, u.etsy_listing_id, i.nis FROM urun u
+           JOIN tasarim t ON t.id = u.tasarim_id JOIN ifade i ON i.id = t.ifade_id
+           WHERE u.durum = 'aktif' AND u.etsy_listing_id IS NOT NULL ORDER BY u.tasarim_id, u.urun"""
+    ).fetchall():
+        bolum = nisler().get(r["nis"], {}).get("vitrin_bolumu") or r["nis"].replace("_", " ").title()
+        onceki = c.execute(
+            "SELECT aciklama FROM olay WHERE varlik = 'urun' AND varlik_id = ? AND yeni = ? ORDER BY id DESC LIMIT 1",
+            (r["tasarim_id"], f"{r['urun']}:vitrin"),
+        ).fetchone()
+        if onceki and (onceki[0] == bolum or (onceki[0] == YALNIZ_YENILEME and bolum in acilamayan)):
+            continue
+        if sayac["yazilan"] + sayac["hata"] >= sinir:
+            sayac["kalan"] = sayac.get("kalan", 0) + 1
+            continue
+        try:
+            bolum_id = None
+            if bolum not in acilamayan:
+                try:
+                    bolum_id = etsy.bolum_kimligi(bolum)
+                except ApiHatasi as e:
+                    if e.durum != 403:
+                        raise
+                    acilamayan.add(bolum)
+                    sayac["bolum_yok"] = "Etsy token'ında shops_w yok: `uv run python scripts/etsy_yetki.py` ile yeniden yetki"
+                    yazdir(f"  vitrin: '{bolum}' bölümü açılamadı, {sayac['bolum_yok']}")
+            if bolum_id is None and onceki:
+                continue  # yenileme zaten açık, bölüm hâlâ açılamıyor
+            etsy.ilan_guncelle(
+                int(r["etsy_listing_id"]),
+                should_auto_renew="true",
+                **({"shop_section_id": bolum_id} if bolum_id else {}),
+            )
+        except Exception as e:  # ilan yine satışta; ertesi koşu yeniden dener
+            sayac["hata"] += 1
+            yazdir(f"  vitrin hata {r['tasarim_id']}/{r['urun']}: {type(e).__name__}: {str(e)[:150]}")
+            continue
+        db.olay(c, "urun", r["tasarim_id"], None, f"{r['urun']}:vitrin", bolum if bolum_id else YALNIZ_YENILEME)
+        c.commit()
+        sayac["yazilan"] += 1
     return sayac
 
 
@@ -413,6 +535,7 @@ def etsy_esle(c, p: pf.Printify, etsy, yazdir=print, hata_dene: bool = True) -> 
                 "who_made": "i_did",
                 "when_made": "made_to_order",
                 "is_supply": "false",
+                "should_auto_renew": "true",  # Printify kapalı açıyor: 4 ayda ilan sona erer (vitrin_esitle eskileri düzeltir)
             }
             if AI_BEYANI.split(":")[0] not in re.sub(r"<[^>]+>", " ", ilan.get("description", "")):
                 alanlar["description"] = c.execute(

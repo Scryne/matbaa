@@ -12,7 +12,7 @@ ilan metni → onay → Printify → Etsy.
 
 | Komut | Ne yapar |
 |---|---|
-| `gunluk` | Günlük koşu (Windows görevi bunu çağırır): DB yedeği → USPTO tazeliği → kur → üretim (talebe bağlı) → ilan metni → yayın → Etsy eşleme → görseller → görüntülenme → siparişler → haftalık rapor ve radar. Aynı anda ikinci koşu başlamaz. |
+| `gunluk` | Günlük koşu (Windows görevi bunu çağırır): DB yedeği → USPTO tazeliği → kur → üretim (talebe bağlı) → ilan metni → yayın → Etsy eşleme → görseller → öznitelikler ve vitrin (bölüm, otomatik yenileme) → görüntülenme → siparişler → haftalık rapor ve radar. Aynı anda ikinci koşu başlamaz. |
 | `panel [--port 8766]` | Yerel onay paneli: onayla (A), reddet (R + 1–6), düzelt (E: başlık ve etiketler), geri al (U). |
 | `uret --nis <niş> [--adet 12]` | İfade üret → IP kapısı → tasarım → kalite kapıları. |
 | `metin [--sinir 50]` | `kalite_ok` tasarımlara ilan metni → onay kuyruğu. |

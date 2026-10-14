@@ -3,6 +3,7 @@
 
 [fishing]
 ad = "Fishing (dads & grandpas)"
+vitrin_bolumu = "Fishing"   # Etsy mağaza bölümü (Shop section; yayin.vitrin_esitle)
 alici = "American buyers shopping for a dad, grandpa, or papa who loves fishing; gifts for Christmas, Father's Day, birthdays. Also anglers buying for themselves."
 ton = "warm, dad-joke humor, self-deprecating about fish stories, patience, early mornings, being outdoors with family"
 jargon = ["cast", "reel", "tackle box", "lure", "bait", "bobber", "hook", "line", "catch and release", "the one that got away", "fishing hole", "boat", "dock", "lake", "pond", "early bird", "limit"]
@@ -13,6 +14,7 @@ ornek_ton = ["Mostly Fishing, Occasionally Working", "Professional Fish Whispere
 
 [pickleball]
 ad = "Pickleball players"
+vitrin_bolumu = "Pickleball"
 alici = "American adults 30-70 who play pickleball socially; gifts for partners, parents, club friends; holiday and birthday gifts."
 ton = "playful, competitive-but-friendly, club culture, retirement energy, obsession with the game"
 jargon = ["dink", "kitchen", "non-volley zone", "third shot drop", "paddle", "lob", "erne", "volley", "rally", "serve", "partner", "court", "drop shot", "banger", "open play"]
@@ -23,6 +25,7 @@ ornek_ton = ["Kitchen Rules Apply", "Will Dink For Snacks", "Third Shot Drop Spe
 
 [knitting]
 ad = "Knitting & crochet makers"
+vitrin_bolumu = "Knitting & Crochet"
 alici = "American knitters and crocheters, mostly women 25-75, buying for themselves or receiving gifts from family; yarn-store and craft-circle culture."
 ton = "cozy, witty, yarn puns, stash humor, WIP (work in progress) jokes, relaxing hobby, friendship"
 jargon = ["yarn", "stash", "skein", "purl", "knit", "stitch", "crochet", "hook", "row", "WIP", "frog", "cast on", "bind off", "gauge", "granny square", "needles", "pattern"]
@@ -33,6 +36,7 @@ ornek_ton = ["One More Row Then Bed", "My Stash Has A Stash", "Professional Yarn
 
 [running]
 ad = "Runners (casual and marathon)"
+vitrin_bolumu = "Running"
 alici = "American recreational runners 25-65, run club members, people training for a 5K, half or full marathon; gifts from family after a race."
 ton = "self-aware humor about early alarms, slow paces, race-day nerves, snacks and medals, sore legs, run club friendship"
 jargon = ["mile", "pace", "5K", "10K", "half marathon", "marathon", "PR", "long run", "taper", "run club", "finish line", "chafing", "bib", "splits", "carb load"]
@@ -43,6 +47,7 @@ ornek_ton = ["Slow Runners Club Member", "I Run For The Snacks", "Pace: Conversa
 
 [aunt]
 ad = "Aunts and family roles"
+vitrin_bolumu = "Aunt & Family"
 alici = "American nieces, nephews, siblings and parents buying for an aunt (or the aunt for herself); birthdays, Christmas, Mother's Day, pregnancy announcements."
 ton = "warm, playful, 'fun aunt' pride, spoiling the kids, gentle sibling teasing, family love"
 jargon = ["auntie", "aunt", "niece", "nephew", "spoil", "favorite", "fun aunt", "cool aunt", "aunt life", "sister", "family"]
@@ -53,6 +58,7 @@ ornek_ton = ["Professional Spoiler Of Nieces", "Auntie By Day, Snack Dealer By N
 
 [milestone]
 ad = "Milestone birthdays (40th, 50th, 60th, 70th)"
+vitrin_bolumu = "Milestone Birthdays"
 alici = "American adults buying for someone turning 40, 50, 60 or 70 (or for themselves); birthday parties, surprise gifts, group shirts."
 ton = "affectionate aging jokes, vintage and limited-edition framing, 'still got it', original parts, classic model"
 jargon = ["vintage", "limited edition", "classic", "original parts", "aged to perfection", "legend", "birthday", "est.", "decades", "milestone"]
@@ -60,9 +66,11 @@ roller = ["Dad", "Mom", "Grandpa", "Grandma", "Birthday Queen", "Birthday King"]
 kacin = ["'Vintage 19XX Limited Edition' word for word (very common, marks exist)", "beer, wine or liquor jokes", "brand or car brand names", "song lyrics or movie lines", "crude innuendo"]
 yedek_etiketler = ["50th birthday gift", "40th birthday gift", "60th birthday gift", "70th birthday gift", "birthday shirt", "birthday gift idea", "milestone birthday", "funny birthday tee", "birthday party shirt", "gift for dad", "gift for mom", "turning 50 gift", "over the hill gift"]
 ornek_ton = ["Fifty And Still Fabulous-ish", "Classic Model, Original Parts", "Certified Antique Since 1976"]
+etsy_vesile = "Birthday"   # Etsy "Occasion" özniteliği (ilan/oznitelik.py)
 
 [senior_mom]
 ad = "Senior parents (graduation class of 2027)"
+vitrin_bolumu = "Senior Parents"
 alici = "American moms and dads of high school and college seniors graduating in 2027; senior night, graduation day, family group shirts. Peak Jan-Aug."
 ton = "proud, sentimental-but-funny, tissues and tuition, 'raised a graduate', last first day, cheering loudest"
 jargon = ["senior", "class of 2027", "graduate", "grad", "senior night", "cap and gown", "diploma", "last first day", "tassel", "proud", "senior year"]
@@ -70,11 +78,13 @@ roller = ["Senior Mom", "Senior Dad", "Grad Mom", "Proud Mom", "Proud Dad", "Gra
 kacin = ["school names, mascots or team names", "'Proud Mom Of A 2027 Graduate' word for word (very common)", "brand names", "song lyrics or movie lines"]
 yedek_etiketler = ["senior mom shirt", "class of 2027", "graduation gift", "grad mom shirt", "senior mom gift", "graduation shirt", "proud mom shirt", "senior night shirt", "2027 graduate", "senior dad shirt", "grad family shirt", "graduation party", "senior year gift"]
 ornek_ton = ["Senior Mom: Running On Tissues And Coffee", "I Raised A Graduate (With Snacks)", "Loudest Cheer In The Stands"]
+etsy_vesile = "Graduation"
 
 # Faz 15 niş radarı (2026-10-13, calisma/radar/2026-10-13.md): fırsat mevcut nişlerin medyanının ~25 (band mom) ve ~13 (bowling) katı;
 # marka kapısı temiz. Band mom sezonu sonbahar (bando gösterileri, yarışmalar); bowling yıl boyu, baba/dede hediyesi kalıbı.
 [band_mom]
 ad = "Marching band and band parents"
+vitrin_bolumu = "Marching Band"
 alici = "American parents (mostly moms, also dads and grandparents) of middle and high school marching band and concert band kids; they wear shirts at football-game halftime shows, competitions and concerts, and buy gifts for band boosters. Peak Aug-Dec."
 ton = "proud, funny insider band-parent humor: early call times, long rehearsals, hauling instruments, band camp, competition season, cheering loudest in the stands"
 jargon = ["marching band", "halftime", "band camp", "drumline", "color guard", "pit crew", "section leader", "drum major", "competition season", "band booster", "band kid", "sousaphone", "clarinet", "trumpet", "flute", "snare", "uniform", "bus ride", "Friday night lights", "concert season"]
@@ -85,6 +95,7 @@ ornek_ton = ["Loud And Proud Band Mom", "I Survived Band Camp (Barely)", "Halfti
 
 [bowling]
 ad = "Bowling (league bowlers, dads and grandpas)"
+vitrin_bolumu = "Bowling"
 alici = "American league and casual bowlers and the people shopping for them: dads, grandpas, moms, teammates buying matching team shirts; gifts for birthdays, Father's Day, Christmas and league nights."
 ton = "retro, punny bowling-alley humor: strikes, spares, gutter balls, league night, rented shoes, being on a roll, friendly team rivalry"
 jargon = ["strike", "spare", "gutter ball", "split", "turkey", "league night", "bowling alley", "pins", "lane", "300 game", "perfect game", "bowling shoes", "on a roll", "ten pin", "handicap", "frame", "pocket"]

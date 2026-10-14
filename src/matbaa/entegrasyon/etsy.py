@@ -44,6 +44,8 @@ class Etsy:
         self._bekle = bekle
         self._erisim: str | None = None
         self._bitis = 0.0
+        self._taksonomi: dict[int, list[dict]] = {}
+        self._bolumler: dict[str, int] | None = None
 
     def _kayit(self) -> dict:
         try:
@@ -146,6 +148,35 @@ class Etsy:
         }
         self._i("PUT", f"/listings/{listing_id}/inventory", json=govde)
         return True
+
+    def taksonomi_ozellikleri(self, taxonomy_id: int) -> list[dict]:
+        """getPropertiesByTaxonomyId: kategorinin öznitelikleri (`property_id`, `name`, `display_name`, `possible_values`,
+        `is_multivalued`, `supports_attributes`). Kategori başına bir kez okunur."""
+        if taxonomy_id not in self._taksonomi:
+            self._taksonomi[taxonomy_id] = self._i("GET", f"/seller-taxonomy/nodes/{taxonomy_id}/properties")["results"]
+        return self._taksonomi[taxonomy_id]
+
+    def ozellik_yaz(self, listing_id: int, property_id: int, value_ids: list[int], values: list[str]) -> dict:
+        """updateListingProperty (form; dizi virgülle, 2026-10-14 canlı denendi: "102,210" → Cotton, Polyester)."""
+        return self._i(
+            "PUT",
+            f"/shops/{self.shop_id}/listings/{listing_id}/properties/{property_id}",
+            data={"value_ids": ",".join(map(str, value_ids)), "values": ",".join(values)},
+        )
+
+    def ozellik_sil(self, listing_id: int, property_id: int) -> dict:
+        return self._i("DELETE", f"/shops/{self.shop_id}/listings/{listing_id}/properties/{property_id}")
+
+    def bolum_kimligi(self, baslik: str) -> int:
+        """Mağaza bölümü (Shop section) kimliği; yoksa açılır (createShopSection, form `title`). Liste koşu başına bir kez okunur."""
+        if self._bolumler is None:
+            self._bolumler = {
+                b["title"]: int(b["shop_section_id"]) for b in self._i("GET", f"/shops/{self.shop_id}/sections")["results"]
+            }
+        if baslik not in self._bolumler:
+            b = self._i("POST", f"/shops/{self.shop_id}/sections", data={"title": baslik})
+            self._bolumler[baslik] = int(b["shop_section_id"])
+        return self._bolumler[baslik]
 
     def kargo_profilleri(self) -> list[dict]:
         return self._i("GET", f"/shops/{self.shop_id}/shipping-profiles")["results"]
