@@ -27,6 +27,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 13 | Performansa göre üretim | 🔄 Devam Ediyor | Günlük üretim niş seçimini görüntülenme/favori/satış verisinden yapıyor (ölü niş kısılır, satan niş büyür); satan ifadenin benzerleri üretiliyor; fiyat testi satış verisiyle; mağaza açılmadan sahte veriyle testli, açıldıktan 30 gün sonra raporda niş dağılımı veriyle değişmiş |
 | 14 | Kupa (ikinci ürün ailesi, koşullu) | ⏳ Bekliyor | İlk 30 gün verisinde ≥ 1 satış: tasarım motoru yatay kupa yerleşimi üretiyor (kapılardan geçiyor), satan tasarımlar önce kupaya da açılıyor; net > 0 fiyatla |
 | 15 | Niş radarı (koşullu) | 🔄 Devam Ediyor | Faz 13 çalışınca: Etsy arama önerileri + mevsim takviminden yükselen hobi/meslek nişleri aday listesi; marka kapısından geçen niş kartı otomatik taslaklanıyor, ilk 2 yeni niş canlı |
+| 16 | Yılbaşı süsü (Q4, K-30) | 🔄 Devam Ediyor | Uygun tasarımlara süs ilanı otomatik açılıyor (pencere 09-15 → 12-10); ilk süs Etsy'de aktif ve kurallara uygun; 10 Aralık'a kadar ≥ 20 süs canlı; 26 Aralık'tan sonra süs ilanları pasif; sezon sonu raporunda süs satışı ve neti |
 
 ## Faz Detayları
 
@@ -69,6 +70,16 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   açıyordu (hoodie'de zorunlu "Clothing closure" boştu). Günlük hatta `oznitelik` ve `vitrin` adımları; 6 ilana yazıldı ve geri okundu
   (renk, kol, yaka/kapanış, malzeme, "Humorous saying", Holiday = Christmas; `should_auto_renew` true). Aynı gün `shops_w` ile
   yeniden yetki alındı: "Fishing" ve "Knitting & Crochet" bölümleri açıldı, 6 ilan yerleşti. Onaylı kuyruk alarmı eklendi.
+
+### Faz 16: Yılbaşı süsü (K-30) 🔄 (2026-10-14)
+- **Yapılan:** `tasarim/susleme.py` (daireye sığan tasarım + alt yayda yıl; arka yüz kodu duruyor, `iki_yuz = false`),
+  `fiyat.urun_uygun/tasarim_urunleri/mevsimde/mevsim_bitti`, `yayin.mevsimlik_ac` (önceden üretilmiş tasarımlara süs),
+  `yayin.mevsim_kapat`, yayın sırasında süs önceliği ve ek ürün sınırı (`EK_URUN_GUNLUK = 3`), Printify gövdesinde şekil seçeneği ve
+  arka baskı alanı, süs ilan görseli (tek yüz kartı + güven kartı). Günlük hatta `mevsimlik` ve `mevsim_kapat` adımları. 8 yeni test,
+  öncelik kuralı bilerek bozulunca 2 test düşüyor.
+- **Canlı (2026-10-14):** #2 (fishing) ve #21 (knitting) süsleri Etsy'de aktif (4595395920, 4595396016), ücretsiz kargo, üretim ortağı,
+  Holiday = Christmas, niş bölümünde. 20 süs metni kuyrukta; onaylı tasarımlar yayınlandıkça süsleriyle birlikte çıkar.
+- **Kalan:** ilk süs siparişinde baskının tek yüz ve doğru konumda geldiğini (müşteri yorumu/şikâyet) ve netin ekstreyle tuttuğunu görmek.
 
 ### Faz 13: Performansa göre üretim 🔄 (kod 2026-10-13)
 - **Yapılan:** `performans.py`: niş puanı = ilan başına beklenen satış (görüntülenme × yumuşatılmış dönüşüm, önsel %2, favori 0,1 satış),

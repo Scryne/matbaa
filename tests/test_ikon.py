@@ -110,3 +110,26 @@ def test_kupa_gorseli_iki_kopya_ve_baski_alanina_sigar(tmp_path):
     ys, xs = np.nonzero(a)
     assert xs.min() > 50 and xs.max() < kupa.KUPA_G - 50 and ys.min() > 40 and ys.max() < kupa.KUPA_Y - 40
     assert isinstance(img, Image.Image)
+
+
+def test_susleme_yuzleri_dairenin_guvenli_alaninda(tmp_path):
+    """K-30: ön ve arka yüz 1800x1800; mürekkep kenar payı dairesinin (GUVENLI) dışına taşmaz, ön yüzde tasarım büyük kalır."""
+    import numpy as np
+    from PIL import Image
+
+    from matbaa.tasarim import susleme
+
+    yol = tmp_path / "koyu.png"
+    t = Image.new("RGBA", (4500, 5400), (0, 0, 0, 0))
+    t.paste(Image.new("RGBA", (4000, 2000), (29, 29, 31, 255)), (250, 150))
+    t.save(yol)
+    svg = tmp_path / "koyu.svg"
+    svg.write_text('<svg><g fill="#1d1d1f" color="#1d1d1f"></g><g fill="#2f5d46" color="#2f5d46"></g></svg>', encoding="utf-8")
+    assert susleme.vurgu_rengi(svg) == "#2f5d46"
+    on = susleme.on_yuz(yol, "#2f5d46", 2026)
+    for img in (on, susleme.arka_yuz("AlfaSlabOne-Regular.ttf", "#2f5d46", 2026, "balik")):
+        assert img.size == (susleme.KENAR, susleme.KENAR)
+        ys, xs = np.nonzero(np.asarray(img.getchannel("A")) > 20)
+        assert np.hypot(xs - susleme.M, ys - susleme.M).max() <= susleme.GUVENLI * susleme.M
+    ys, xs = np.nonzero(np.asarray(on.getchannel("A")) > 20)
+    assert xs.max() - xs.min() > 0.6 * susleme.KENAR  # geniş tasarım daireyi doldurur

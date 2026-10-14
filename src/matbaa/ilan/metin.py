@@ -30,14 +30,14 @@ SEMA = {
         "intro": {"type": "string", "description": "2-3 warm sentences: what the design says, who it is for, gift occasion"},
         "alt_text": {
             "type": "string",
-            "description": "image alt text, max 250 characters, describes the shirt and the printed words",
+            "description": "image alt text, max 250 characters, describes the product and the printed words",
         },
     },
     "required": ["title", "tags", "intro", "alt_text"],
 }
 
 SISTEM = (
-    "You write Etsy listings for an American print-on-demand apparel shop. Write natural, specific, buyer-focused copy. "
+    "You write Etsy listings for an American print-on-demand gift shop (apparel, mugs, ornaments). Write natural, specific, buyer-focused copy. "
     "Never use brand names (other than the garment brand given), trademarks, celebrity, team, movie, or song references. "
     "No keyword stuffing, no ALL CAPS, no emojis, no claims you cannot verify (no 'best', no 'handmade')."
 )
@@ -73,6 +73,7 @@ def istem(satirlar: list[str], nis: str, urun: str) -> str:
             f"Write the Etsy title (start with the main search phrase such as 'Funny Fishing Grandpa {u['etsy_turu']}', include the gift angle, "
             "max 140 characters, under 15 words), 16 tags (distinct multi-word phrases buyers type, each at most 20 characters, "
             "no repeats, no brand names including the garment brand), a short intro, and image alt text.",
+            *([u["istem_notu"]] if u.get("istem_notu") else []),
         ]
     )
 

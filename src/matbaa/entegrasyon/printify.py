@@ -145,16 +145,19 @@ def _sade(metin: str) -> str:
     return " ".join("".join(ch for ch in metin.lower() if ch.isalnum() or ch == " ").split())
 
 
-def varyant_sec(varyantlar: list[dict], renkler: list[dict], bedenler: list[str]) -> dict[str, list[dict]]:
+def varyant_sec(
+    varyantlar: list[dict], renkler: list[dict], bedenler: list[str], beden_anahtari: str = "size"
+) -> dict[str, list[dict]]:
     """Katalog renk/beden listesine uyan varyantlar, mürekkep grubuna göre ("koyu" | "acik").
 
     Eşleşme tam addır; yalnız "Solid Black" gibi "Solid " öneki tolere edilir. Bitiş eşleşmesi "Heather Sport Dark Navy"yi
     "Navy" sanıyordu (2026-10-13 sağlayıcı taraması): başka bir renk yanlış mürekkeple basılırdı.
+    `beden_anahtari`: seçimi taşıyan varyant seçeneği (süste "shape": Round / Round + White Gift Packaging).
     """
     gruplar: dict[str, list[dict]] = {"koyu": [], "acik": []}
     for v in varyantlar:
         o = v.get("options", {})
-        renk, beden = str(o.get("color", "")), str(o.get("size", ""))
+        renk, beden = str(o.get("color", "")), str(o.get(beden_anahtari, ""))
         if beden not in bedenler:
             continue
         eslesen = next((r for r in renkler if renk.lower() in (r["ad"].lower(), "solid " + r["ad"].lower())), None)
@@ -184,7 +187,9 @@ def urun_govdesi(
     gorseller: dict[str, tuple[str, tuple[int, int, int, int], tuple[int, int]]],
     fiyat_usd: float,
     buyuk_beden_ek: dict[str, float],
+    beden_anahtari: str = "size",
 ) -> dict:
+    """`gorseller["arka"]` varsa (süs, K-30) her varyantın arka baskı alanına da o görsel konur."""
     variants, print_areas = [], []
     for murekkep, vs in gruplar.items():
         if not vs:
@@ -193,16 +198,17 @@ def urun_govdesi(
         pozisyon, ag, ay = on_yer_tutucu(vs[0])
         y = yerlesim(kutu, tuval, (ag, ay))
         for v in vs:
-            ek = buyuk_beden_ek.get(str(v.get("options", {}).get("size")), 0.0)
+            ek = buyuk_beden_ek.get(str(v.get("options", {}).get(beden_anahtari)), 0.0)
             variants.append({"id": v["id"], "price": round((fiyat_usd + ek) * 100), "is_enabled": True})
-        print_areas.append(
-            {
-                "variant_ids": [v["id"] for v in vs],
-                "placeholders": [
-                    {"position": pozisyon, "images": [{"id": gorsel_id, "x": y.x, "y": y.y, "scale": y.scale, "angle": 0}]}
-                ],
-            }
-        )
+        yerler = [{"position": pozisyon, "images": [{"id": gorsel_id, "x": y.x, "y": y.y, "scale": y.scale, "angle": 0}]}]
+        if "arka" in gorseller:
+            a_id, a_kutu, a_tuval = gorseller["arka"]
+            arka = next((p for p in vs[0].get("placeholders", []) if p["position"] == "back"), None)
+            if arka is None:
+                raise ValueError(f"varyant {vs[0].get('id')}: arka baskı alanı yok")
+            ya = yerlesim(a_kutu, a_tuval, (arka["width"], arka["height"]))
+            yerler.append({"position": "back", "images": [{"id": a_id, "x": ya.x, "y": ya.y, "scale": ya.scale, "angle": 0}]})
+        print_areas.append({"variant_ids": [v["id"] for v in vs], "placeholders": yerler})
     if not variants:
         raise ValueError("hiç varyant eşleşmedi: renk/beden adlarını Printify kataloğuyla karşılaştır")
     return {

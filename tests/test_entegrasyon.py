@@ -678,3 +678,148 @@ def test_onayli_kuyruk_azalinca_onay_bekleyen_varsa_alarm(ortam):
         db.kapi_yaz(ortam, j, "temiz", [], [])
         ortam.execute("UPDATE tasarim SET durum = 'onaylandi' WHERE id = ?", (db.tasarim_ekle(ortam, j, "yigin", []),))
     assert yayin.onay_pisti(ortam) is None  # 5 günlük yayına yetiyor
+
+
+# --- K-30: yılbaşı süsü (mevsimlik ürün) ---
+
+SUS_VARYANTLAR = [
+    {
+        "id": 11,
+        "options": {"shape": "Round", "size": "One size"},
+        "placeholders": [
+            {"position": "front", "decoration_method": "uv", "width": 900, "height": 900},
+            {"position": "back", "decoration_method": "uv", "width": 900, "height": 900},
+        ],
+    },
+    {"id": 12, "options": {"shape": "Heart", "size": "One size"}, "placeholders": []},
+    {
+        "id": 13,
+        "options": {"shape": "Round + White Gift Packaging", "size": "One size"},
+        "placeholders": [
+            {"position": "front", "decoration_method": "uv", "width": 900, "height": 900},
+            {"position": "back", "decoration_method": "uv", "width": 900, "height": 900},
+        ],
+    },
+]
+
+
+def test_susleme_govdesi_iki_yuz_ve_sekil_secenegi():
+    k = fiyat.urunler()["susleme"]
+    g = pf.varyant_sec(SUS_VARYANTLAR, k["renkler"], k["bedenler"], k["beden_anahtari"])
+    assert [v["id"] for v in g["koyu"]] == [11, 13]  # kalp şekli katalogda yok
+    gorseller = {"koyu": ("on", (100, 100, 1700, 1500), (1800, 1800)), "arka": ("arka", (300, 200, 1500, 1400), (1800, 1800))}
+    govde = pf.urun_govdesi("B", "A", [], 1632, 39, g, gorseller, k["fiyat"], k["buyuk_beden_ek"], k["beden_anahtari"])
+    assert {v["id"]: v["price"] for v in govde["variants"]} == {11: 2199, 13: 2499}  # hediye kutusu +$3
+    yerler = {y["position"]: y["images"][0]["id"] for y in govde["print_areas"][0]["placeholders"]}
+    assert yerler == {"front": "on", "back": "arka"}
+    yalniz_on = [{**SUS_VARYANTLAR[0], "placeholders": SUS_VARYANTLAR[0]["placeholders"][:1]}]
+    with pytest.raises(ValueError):  # arka alanı olmayan varyanta arka yüz istenirse sessizce tek yüz basılmaz
+        pf.urun_govdesi("B", "A", [], 1, 1, {"koyu": yalniz_on, "acik": []}, gorseller, 20, {})
+
+
+def test_susleme_uygunlugu_nis_noel_kelimesi_ve_pencere():
+    from datetime import date
+
+    ekim, aralik_sonu = date(2026, 10, 14), date(2026, 12, 20)
+    assert "susleme" in fiyat.tasarim_urunleri("fishing", ["REEL COOL"], ekim)
+    assert "susleme" not in fiyat.tasarim_urunleri("bowling", ["SPARE ME"], ekim)  # süs talebi tişörtün altında olan niş
+    assert "susleme" in fiyat.tasarim_urunleri("bowling", ["Merry Christmas, 7-10"], ekim)  # Noel kelimesi her nişte açar
+    assert "susleme" not in fiyat.tasarim_urunleri("fishing", ["REEL COOL"], aralik_sonu)  # pencere 12-10'da kapanır
+    assert "kupa" not in fiyat.tasarim_urunleri("fishing", ["REEL COOL"], ekim)  # kupa satışa bağlı
+    assert not fiyat.mevsim_bitti("susleme", ekim) and fiyat.mevsim_bitti("susleme", date(2026, 12, 27))
+    assert fiyat.mevsim_bitti("susleme", date(2027, 2, 1)) and not fiyat.mevsim_bitti("tisort", date(2027, 2, 1))
+
+
+@pytest.fixture
+def sus_ortam(ortam, monkeypatch, tmp_path):
+    cfg = yayin.ayar()
+    cfg["printify"]["susleme"] = {"blueprint_id": 1632, "saglayici_id": 39}
+    monkeypatch.setattr(yayin, "susleme_dosyalari", lambda *a, **k: {"on": tmp_path / "on.png", "arka": tmp_path / "arka.png"})
+    monkeypatch.setattr(yayin, "mevsimde", lambda u, gun=None: True)
+    return ortam
+
+
+class SahteSusPrintify(SahtePrintify):
+    def varyantlar(self, bp, sg):
+        return SUS_VARYANTLAR if bp == 1632 else VARYANTLAR
+
+
+def _sus_ilan(s, n, u):
+    from matbaa.ilan.metin import Ilan
+
+    return Ilan("Fishing Christmas Ornament 2026", [f"fishing ornament {i}" for i in range(13)], "a", "alt")
+
+
+def test_mevsimlik_ac_uygun_tasarimlara_bir_kez_acar(sus_ortam):
+    from datetime import date
+
+    sessiz = lambda *_: None  # noqa: E731
+    sus_ortam.execute("UPDATE ifade SET nis = 'bowling' WHERE id = 3")  # bowling, Noel kelimesi yok: açılmaz
+    assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 10, 14), yazdir=sessiz)["acilan"] == 2
+    assert sus_ortam.execute("SELECT count(*) FROM urun WHERE urun = 'susleme' AND durum = 'bekliyor'").fetchone()[0] == 2
+    assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 10, 14), yazdir=sessiz)["acilan"] == 0
+    assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 12, 20), yazdir=sessiz)["acilan"] == 0
+
+
+def test_susu_olan_tasarim_once_ve_yayindakine_ek_urun_siniri_yemez(sus_ortam):
+    # Tasarım 3'ün süsü var (sırada öne geçer); tasarım 1 zaten yayında, yalnız süsü bekliyor (tasarım sınırını yemez).
+    for t in (1, 3):
+        sus_ortam.execute("INSERT INTO urun (tasarim_id, urun) VALUES (?, 'susleme')", (t,))
+        sus_ortam.execute(
+            "INSERT INTO ilan (tasarim_id, urun, baslik, etiketler, aciklama, fiyat, kargo) VALUES (?, 'susleme', 'B', '[]', 'A', 21.99, 0)",
+            (t,),
+        )
+    sus_ortam.execute("UPDATE urun SET durum = 'aktif' WHERE tasarim_id = 1 AND urun != 'susleme'")
+    db.olay(sus_ortam, "urun", 1, "olusturuldu", "tisort:printify", "ilk yayın")
+    sus_ortam.execute("UPDATE olay SET zaman = '2026-01-01T00:00:00+00:00' WHERE yeni = 'tisort:printify'")
+    sus_ortam.execute("UPDATE tasarim SET durum = 'yayinda' WHERE id = 1")
+    sus_ortam.commit()
+    p = SahteSusPrintify()
+    s = yayin.yayinla(sus_ortam, p, yazdir=lambda *_: None)
+    assert s["sinir"] == 5 and s.get("ek_urun") == 1 and s["tasarim"] == 2
+    durum = dict(sus_ortam.execute("SELECT tasarim_id || '/' || urun, durum FROM urun").fetchall())
+    assert durum["1/susleme"] == "printify" and durum["3/susleme"] == "printify"
+    assert p.olusturulan.count(1632) == 2
+
+
+def test_susu_olan_onayli_tasarim_sirada_one_gecer(sus_ortam):
+    sus_ortam.execute("INSERT INTO urun (tasarim_id, urun) VALUES (3, 'susleme')")
+    sus_ortam.execute(
+        "INSERT INTO ilan (tasarim_id, urun, baslik, etiketler, aciklama, fiyat, kargo) VALUES (3, 'susleme', 'B', '[]', 'A', 21.99, 0)"
+    )
+    sus_ortam.commit()
+    s = yayin.yayinla(sus_ortam, SahteSusPrintify(), yazdir=lambda *_: None)
+    assert s["sinir"] == 1 and s["tasarim"] == 1 and s["urun"] == 4
+    assert sus_ortam.execute("SELECT count(*) FROM urun WHERE tasarim_id = 3 AND durum = 'printify'").fetchone()[0] == 4
+
+
+def test_mevsim_bitince_aktif_sus_ilani_pasife_alinir(sus_ortam):
+    from datetime import date
+
+    sus_ortam.execute("INSERT INTO urun (tasarim_id, urun, durum, etsy_listing_id) VALUES (1, 'susleme', 'aktif', '777')")
+    sus_ortam.commit()
+    e = SahteEtsy()
+    assert yayin.mevsim_kapat(sus_ortam, e, gun=date(2026, 12, 1), yazdir=lambda *_: None)["kapanan"] == 0
+    assert yayin.mevsim_kapat(sus_ortam, e, gun=date(2026, 12, 27), yazdir=lambda *_: None)["kapanan"] == 1
+    assert e.guncellenen == [(777, {"state": "inactive", "should_auto_renew": "false"})]
+    assert sus_ortam.execute("SELECT durum FROM urun WHERE tasarim_id = 1 AND urun = 'susleme'").fetchone()[0] == "kaldirildi"
+    assert sus_ortam.execute("SELECT durum FROM urun WHERE tasarim_id = 1 AND urun = 'tisort'").fetchone()[0] == "bekliyor"
+
+
+def test_gunluk_sinir_doluyken_de_yayindaki_tasarima_sus_acilir(sus_ortam):
+    p = SahteSusPrintify()
+    assert yayin.yayinla(sus_ortam, p, yazdir=lambda *_: None)["tasarim"] == 1  # bugünün tek tasarım hakkı
+    yayinda = sus_ortam.execute("SELECT DISTINCT tasarim_id FROM urun WHERE durum = 'printify'").fetchone()[0]
+    sus_ortam.execute("UPDATE tasarim SET durum = 'yayinda' WHERE id = ?", (yayinda,))
+    bekleyen = [r[0] for r in sus_ortam.execute("SELECT id FROM tasarim WHERE durum = 'onaylandi'")]
+    sus_ortam.execute("INSERT INTO urun (tasarim_id, urun) VALUES (?, 'susleme')", (yayinda,))
+    sus_ortam.execute(
+        "INSERT INTO ilan (tasarim_id, urun, baslik, etiketler, aciklama, fiyat, kargo) VALUES (?, 'susleme', 'B', '[]', 'A', 21.99, 0)",
+        (yayinda,),
+    )
+    sus_ortam.commit()
+    s = yayin.yayinla(sus_ortam, p, yazdir=lambda *_: None)
+    assert s["tasarim"] == 0 and s.get("ek_urun") == 1 and s["urun"] == 1
+    assert not sus_ortam.execute(
+        f"SELECT count(*) FROM urun WHERE durum != 'bekliyor' AND tasarim_id IN ({','.join(map(str, bekleyen))})"
+    ).fetchone()[0]  # yeni tasarım açılmadı

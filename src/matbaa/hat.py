@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from matbaa import db, tavan
 from matbaa.ayar import KOK
-from matbaa.fiyat import urunler
+from matbaa.fiyat import tasarim_urunleri, urunler
 from matbaa.ifade import uret as ifade_uret
 from matbaa.ilan import metin as ilan_metin
 from matbaa.ip import kapi, marka
@@ -179,13 +179,14 @@ def metin(c=None, sinir: int = 50, yazdir=print) -> dict:
     """kalite_ok tasarımlar → her ürün için ilan metni → onay kuyruğu."""
     c = c or db.baglan()
     sayac = {"tasarim": 0, "ilan": 0, "ret": 0}
-    urun_adlari = [u for u, p in urunler().items() if not p.get("yalniz_satan")]  # kupa: yalnız satan tasarıma (Faz 14)
     satirlar = c.execute(
         "SELECT t.id, i.satirlar, i.nis FROM tasarim t JOIN ifade i ON i.id = t.ifade_id WHERE t.durum = 'kalite_ok' ORDER BY t.id LIMIT ?",
         (sinir,),
     ).fetchall()
     for t_id, sat, nis in satirlar:
         s = json.loads(sat)
+        # Kupa yalnız satan tasarıma (Faz 14, yayin.kupa_ac); süs mevsiminde ve uygun nişte (K-30).
+        urun_adlari = tasarim_urunleri(nis, s)
         try:
             with ThreadPoolExecutor(len(urun_adlari)) as havuz:
                 ilanlar = dict(
@@ -380,6 +381,7 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
         yazdir(f"== {n}")
         _adim(rapor, f"uret_{n}", lambda n=n: uret(n, adet, c, yazdir), yazdir)
     _adim(rapor, "metin", lambda: metin(c, yazdir=yazdir), yazdir)
+    _adim(rapor, "mevsimlik", lambda: yayin.mevsimlik_ac(c, _ilan_yaz, yazdir=yazdir), yazdir)
     alarmlar: list[str] = []
     goruntu_tamam = False
     if os.environ.get("PRINTIFY_TOKEN") and os.environ.get("PRINTIFY_SHOP_ID"):
@@ -400,6 +402,7 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             _adim(rapor, "gorsel", lambda: yayin.gorselleri_tamamla(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "oznitelik", lambda: yayin.oznitelikleri_esitle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "vitrin", lambda: yayin.vitrin_esitle(c, e, yazdir=yazdir), yazdir)
+            _adim(rapor, "mevsim_kapat", lambda: yayin.mevsim_kapat(c, e, yazdir=yazdir), yazdir)
             # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
             goruntu_tamam = (
                 _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir) is not None

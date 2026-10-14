@@ -26,6 +26,53 @@ def urunler() -> dict:
     return tomllib.loads((CONFIG / "urunler.toml").read_text(encoding="utf-8"))
 
 
+def _ay_gun(gun) -> str:
+    from datetime import date
+
+    return (gun or date.today()).strftime("%m-%d")
+
+
+def mevsimde(urun: str, gun=None) -> bool:
+    """Mevsimlik ürün (`kosul.bas`–`kosul.son`, ay-gün) bugün açılabilir/yayınlanabilir mi; koşulsuz ürün hep açık."""
+    k = urunler()[urun].get("kosul")
+    return not k or k["bas"] <= _ay_gun(gun) <= k["son"]
+
+
+def mevsim_bitti(urun: str, gun=None) -> bool:
+    """Mevsimlik ürünün aktif ilanı pasife alınmalı mı (`kosul.kapanis`tan sonra, yeni pencere açılana kadar)."""
+    k = urunler()[urun].get("kosul")
+    if not k or not k.get("kapanis"):
+        return False
+    g = _ay_gun(gun)
+    return g >= k["kapanis"] or g < k["bas"]
+
+
+def urun_uygun(urun: str, nis: str, satirlar: list[str], gun=None) -> bool:
+    """Bu tasarıma bu ürün açılır mı. `yalniz_satan` (kupa) satışa bağlıdır, burada hep hayır (yayin.kosullu_ac açar).
+    `kosul` (süs, K-30): pencere içinde ve niş listede ya da basılı metinde Noel kelimesi varsa."""
+    p = urunler()[urun]
+    if p.get("yalniz_satan"):
+        return False
+    k = p.get("kosul")
+    if not k:
+        return True
+    if not mevsimde(urun, gun):
+        return False
+    if nis in k.get("nisler", []):
+        return True
+    if k.get("mevsim_kelimesi"):
+        from matbaa.tasarim.ikon import MEVSIM_KELIMELERI
+
+        kelimeler = {w.strip(".,!?'’\"()") for w in " ".join(satirlar).upper().split()}
+        return bool(kelimeler & MEVSIM_KELIMELERI)
+    return False
+
+
+def tasarim_urunleri(nis: str, satirlar: list[str], gun=None) -> list[str]:
+    """Yeni tasarımın ilan metni yazılacak ürünleri (katalog sırasıyla)."""
+    return [u for u in urunler() if urun_uygun(u, nis, satirlar, gun)]
+
+
 def kur_guncelle(http=None) -> float:
     """TCMB günlük USD döviz satış kuru → veri/kur.json. Etsy'nin TRY sabit ödeme ücreti (14 TRY) bu kurla USD'ye çevrilir."""
     import httpx

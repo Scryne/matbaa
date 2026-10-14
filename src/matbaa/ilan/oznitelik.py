@@ -46,7 +46,8 @@ def istenen(urun: str, nis: str, satirlar: list[str], baslik: str = "", gun: dat
     o["Clothing graphic"] = [k.get("etsy_grafik", VARSAYILAN_GRAFIK)]
     basili = " ".join(satirlar)
     mevsim = next((m["etsy_tatil"] for m in aktif_mevsimler(nis, gun) if m.get("etsy_tatil")), None)
-    if tatil := _ilk(METIN_TATIL, basili) or mevsim or _ilk(METIN_TATIL, baslik) or k.get("etsy_tatil"):
+    # Ürünün kendi tatili (süs: Christmas, K-30) metinden gelen tatile ezilmez.
+    if "Holiday" not in o and (tatil := _ilk(METIN_TATIL, basili) or mevsim or _ilk(METIN_TATIL, baslik) or k.get("etsy_tatil")):
         o["Holiday"] = [tatil]
     if vesile := _ilk(METIN_VESILE, f"{basili} {baslik}") or k.get("etsy_vesile"):
         o["Occasion"] = [vesile]

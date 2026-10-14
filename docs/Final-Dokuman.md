@@ -157,6 +157,21 @@ iade kararı.
   Bölüm açmak `shops_w` ister (yetki kapsamına eklendi, 2026-10-14 yeniden alındı); yetki yoksa yalnız yenileme yazılır. Onaylı kuyruk 5 günlük yayından
   azalır ve onay bekleyen varsa günlük alarm (yayın sessizce durmasın).
 
+- **K-30 Yılbaşı süsü, Q4 için ikinci ürün ailesi (2026-10-14):** Scryne'ın paylaştığı Etsy/POD videolarındaki süs örneği Etsy
+  API'siyle ölçüldü (üst 100 ilan, `radar.olc` ürün ekiyle): süsün talebi tişörtün fishing 3,7×, running 1,8×, knitting 2,8× katı;
+  kupada talep her nişte tişörtün altında (Faz 14 koşulu sürer). Medyan süs fiyatı ~$20, çoğu ayrı kargolu. Üst sıralar
+  kişiselleştirilmiş (isim/yıl); isimsiz yıllı süs de satıyor (örgüde en çok görülen "2025 Christmas Ornament", ~94 bin görüntülenme).
+  Ürün: Printify 1632 "Ceramic Decoration Ornament (1pc)", SwiftPOD (sweatshirt/kupa ile aynı sağlayıcı), UV, altın ip; geçici
+  ürünle maliyet Round $4.93, hediye kutulu $7.06, ABD kargo ≤ $5.89. Tasarım motoru: tişört tasarımı daireye sığar, alt yayda
+  "CHRISTMAS <yıl>" (`tasarim/susleme.py`). **Tek yüz:** canlı ilk iki süste arka baskı maliyeti $6.57'ye çıkardı; çift yüzü aynı
+  nete taşımak $23.99 ister. Fiyat $21.99 ücretsiz kargo (net $5.94, Offsite $1.98; alıcı toplamı rakip + kargodan düşük), hediye
+  kutusu +$3. Kimlere: fishing/running/knitting + metninde Noel kelimesi geçen her tasarım; pencere 09-15 → 12-10 (sonrası Noel'e
+  yetişmez), 12-26'dan sonra aktif süs ilanları Etsy'de pasife alınır (yıllı ürün Ocak'ta satmaz, yenileme ücreti boşa gitmez).
+  Süsü olan onaylı tasarım yayın sırasında öne geçer; yayındaki tasarıma sonradan eklenen süs tasarım sınırını yemez (günde ≤ 3).
+  İlk iki süs (#2, #21; çift yüzlü, net $4.30) 2026-10-14 canlı. Kişiselleştirme (isimli süs) araştırıldı: otomatik yol var ama
+  ağır (Printify'da manuel onay + içe aktarılan siparişi iptal edip API ile yeniden açma + takibi Etsy'ye `createReceiptShipment`
+  ile yazma; Etsy kişiselleştirme API'si 2026'da çoklu soruya geçti); Faz 11'e taşındı, süs satışı gelirse öne alınır.
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.
@@ -178,6 +193,6 @@ iade kararı.
 3. **Anahtarlar:** Printify kişisel token; Etsy geliştirici hesabı → Seller App (Aria adım adım). USPTO API anahtarı isteğe bağlı (v1.1).
 
 ## Kapsam Dışı
-Shopify (koşullu faz), ücretli dış reklam, kişiselleştirme (koşullu faz, Ocak), poster/sticker (kupa Faz 14'te koşullu), dijital ürün,
+Shopify (koşullu faz), ücretli dış reklam, kişiselleştirme (koşullu faz, Ocak), poster/sticker (kupa Faz 14'te koşullu; süs K-30 ile Q4'te açık), dijital ürün,
 fabrika ürünü/trend oyuncak yeniden satışı (Etsy'de yasak; ayrı iş modeli), Etsy mesaj otomasyonu
 (API yok; hazır cevap şablonları var), Redbubble/TeePublic/Amazon Merch kolları, AI görsel katmanı (grafik öğe; v1.1 spike).

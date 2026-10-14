@@ -162,6 +162,84 @@ def renk_karti(urun: str) -> Image.Image:
     return _png(_svg(p))
 
 
+def _disk(yuz_png: str | Path, cap: int) -> tuple[Image.Image, Image.Image]:
+    """Süs yüzü beyaz seramik diskte (hafif gölgeli kenar), (görsel, maske)."""
+    from PIL import ImageDraw
+
+    yuz = Image.open(yuz_png).convert("RGBA").resize((cap, cap), Image.LANCZOS)
+    disk = Image.new("RGBA", (cap, cap), (0, 0, 0, 0))
+    ImageDraw.Draw(disk).ellipse((0, 0, cap - 1, cap - 1), fill=(252, 251, 248, 255), outline=ACIK_CIZGI, width=max(4, cap // 90))
+    disk.alpha_composite(yuz)
+    maske = Image.new("L", (cap, cap), 0)
+    ImageDraw.Draw(maske).ellipse((0, 0, cap - 1, cap - 1), fill=255)
+    return disk, maske
+
+
+def tek_yuz_karti(on_png: str | Path) -> Image.Image:
+    """Tek yüzlü süsün baskı yakın planı (K-30): yıllı hatıra vurgusu, ölçü ve hediye kutusu seçeneği."""
+    p: list[str] = [
+        _yazi("A KEEPSAKE FOR THIS CHRISTMAS", BASLIK_F, KENAR / 2, 170, 88, LACIVERT, ara=0.04, maks_g=KENAR - 200)[0]
+    ]
+    p.append(
+        _yazi(
+            "ROUND CERAMIC ORNAMENT  ·  ABOUT 3 INCHES  ·  GOLDEN STRING",
+            RAKAM_F,
+            KENAR / 2,
+            320,
+            56,
+            MERCAN,
+            ara=0.06,
+            maks_g=KENAR - 200,
+        )[0]
+    )
+    p.append(_yazi("ADD A WHITE GIFT BOX AT CHECKOUT", RAKAM_F, KENAR / 2, 1800, 64, MERCAN, ara=0.06)[0])
+    zemin = _png(_svg(p)).convert("RGBA")
+    cap, ust = 1240, 470
+    disk, maske = _disk(on_png, cap)
+    x = (KENAR - cap) // 2
+    a = Image.new("L", zemin.size, 0)
+    a.paste(maske.point(lambda v: v * 55 // 255), (x + 12, ust + 20))
+    golge = Image.new("RGBA", zemin.size, (60, 50, 40, 0))
+    golge.putalpha(a.filter(ImageFilter.GaussianBlur(16)))
+    zemin.alpha_composite(golge)
+    zemin.paste(disk, (x, ust), maske)
+    return zemin.convert("RGB")
+
+
+def iki_yuz_karti(on_png: str | Path, arka_png: str | Path) -> Image.Image:
+    """Süsün iki yüzü yan yana (K-30): alıcı arkada ne yazdığını görür; Printify mockup'ı yalnız önü gösteriyor."""
+    p: list[str] = [_yazi("PRINTED ON BOTH SIDES", BASLIK_F, KENAR / 2, 170, 96, LACIVERT, ara=0.04, maks_g=KENAR - 200)[0]]
+    p.append(
+        _yazi(
+            "ROUND CERAMIC ORNAMENT  ·  ABOUT 3 INCHES  ·  GOLDEN STRING",
+            RAKAM_F,
+            KENAR / 2,
+            330,
+            56,
+            MERCAN,
+            ara=0.06,
+            maks_g=KENAR - 200,
+        )[0]
+    )
+    cap, ust = 820, 520
+    for i, ad in enumerate(("FRONT", "BACK")):
+        x = KENAR / 4 + i * KENAR / 2
+        p.append(_yazi(ad, GOVDE_F, x, ust + cap + 70, 70, LACIVERT, ara=0.08)[0])
+    p.append(_yazi("ADD A WHITE GIFT BOX AT CHECKOUT", RAKAM_F, KENAR / 2, ust + cap + 270, 64, MERCAN, ara=0.06)[0])
+    zemin = _png(_svg(p)).convert("RGBA")
+    for i, yol in enumerate((on_png, arka_png)):
+        disk, maske = _disk(yol, cap)
+        x = round(KENAR / 4 + i * KENAR / 2 - cap / 2)
+        golge = Image.new("RGBA", zemin.size, (60, 50, 40, 0))
+        golge.putalpha(Image.new("L", zemin.size, 0))
+        a = Image.new("L", zemin.size, 0)
+        a.paste(maske.point(lambda v: v * 55 // 255), (x + 10, ust + 16))
+        golge.putalpha(a.filter(ImageFilter.GaussianBlur(14)))
+        zemin.alpha_composite(golge)
+        zemin.paste(disk, (x, ust), maske)
+    return zemin.convert("RGB")
+
+
 def _jpeg(img: Image.Image) -> bytes:
     b = io.BytesIO()
     img.convert("RGB").save(b, "JPEG", quality=90, optimize=True)
@@ -194,6 +272,16 @@ def ilan_gorselleri(urun: str, dosyalar: dict[str, Path], tohum: int = 0) -> lis
     Yakın plan vitrin rengindeki kumaşta (o rengin mürekkebiyle): ilk iki görsel aynı ürünü gösterir.
     """
     u = urunler()[urun]
+    if urun == "susleme":
+        if u.get("iki_yuz"):
+            kart = (
+                "iki-yuz",
+                iki_yuz_karti(dosyalar["susleme_on_png"], dosyalar["susleme_arka_png"]),
+                "Front and back of the ceramic Christmas ornament",
+            )
+        else:
+            kart = ("iki-yuz", tek_yuz_karti(dosyalar["susleme_on_png"]), "Close-up of the printed ceramic Christmas ornament")
+        return [kart, ("guven", guven_karti(), "Printed to order in the USA with free US shipping")]
     renk = next((r for r in u["renkler"] if r["ad"] == u.get("vitrin_rengi")), u["renkler"][0])
     png = dosyalar.get("kupa_png") if urun == "kupa" else dosyalar[f"{renk['murekkep']}_png"]
     tur = u["etsy_turu"].lower()
@@ -240,8 +328,9 @@ def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohu
         kendi[ad] = (y or {}).get("listing_image_id")
         sonuc["eklenen"].append(ad)
     mockuplar = [g["listing_image_id"] for g in mockup_g if not vitrin or g["listing_image_id"] != vitrin["listing_image_id"]]
-    bas = ([vitrin["listing_image_id"]] if vitrin else mockuplar[:1]) + ([kendi["yakin-plan"]] if kendi.get("yakin-plan") else [])
-    kartlar = [kendi[ad] for ad, _, _ in plan if ad != "yakin-plan" and kendi.get(ad)]
+    ikinci = next((ad for ad in ("yakin-plan", "iki-yuz") if kendi.get(ad)), None)  # galerinin 2. görseli
+    bas = ([vitrin["listing_image_id"]] if vitrin else mockuplar[:1]) + ([kendi[ikinci]] if ikinci else [])
+    kartlar = [kendi[ad] for ad, _, _ in plan if ad != ikinci and kendi.get(ad)]
     sira = bas + [g for g in mockuplar if g not in bas] + kartlar
     sira_kur(etsy, listing_id, sira)
     sonuc["vitrin"] = vitrin["listing_image_id"] if vitrin else None
