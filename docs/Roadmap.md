@@ -42,8 +42,8 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 - Faz 6–7 ⛔ Faz 0'a bağlı: istemciler resmî dokümandan doğrulanmış uç noktalarla yazıldı, sahte HTTP ile test edildi (mükerrer ürün
   koruması dahil); gerçek hesapta 3 ürün oluşturulunca ✅.
 - Faz 8 🔄 (üçüncü tur): kod tamam: sipariş defteri, TCMB kuru (`veri/kur.json`, günlük), aylık özet (`matbaa ozet`: sipariş neti −
-  listeleme ücreti), harcama tavanları (`config/tavanlar.toml`, K-19; tavanda yayın para harcamadan durur). Kalan: Scryne'ın tavan
-  onayı ve ilk gerçek siparişte netin Etsy/Printify ekstresiyle tutması.
+  listeleme ücreti), harcama tavanları (`config/tavanlar.toml`, K-19; tavanda yayın para harcamadan durur). Tavan değerleri K-22 ile karara bağlandı (onay
+  beklemiyor). Kalan: ilk gerçek siparişte netin Etsy/Printify ekstresiyle tutması.
 - Faz 9 🔄 (üçüncü tur): `Matbaa-Gunluk` Windows görevi kurulu (her gün 10:30); haftalık rapor (`matbaa rapor`, haftanın ilk koşusunda
   otomatik; ilan, Etsy görüntülenme farkı, satış, net, gecikme/hata en üstte); USPTO 30. günde yenilenir; verideki en yeni başvuru 60 günü geçerse üretim durur (K-21).
   Kalan: Faz 0 anahtarlarıyla günlük koşunun yayın + Etsy + sipariş adımlarını gerçek hesapta uçtan uca koşması.
