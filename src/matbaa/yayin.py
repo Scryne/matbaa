@@ -420,6 +420,8 @@ def etsy_esle(c, p: pf.Printify, etsy, yazdir=print, hata_dene: bool = True) -> 
                 ).fetchone()[0]
             alanlar["state"] = "active"
             etsy.ilan_guncelle(int(listing), **alanlar)
+            if hp := ayar()["etsy"].get("hazirlama_profili_id"):
+                etsy.hazirlama_ayarla(int(listing), hp)
             db.urun_gecis(c, r["tasarim_id"], r["urun"], "aktif", "üretim ortağı bağlandı, AI beyanı doğrulandı, aktif")
             sayac["aktif"] += 1
             if c.execute("SELECT durum FROM tasarim WHERE id = ?", (r["tasarim_id"],)).fetchone()[0] == "onaylandi":

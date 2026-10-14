@@ -115,6 +115,59 @@ def test_etsy_token_yenilenir_ve_yeni_yenileme_tokeni_kaydedilir(tmp_path, monke
     assert sum(1 for g in gorulen if g[1].endswith("/oauth/token")) == 1  # token önbellekte
 
 
+def test_etsy_hazirlama_profili_envanterde_sku_fiyat_korunarak_yazilir(tmp_path):
+    (tmp_path / "t.json").write_text(json.dumps({"access_token": "a", "bitis": 9e12}))
+    teklif = {"offering_id": 1, "quantity": 999, "is_enabled": True, "is_deleted": False, "readiness_state_id": 2}
+    deger = {"property_id": 513, "property_name": "Clothing sizes", "scale_id": None, "scale_name": None}
+    env = {
+        "products": [
+            {
+                "product_id": 7,
+                "sku": "S1",
+                "is_deleted": False,
+                "offerings": [teklif | {"price": {"amount": 3399, "divisor": 100}}],
+                "property_values": [deger | {"value_ids": [11], "values": ["S"]}],
+            },
+            {
+                "product_id": 8,
+                "sku": "S2",
+                "is_deleted": True,
+                "offerings": [teklif | {"price": {"amount": 1, "divisor": 1}}],
+                "property_values": [],
+            },
+        ],
+        "price_on_property": [513],
+        "quantity_on_property": [],
+        "sku_on_property": [513],
+        "readiness_state_on_property": [],
+    }
+    yazilan = []
+
+    def isle(r: httpx.Request):
+        if r.method == "PUT":
+            yazilan.append(json.loads(r.content))
+            env["products"][0]["offerings"][0]["readiness_state_id"] = 3
+            return httpx.Response(200, json={})
+        return httpx.Response(200, json=env)
+
+    e = etsy_mod.Etsy(
+        "ks", "sec", "777", http=httpx.Client(transport=httpx.MockTransport(isle)), token_dosyasi=tmp_path / "t.json"
+    )
+    assert e.hazirlama_ayarla(9, 3) is True
+    g = yazilan[0]
+    assert g["products"] == [
+        {
+            "sku": "S1",
+            "property_values": [
+                {"property_id": 513, "value_ids": [11], "scale_id": None, "property_name": "Clothing sizes", "values": ["S"]}
+            ],
+            "offerings": [{"price": 33.99, "quantity": 999, "is_enabled": True, "readiness_state_id": 3}],
+        }
+    ]
+    assert g["price_on_property"] == [513] and g["sku_on_property"] == [513]
+    assert e.hazirlama_ayarla(9, 3) is False and len(yazilan) == 1  # profil zaten doğruysa envantere dokunulmaz
+
+
 # --- yayın akışı sahte istemcilerle ---
 
 
@@ -152,6 +205,10 @@ class SahteEtsy:
     def ilan_guncelle(self, listing_id, **alanlar):
         self.guncellenen.append((listing_id, alanlar))
 
+    def hazirlama_ayarla(self, listing_id, readiness_state_id):
+        self.hazirlama = getattr(self, "hazirlama", []) + [(listing_id, readiness_state_id)]
+        return True
+
 
 @pytest.fixture
 def ortam(tmp_path, monkeypatch):
@@ -163,7 +220,7 @@ def ortam(tmp_path, monkeypatch):
             u: {"blueprint_ara": u, "blueprint_id": i + 1, "saglayici_id": 9}
             for i, u in enumerate(["tisort", "sweatshirt", "hoodie"])
         },
-        "etsy": {"uretim_ortagi_id": 55, "kargo_profili_id": 66},
+        "etsy": {"uretim_ortagi_id": 55, "kargo_profili_id": 66, "hazirlama_profili_id": 35},
     }
     monkeypatch.setattr(yayin, "ayar", lambda: cfg)
     c = db.baglan()
@@ -311,6 +368,7 @@ def test_urun_hatasi_digerlerini_durdurmaz_ve_mukerrer_acilmaz(ortam):
     assert s["aktif"] == 2
     alanlar = e.guncellenen[0][1]
     assert alanlar["production_partner_ids"] == [55] and alanlar["state"] == "active" and alanlar["description"] == "A"
+    assert [r for _, r in e.hazirlama] == [35, 35]  # Printify'ın 2-5 gün profili mağazanın 3-5 gün profiline çekilir
     assert ortam.execute("SELECT durum FROM tasarim WHERE id = 1").fetchone()[0] == "yayinda"
 
 

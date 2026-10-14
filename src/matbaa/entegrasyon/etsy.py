@@ -108,6 +108,45 @@ class Etsy:
         form = {k: ",".join(map(str, v)) if isinstance(v, list | tuple) else v for k, v in alanlar.items()}
         return self._i("PATCH", f"/shops/{self.shop_id}/listings/{listing_id}", data=form)
 
+    def hazirlama_ayarla(self, listing_id: int, readiness_state_id: int) -> bool:
+        """İşlem süresi profili ilanda değil, her varyantın teklifinde durur (`updateListing` alanı yok sayar, 2026-10-14
+        canlı denendi). Printify ilanı kendi "2-5 days" profiline bağlıyor; mağaza vaadi 3-5 gün. Envanter (SKU, fiyat, adet
+        aynen; Printify siparişi SKU'dan eşler) yalnız profil farklıysa `updateListingInventory` (JSON, şema 2026-10-14) ile
+        yazılır. Değiştiyse True."""
+        env = self._i("GET", f"/listings/{listing_id}/inventory")
+        urunler = [
+            p | {"offerings": [o for o in p["offerings"] if not o.get("is_deleted")]}
+            for p in env["products"]
+            if not p.get("is_deleted")
+        ]
+        if all(o.get("readiness_state_id") == readiness_state_id for p in urunler for o in p["offerings"]):
+            return False
+        alanlar = ("property_id", "value_ids", "scale_id", "property_name", "values")
+        govde = {
+            "products": [
+                {
+                    "sku": p.get("sku"),
+                    "property_values": [{k: v.get(k) for k in alanlar} for v in p.get("property_values", [])],
+                    "offerings": [
+                        {
+                            "price": o["price"]["amount"] / o["price"]["divisor"],
+                            "quantity": o["quantity"],
+                            "is_enabled": o["is_enabled"],
+                            "readiness_state_id": readiness_state_id,
+                        }
+                        for o in p["offerings"]
+                    ],
+                }
+                for p in urunler
+            ],
+            **{
+                k: env.get(k, [])
+                for k in ("price_on_property", "quantity_on_property", "sku_on_property", "readiness_state_on_property")
+            },
+        }
+        self._i("PUT", f"/listings/{listing_id}/inventory", json=govde)
+        return True
+
     def kargo_profilleri(self) -> list[dict]:
         return self._i("GET", f"/shops/{self.shop_id}/shipping-profiles")["results"]
 
