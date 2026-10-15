@@ -234,6 +234,18 @@ iade kararı.
   dağılımı. ABD payı düşükse karar yeniden açılır (ücretli TikTok reklamı Türkiye kayıtlı hesapla ABD'yi hedefleyebiliyor mu
   doğrulanamadı; kampanya tabanı günlük $50).
 
+- **K-35 Giyilmiş ürün videosu, yerel ve ücretsiz (2026-10-15, deneme):** Scryne: ürünü insan üstünde görmek alıcıya güven
+  veriyor; ComfyUI ile yerelde üretilsin. Kurulum `C:\Users\scryn\ComfyUI` (git + uv venv, torch cu130; RTX 4060 8 GB),
+  `scripts/comfy_baslat.ps1`. Modeller: RealVisXL V5 (fotoğraf, OpenRAIL++), Wan 2.2 TI2V 5B (video, Apache-2.0), SAM 2.1
+  (tişört bölütleme, Apache-2.0); kıyafet bölütleyici segformer_b2_clothes lisansı belirsiz olduğu için kullanılmadı.
+  **Yöntem (`giyim.py`, `matbaa giyim --tasarim N`):** model baskıyı çizmez (yerel modeller yazıyı harf harf koruyamıyor):
+  baskısız vitrin renginde tişörtlü insan → SAM ile tişört → kendi baskı dosyamız göğse, kumaşın ışığı ve kırışıklığıyla →
+  OCR → Wan 2.2 ile hafif hareket → örnek karelerde OCR (tutmazsa fotoğrafta kamera yakınlaşması) → kanca yazısı + kapanış
+  kartı. Renk eşiğiyle tişört bulma ilk denemede gün batımı göğünü tişört sandı, baskı yüze kaydı: SAM'e geçildi.
+  **İlk deneme (#2 Grandpa's Fishing Crew):** 4 aday 83 sn, dördünde slogan birebir; video 81 kare 18,6 dk, örnek karelerin
+  %100'ünde slogan birebir; çıktı 6,5 sn. Gerçekçi AI insanı içerdiği için TikTok'ta "AI ile oluşturulmuş içerik" açık
+  paylaşılır; Etsy ilanına girmez. Sonuç iyiyse günlük hatta tasarım başına bir giyilmiş video eklenir (GPU ~20 dk/video).
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.
