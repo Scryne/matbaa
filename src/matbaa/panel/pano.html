@@ -366,6 +366,11 @@ function siradaki(d) {
   if (p.bekleyen) g.push({ ikon: "raptiye", metin: p.verilen ? `${p.bekleyen} yeni pin hazır` : `İlk ${p.bekleyen} pin hazır`,
     alt: p.verilen ? "CSV'yi indirip Pinterest'e yükle" : "Pinterest işletme hesabı aç, CSV'yi yükle",
     eylem: `<form method="post" action="/pinterest/indir"><button class="btn ana" type="submit">${ik("indir")}CSV indir</button></form>` });
+  // İndirilen dosya "Yükledim" denene kadar burada kalır: tarayıcı indirmeyi sessizce düşürse de pinler kaybolmaz.
+  if (p.son_dosya && !gizli.includes("pin-" + p.son_dosya.dosya))
+    g.push({ ikon: "raptiye", metin: `${p.son_dosya.adet} pinlik dosya Pinterest'e yüklenmeyi bekliyor`,
+      alt: "Pinterest: Ayarlar, İçeriği içe aktar, .csv yükle",
+      eylem: `<a class="btn" href="/pinterest/son" download="${esc(p.son_dosya.dosya)}">${ik("indir")}İndir</a> <button class="btn sade" type="button" onclick="gizle('pin-${esc(p.son_dosya.dosya)}')">Yükledim</button>` });
   if (d.acilis) {
     const ads = new Date(d.acilis + "T00:00:00"); ads.setDate(ads.getDate() + 15);
     if (new Date() >= ads) {
