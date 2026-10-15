@@ -34,7 +34,10 @@ from matbaa.tasarim.yazi import font
 
 G, Y = 1080, 1920
 FPS = 30
-GUVENLI = (60, 150, 920, 1380)  # x0, y0, x1, y1: yazı bu kutuda (alt açıklama alanı ve sağ düğme şeridi dışında)
+# x0, y0, x1, y1: yazı bu kutuda. Telefon ekranı 9:16'dan uzun (~9:19,5): TikTok videoyu yükseklikten doldurup iki yandan ~100 px
+# kırpıyor, sağda düğme şeridi var (2026-10-15 Studio önizlemesinde kapanış kartı iki yandan kesildi). Alt: açıklama alanı.
+GUVENLI = (110, 150, 870, 1380)
+ORTA = (GUVENLI[0] + GUVENLI[2]) / 2
 CIKTI = KOK / "calisma" / "tiktok"
 MAGAZA = "HobbyHeartPrints"
 KREM, LACIVERT, MERCAN = "#F4EDE1", "#2B3A55", "#E07A5F"
@@ -139,7 +142,7 @@ def _sigdir(foto: Image.Image, ust: float | None = None) -> Image.Image:
     zemin = Image.new("RGB", (G, Y), renk)
     urun = foto.crop(_urun_kutusu(foto, renk))
     bas = GUVENLI[1] if ust is None else ust
-    k = min(G * 0.94 / urun.width, (FOTO_ALT - bas) / urun.height)
+    k = min(G * 0.8 / urun.width, (FOTO_ALT - bas) / urun.height)  # telefonda yanlardan kırpılan ~100 px'e kol taşmasın
     on = urun.resize((round(urun.width * k), round(urun.height * k)), Image.LANCZOS)
     zemin.paste(on, ((G - on.width) // 2, round(bas + (FOTO_ALT - bas - on.height) / 2)))
     return zemin
@@ -162,21 +165,26 @@ class Sahne:
         return img.convert("RGB")
 
 
+def _sigan_boy(metin: str, dosya: str, boy: float) -> float:
+    """İstenen büyük harf yüksekliği; satır güvenli genişliği aşacaksa küçültülür."""
+    f = font(dosya)
+    return min(boy, (GUVENLI[2] - GUVENLI[0]) * f.buyuk_harf / f.satir(metin).ilerleme)
+
+
 def kapanis(tasarim_png: Path | None, alt_satir: str) -> Image.Image:
-    f = font(BASLIK_F)
-    ad_boy = min(104, (GUVENLI[2] - GUVENLI[0]) * f.buyuk_harf / f.satir(MAGAZA).ilerleme)  # güvenli genişliğe sığar
-    p = [
-        _yazi("FIND IT ON ETSY", ALT_F, G / 2, 420, 64, MERCAN)[0],
-        _yazi(MAGAZA, BASLIK_F, G / 2, 560, ad_boy, LACIVERT)[0],
-        _yazi(alt_satir.upper(), ALT_F, G / 2, 1330, 58, LACIVERT)[0],
-        _yazi("SEARCH  HOBBYHEARTPRINTS", KALIN_F, G / 2, 1430, 40, MERCAN)[0],
+    satirlar = [
+        ("FIND IT ON ETSY", ALT_F, 420, 64, MERCAN),
+        (MAGAZA, BASLIK_F, 560, 104, LACIVERT),
+        (alt_satir.upper(), ALT_F, 1330, 58, LACIVERT),
+        ("SEARCH  HOBBYHEARTPRINTS", KALIN_F, 1430, 40, MERCAN),
     ]
+    p = [_yazi(m, d, ORTA, y, _sigan_boy(m, d, b), r)[0] for m, d, y, b, r in satirlar]
     zemin = _svg(p, KREM)
     if tasarim_png and tasarim_png.exists():
         t = Image.open(tasarim_png).convert("RGBA")
         t = t.crop(t.getchannel("A").getbbox())
-        t.thumbnail((760, 560), Image.LANCZOS)
-        zemin.alpha_composite(t, ((G - t.width) // 2, 650 + (560 - t.height) // 2))
+        t.thumbnail((GUVENLI[2] - GUVENLI[0], 560), Image.LANCZOS)
+        zemin.alpha_composite(t, (round(ORTA - t.width / 2), 650 + (560 - t.height) // 2))
     return zemin.convert("RGB")
 
 
@@ -340,10 +348,12 @@ def uret(c, etsy, tasarim_id: int, indir=None, yazar=None) -> dict:
         renk = next((r for r in u["renkler"] if r["ad"] == u.get("vitrin_rengi")), u["renkler"][0])
         yakin = gorsel.yakin_plan(dos[f"{renk['murekkep']}_png"], renk["hex"], tohum=tasarim_id)
     satirlar = json.loads(t["satirlar"])
-    onceki = [
-        r[0] for r in c.execute("SELECT hook FROM video WHERE tasarim_id != ? ORDER BY olusturma DESC LIMIT 8", (tasarim_id,))
-    ]
-    m = metin_yaz(satirlar, t["nis"], [urunler()[u]["etsy_turu"] for u in fotolar], yazar, onceki)
+    eski = c.execute("SELECT hook, aciklama, etiketler FROM video WHERE tasarim_id = ?", (tasarim_id,)).fetchone()
+    if eski and eski["hook"]:  # yeniden üretim (görsel düzeltmesi): metin aynı kalır, Studio'ya yapıştırılan açıklama tutar
+        m = Metin(eski["hook"], eski["aciklama"], json.loads(eski["etiketler"] or "[]"))
+    else:
+        onceki = [r[0] for r in c.execute("SELECT hook FROM video ORDER BY olusturma DESC LIMIT 8")]
+        m = metin_yaz(satirlar, t["nis"], [urunler()[u]["etsy_turu"] for u in fotolar], yazar, onceki)
     sh = sahneler(fotolar, yakin, dos.get("koyu_png"), m)
     klasor = CIKTI / f"{tasarim_id:05d}"
     video_yaz(sh, klasor / "video.mp4")

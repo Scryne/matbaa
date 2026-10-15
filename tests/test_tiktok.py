@@ -140,3 +140,11 @@ def test_takvim_aksam_gecince_ertesi_gun_ve_zamanlanandan_sonra(c):
     kis = datetime(2026, 11, 3, 15, 0, tzinfo=UTC)  # yaz saati bitti (EST): 19:00 = 00:00 UTC
     c.execute("DELETE FROM video")
     assert tiktok.plan(c, 1, kis)[0].isoformat() == "2026-11-04T00:00:00+00:00"
+
+
+def test_yeniden_uretim_metni_korur(c):
+    indir = lambda url: _mockup("#f3dfa2")  # noqa: E731
+    tiktok.uret(c, SahteEtsy(), 1, indir=indir, yazar=_yazar)
+    baska = lambda *a: {"hook": "Yepyeni kanca", "caption": "Başka.", "hashtags": ["x", "y", "z"]}  # noqa: E731
+    tiktok.uret(c, SahteEtsy(), 1, indir=indir, yazar=baska)
+    assert c.execute("SELECT hook FROM video WHERE tasarim_id = 1").fetchone()[0] == "POV: your dad found a new lake"
