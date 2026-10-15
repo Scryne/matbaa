@@ -132,13 +132,13 @@ def test_gunluk_adim_video_uretir_tekrar_uretmez_takvim_ve_pano(c):
     assert pano["paylasilan"] == 1 and [h["tasarim_id"] for h in pano["hazir"]] == [2]
 
 
-def test_takvim_gunde_iki_saat_aksam_gecince_ertesi_gun_ve_zamanlanandan_sonra(c):
+def test_takvim_gunde_iki_saat_aksam_gecince_ertesi_gun_ve_dolu_saat_atlanir(c):
     gec = datetime(2026, 10, 20, 23, 30, tzinfo=UTC)  # ABD 19:30: bugünkü iki saat de geçti
     assert tiktok.plan(c, 1, gec)[0].isoformat() == "2026-10-21T16:00:00+00:00"
     c.execute(
-        "INSERT INTO tiktok_video (tasarim_id, tur, durum, plan) VALUES (1, 'urun', 'paylasildi', '2026-10-25T23:00+00:00')"
+        "INSERT INTO tiktok_video (tasarim_id, tur, durum, plan) VALUES (1, 'urun', 'paylasildi', '2026-10-20T23:00+00:00')"
     )
-    assert [z.isoformat() for z in tiktok.plan(c, 2, SIMDI)] == ["2026-10-26T16:00:00+00:00", "2026-10-26T23:00:00+00:00"]
+    assert [z.isoformat() for z in tiktok.plan(c, 2, SIMDI)] == ["2026-10-20T16:00:00+00:00", "2026-10-21T16:00:00+00:00"]
     kis = datetime(2026, 11, 3, 15, 0, tzinfo=UTC)  # yaz saati bitti (EST): 12:00 = 17:00 UTC
     c.execute("DELETE FROM tiktok_video")
     assert tiktok.plan(c, 1, kis)[0].isoformat() == "2026-11-03T17:00:00+00:00"
@@ -166,3 +166,18 @@ def test_eski_video_tablosu_tasinir(c):
     )
     assert not c2.execute("SELECT 1 FROM sqlite_master WHERE name = 'video'").fetchone()
     db.baglan().close()  # ikinci bağlantı: taşıma yinelenmez
+
+
+def test_sirasiz_isaretleme_kart_saatini_korur(c):
+    for tid, tur, zaman in [(1, "urun", "a"), (2, "urun", "b"), (1, "giyim", "c")]:
+        c.execute(
+            "INSERT INTO tiktok_video (tasarim_id, tur, durum, hook, olusturma) VALUES (?, ?, 'hazir', 'h', ?)", (tid, tur, zaman)
+        )
+    c.commit()
+    kart = {h["id"]: h["plan"] for h in tiktok.ozet(c, SIMDI)["hazir"]}
+    for vid in (3, 1, 2):  # önce sonuncu işaretlenir
+        tiktok.paylasildi(c, vid, SIMDI)
+        assert c.execute("SELECT plan FROM tiktok_video WHERE id = ?", (vid,)).fetchone()[0] == kart[vid]
+        assert {h["id"]: h["plan"] for h in tiktok.ozet(c, SIMDI)["hazir"]} == {
+            k: v for k, v in kart.items() if k in {r[0] for r in c.execute("SELECT id FROM tiktok_video WHERE durum = 'hazir'")}
+        }  # kalan kartlar kaymaz

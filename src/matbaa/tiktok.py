@@ -417,18 +417,26 @@ def hazirla(c, etsy, sinir: int = GUNLUK, yazdir=print, indir=None, yazar=None) 
 
 
 def plan(c, n: int, simdi: datetime | None = None) -> list[datetime]:
-    """Sıradaki `n` paylaşım saati (UTC): `PAYLASIM_SAATLERI` (ABD doğu), en son zamanlanan videodan ve şimdiden sonra."""
+    """Sıradaki `n` boş paylaşım saati (UTC): `PAYLASIM_SAATLERI` (ABD doğu), şimdiden sonra, zamanlanmış videoların saatleri
+    atlanarak. Boşluk doldurulur: kartlar sırasız işaretlense de her video kartında gördüğü saati korur."""
     simdi = simdi or datetime.now(UTC)
-    son = c.execute("SELECT max(plan) FROM tiktok_video WHERE durum = 'paylasildi'").fetchone()[0]
-    esik = max(simdi + timedelta(minutes=20), datetime.fromisoformat(son) if son else simdi)  # Studio en az ~15 dk ileri zamanlar
+    dolu = {
+        datetime.fromisoformat(r[0])
+        for r in c.execute("SELECT plan FROM tiktok_video WHERE durum = 'paylasildi' AND plan IS NOT NULL")
+    }
+    esik = simdi + timedelta(minutes=20)  # Studio en az ~15 dk ileri zamanlar
     sonuc, gun = [], esik.astimezone(ABD).date()
     while len(sonuc) < n:
         for saat in PAYLASIM_SAATLERI:
             z = datetime.combine(gun, saat, ABD).astimezone(UTC)
-            if z > esik and len(sonuc) < n:
+            if z > esik and z not in dolu and len(sonuc) < n:
                 sonuc.append(z)
         gun += timedelta(days=1)
     return sonuc
+
+
+def _hazir_idler(c) -> list[int]:
+    return [r[0] for r in c.execute("SELECT id FROM tiktok_video WHERE durum = 'hazir' ORDER BY olusturma, id")]
 
 
 def ozet(c, simdi: datetime | None = None) -> dict:
@@ -438,7 +446,7 @@ def ozet(c, simdi: datetime | None = None) -> dict:
             """SELECT v.id, v.tasarim_id, v.tur, v.ai, v.hook, v.aciklama, v.etiketler, v.sure, v.olusturma,
                       (SELECT group_concat(x, ' ') FROM (SELECT value AS x FROM json_each(i.satirlar))) AS slogan
                FROM tiktok_video v JOIN tasarim t ON t.id = v.tasarim_id JOIN ifade i ON i.id = t.ifade_id
-               WHERE v.durum = 'hazir' ORDER BY v.olusturma"""
+               WHERE v.durum = 'hazir' ORDER BY v.olusturma, v.id"""
         )
     ]
     for h, z in zip(hazir, plan(c, len(hazir), simdi), strict=True):
@@ -452,12 +460,13 @@ def ozet(c, simdi: datetime | None = None) -> dict:
 
 
 def paylasildi(c, video_id: int, simdi: datetime | None = None) -> None:
-    """Paylaşıldı/zamanlandı: video sıradaki boş saati alır (`plan`), sonraki videolar bir sonraki saate kayar."""
+    """Paylaşıldı/zamanlandı: video panodaki kartında gösterilen saati alır (`ozet` ile aynı sıra); diğer kartlar kaymaz."""
     simdi = simdi or datetime.now(UTC)
-    saat = plan(c, 1, simdi)[0].isoformat(timespec="minutes")
     r = c.execute("SELECT tasarim_id, tur FROM tiktok_video WHERE id = ? AND durum = 'hazir'", (video_id,)).fetchone()
     if r is None:
         raise KeyError(video_id)
+    sira = _hazir_idler(c)
+    saat = plan(c, len(sira), simdi)[sira.index(video_id)].isoformat(timespec="minutes")
     c.execute(
         "UPDATE tiktok_video SET durum = 'paylasildi', paylasim = ?, plan = ? WHERE id = ?",
         (simdi.isoformat(timespec="seconds"), saat, video_id),
