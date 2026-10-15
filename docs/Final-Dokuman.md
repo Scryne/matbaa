@@ -196,6 +196,26 @@ iade kararı.
   2026-10-15: Pinterest işletme hesabı açıldı (HobbyHeartPrints, ülke Türkiye, profil mağaza adıyla); ilk CSV (13 pin, 10-16 → 10-20)
   Pinterest'e yüklendi ("Yükleme başarılı"). Pinlerin hepsinin oluştuğu 10-16'da profilden doğrulanacak.
 
+- **K-33 Üçüncü tam denetim (2026-10-15):** Scryne projeyi baştan sona denetleyip eksikleri kapatmayı, iyileştirmeyi bıraktı.
+  - **Dayanıklılık:** HTTP katmanı ağ hatasını yineler: bağlantı kurulamadıysa her istek, kurulup düştüyse yalnız kaynak
+    oluşturmayan istek (oluşturma işlenmiş olabilir, mükerrer ürün/sipariş riski). Etsy 401 dönerse erişim token'ı zorla
+    yenilenip istek bir kez yinelenir (önce süresi dolmamış görünen geçersiz token günü düşürürdü). Adım dışında düşen günlük
+    koşu da `son.json`'a ve bildirime yazılır. Elle `yayinla`, `etsy-esle`, `isimli` günlük koşunun kilidini alır.
+  - **İzleme:** bizde `aktif` olup o günün Etsy aktif ilan anlık görüntüsünde olmayan ilan günlük alarmdır: Etsy marka
+    bildirimiyle ilanı kendisi kaldırır, tekrarında mağazayı kapatır; bunu gün içinde görmek gerekir. Pinterest kuyruğunda
+    yayından kalkmış ilanın pini dosyaya girmez.
+  - **İsimli süs (Faz 11):** alıcının "Name: Emma" ya da tırnaklı yazdığı isim temizlenir; basılamayan isim için panoda
+    elle isim ("İsimle aç", basılabilirlik aynı denetimle) ve "Elle hallettim"; Printify'ın iptal ettiği ya da üretimdeyken
+    iade edilen sipariş `elle` durumuna düşer ve otomatik yeniden açılmaz (çift üretim riski), panelden kapatılana kadar her
+    gün hatırlatılır. Haftalık rapor bunları "Dikkat"e yazar.
+  - **Tasarım motoru:** `gunes` şablonunun çizim çevresindeki boşluk SVG `feMorphology` süzgeciyle açılıyordu; resvg onu
+    naif uyguluyor, tek render 68 sn sürüyordu (test süresinin 3,5 dakikası, üretimde şablon başına dakikalar) ve dağ
+    çiziminin zirvesinde bulanık bozulma bırakıyordu. Genişleme artık çizim tek başına render edilip numpy'de gerçek Öklid
+    uzaklığıyla yapılır, iç boşluklar doldurulur (trampet baklavalarından şerit kırıntısı görünmez): 1,8 sn, 16 çizimin
+    hepsi gözle doğrulandı. Canlı ve onaylı 12 gunes tasarımında bozulma yoktu, yeniden basılmadı.
+  - **Bilinen sınır:** süs ürün satırı tasarım başına tek (`urun` birincil anahtarı); 2027 sezonunda "CHRISTMAS 2027" süsleri
+    için kapanan (`kaldirildi`) süs satırının yeniden açılması gerekecek. Eylül 2027'den önce roadmap'te.
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.
@@ -208,7 +228,8 @@ iade kararı.
 | Marka/eser şikâyeti | Azaltıldı | USPTO + Jev, 50 ifadede kaçan 0 (S6); en yaygın POD kalıplarının tescilli olduğu bulundu |
 | Etsy kuralları (AI beyanı, üretim ortağı, ücretler) | Doğrulandı | Birincil sayfalar (S7) |
 | Printify Türk kartı | **Açık** | İlk gerçek sipariş; ödeme düşmezse gecikme alarmı (K-20) |
-| Etsy API erişimi | **Açık** | S4: Seller App kaydı (mağaza açılınca) |
+| Etsy API erişimi | Kapandı | Kişisel uygulama 2026-10-13'te onaylandı (K-27), `mod = "api"`; token 401'de kendiliğinden yenilenir |
+| Etsy'nin ilanı kaldırması (marka bildirimi, kural) | Azaltıldı | Günlük koşu bizde aktif olup Etsy'de aktif olmayan ilanı alarmlar (K-33) |
 | Satış hiç gelmemesi | Kabul edilen risk | Öldürme kriteri: 90. gün 100 ilan / < 5 satış → niş ve tasarım dili baştan; 180. gün < $100/ay net → dur |
 
 ## Scryne'ın işleri (Faz 0)
@@ -217,6 +238,6 @@ iade kararı.
 3. **Anahtarlar:** Printify kişisel token; Etsy geliştirici hesabı → Seller App (Aria adım adım). USPTO API anahtarı isteğe bağlı (v1.1).
 
 ## Kapsam Dışı
-Shopify (koşullu faz), ücretli dış reklam, kişiselleştirme (koşullu faz, Ocak), poster/sticker (kupa Faz 14'te koşullu; süs K-30 ile Q4'te açık), dijital ürün,
+Shopify (koşullu faz), ücretli dış reklam, isimli süs dışındaki kişiselleştirme (K-31; Class of 2027 Ocak'ta), poster/sticker (kupa Faz 14'te koşullu; süs K-30 ile Q4'te açık), dijital ürün,
 fabrika ürünü/trend oyuncak yeniden satışı (Etsy'de yasak; ayrı iş modeli), Etsy mesaj otomasyonu
 (API yok; hazır cevap şablonları var), Redbubble/TeePublic/Amazon Merch kolları, AI görsel katmanı (grafik öğe; v1.1 spike).

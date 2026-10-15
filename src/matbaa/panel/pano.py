@@ -142,9 +142,20 @@ def _siparisler(c) -> dict:
         )
     ]
     isimli = [
-        {**dict(r), "isimler": [k.get("isim") for k in json.loads(r["kalemler"] or "[]")]}
+        {
+            **dict(r),
+            "isimler": [k.get("isim") for k in json.loads(r["kalemler"] or "[]")],
+            # Panelden isim düzeltmesi için: kalem kimliği + alıcının yazdığı (ya da en son elle verilen) isim
+            "kalemler": [
+                {
+                    "transaction_id": k.get("transaction_id"),
+                    "isim": json.loads(r["duzeltme"] or "{}").get(k.get("transaction_id"), k.get("isim")),
+                }
+                for k in json.loads(r["kalemler"] or "[]")
+            ],
+        }
         for r in c.execute(
-            "SELECT etsy_receipt_id, durum, kalemler, printify_order_id, takip, hata, guncelleme FROM isimli_siparis "
+            "SELECT etsy_receipt_id, durum, kalemler, duzeltme, printify_order_id, takip, hata, guncelleme FROM isimli_siparis "
             "ORDER BY guncelleme DESC LIMIT 10"
         )
     ]

@@ -825,3 +825,50 @@ def test_gunluk_sinir_doluyken_de_yayindaki_tasarima_sus_acilir(sus_ortam):
     assert not sus_ortam.execute(
         f"SELECT count(*) FROM urun WHERE durum != 'bekliyor' AND tasarim_id IN ({','.join(map(str, bekleyen))})"
     ).fetchone()[0]  # yeni tasarım açılmadı
+
+
+def test_ag_hatasi_yinelenir_islenmis_olabilecek_olusturma_yinelenmez():
+    sira = iter([httpx.ConnectError("dns"), httpx.ReadTimeout("yavaş"), httpx.Response(200, json={"ok": 1})])
+
+    def isle(r):
+        x = next(sira)
+        if isinstance(x, Exception):
+            raise x
+        return x
+
+    http = httpx.Client(transport=httpx.MockTransport(isle))
+    assert istek(http, "GET", "https://x/y", bekle=lambda s: None).json() == {"ok": 1}
+    # Kaynak oluşturan istek: bağlantı kurulamadıysa yinelenir, kurulup düştüyse (sunucu oluşturmuş olabilir) yinelenmez
+    sira = iter([httpx.ConnectError("dns"), httpx.ReadTimeout("yavaş"), httpx.Response(200, json={"ok": 1})])
+    with pytest.raises(httpx.ReadTimeout):
+        istek(http, "POST", "https://x/y", bekle=lambda s: None, tekrar_5xx=False)
+
+
+def test_etsy_401de_token_zorla_yenilenir_istek_yinelenir(tmp_path):
+    (tmp_path / "t.json").write_text(json.dumps({"refresh_token": "r1", "access_token": "1.bayat", "bitis": 9e12}))
+    gorulen = []
+
+    def isle(r: httpx.Request):
+        if r.url.path.endswith("/oauth/token"):
+            return httpx.Response(200, json={"access_token": "1.taze", "refresh_token": "r2", "expires_in": 3600})
+        gorulen.append(r.headers["authorization"])
+        return httpx.Response(401 if r.headers["authorization"] == "Bearer 1.bayat" else 200, json={"listing_id": 9})
+
+    e = etsy_mod.Etsy(
+        "ks", "sec", "777", http=httpx.Client(transport=httpx.MockTransport(isle)), token_dosyasi=tmp_path / "t.json"
+    )
+    assert e.ilan(9) == {"listing_id": 9}
+    assert gorulen == ["Bearer 1.bayat", "Bearer 1.taze"]
+    assert json.loads((tmp_path / "t.json").read_text())["refresh_token"] == "r2"
+
+
+def test_bizde_aktif_etsyde_olmayan_ilan_alarm(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, "DB", tmp_path / "a.db")
+    c = db.baglan()
+    c.execute("PRAGMA foreign_keys = OFF")  # yalnız urun ve goruntulenme tabloları sınanıyor
+    c.executemany("INSERT INTO urun (tasarim_id, urun, durum, etsy_listing_id) VALUES (?, ?, ?, ?)",
+                  [(1, "tisort", "aktif", "11"), (1, "hoodie", "aktif", "12"), (2, "susleme", "kaldirildi", "13")])  # fmt: skip
+    assert yayin.etsy_disi_ilanlar(c, "2026-10-20") == []  # o gün anlık görüntü yok: karşılaştırma yapılmaz
+    c.executemany("INSERT INTO goruntulenme (tarih, etsy_listing_id, views) VALUES ('2026-10-20', ?, 0)", [("11",), ("99",)])
+    alarm = yayin.etsy_disi_ilanlar(c, "2026-10-20")
+    assert len(alarm) == 1 and "#1/hoodie" in alarm[0] and "12" in alarm[0]

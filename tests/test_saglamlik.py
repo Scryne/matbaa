@@ -263,3 +263,15 @@ def test_bekleme_turlari_hatali_urunu_yeniden_denemez(ortam):  # noqa: F811
     for _ in range(5):  # aynı koşunun 90 sn'lik turları
         assert yayin.etsy_esle(ortam, SahtePrintify(), BozukEtsy(), yazdir=lambda *_: None, hata_dene=False)["hata"] == 0
     assert all(yayin.ELLE not in h for (h,) in ortam.execute("SELECT hata FROM urun WHERE durum = 'hata'"))
+
+
+def test_adim_disinda_dusen_gunluk_kosu_son_kosuya_ve_bildirime_yazilir(tmp_path, monkeypatch):
+    from matbaa import bildirim, hat
+
+    monkeypatch.setattr(hat, "SON_KOSU", tmp_path / "son.json")
+    monkeypatch.setattr(hat, "_gunluk", lambda *a: (_ for _ in ()).throw(RuntimeError("config bozuk")))
+    gosterilen = []
+    monkeypatch.setattr(bildirim, "goster", lambda baslik, metin, yazdir=print: gosterilen.append(baslik))
+    r = hat.gunluk(kilit=tmp_path / "k.kilit", yazdir=lambda *_: None)
+    assert "config bozuk" in r["hatalar"][0] and gosterilen
+    assert json.loads((tmp_path / "son.json").read_text(encoding="utf-8"))["hatalar"] == r["hatalar"]

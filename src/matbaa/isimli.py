@@ -11,6 +11,8 @@ aktifleştirmeyi `yayin.etsy_esle` yapar (üretim ortağı, kargo profili, AI be
 Sipariş (`siparisleri_isle`, günlük koşu): ödenmiş makbuzdaki isimli kalemler → isimli baskı dosyası → Printify'da tek seferlik
 ürün → API siparişi (`external_id` = makbuz; `siparis.izle` buradan eşler) → on-hold olunca üretime → takip Etsy'ye.
 Her makbuz `isimli_siparis` tablosunda tek satır; Printify'da aynı makbuzlu iptal olmamış sipariş varsa ikincisi açılmaz.
+Açılamayan sipariş (`hata`, ör. fontta glifi olmayan isim) her gün yeniden denenir ve alarm verir; panelden elle isim verilirse
+(`duzeltme`) o isimle açılır. Printify'ın iptal ettiği sipariş `elle`ye düşer: otomatik yeniden açılmaz (çift üretim riski).
 """
 
 from __future__ import annotations
@@ -381,6 +383,9 @@ def siparisleri_isle(c, etsy, p: pf.Printify, simdi: datetime | None = None, yaz
         if not ks:
             continue
         r = kayit.get(mid)
+        duzeltme = json.loads((r or {}).get("duzeltme") or "{}")  # panelden elle verilen isim (basılamayan isim)
+        for k in ks:
+            k["isim"] = duzeltme.get(k["transaction_id"], k["isim"])
         if str(m.get("status") or "").lower() in KAPALI_MAKBUZ:
             if r and r.get("printify_order_id") and r["durum"] in ("acildi", "hata"):
                 try:
@@ -389,8 +394,10 @@ def siparisleri_isle(c, etsy, p: pf.Printify, simdi: datetime | None = None, yaz
                     sayac["iptal"] += 1
                 except Exception as e:
                     sayac["alarm"].append(f"isimli makbuz {mid} iptal edildi ama Printify siparişi iptal olmadı: {e}"[:200])
-            elif r and r["durum"] in ("uretimde", "takip_yazildi"):
-                sayac["alarm"].append(f"isimli makbuz {mid} iptal/iade: Printify siparişi üretimde, panelde bak")
+            elif r and r["durum"] == "uretimde":  # üretimdeki sipariş API'den iptal edilemez: insan bakar (bir kez, `elle`)
+                _kaydet(c, mid, durum="elle", hata="makbuz iptal/iade edildi ama Printify siparişi üretimde")
+            elif r and r["durum"] == "takip_yazildi":  # kargodan sonra iade: Printify'da yapılacak bir şey yok
+                _kaydet(c, mid, durum="iptal")
             elif not r:
                 _kaydet(c, mid, durum="iptal", kalemler=json.dumps(ks, ensure_ascii=False))
             continue
@@ -417,6 +424,10 @@ def siparisleri_isle(c, etsy, p: pf.Printify, simdi: datetime | None = None, yaz
     for r in c.execute("SELECT * FROM isimli_siparis WHERE durum = 'uretimde'").fetchall():
         try:
             o = p.siparis(r["printify_order_id"])
+            if o.get("status") == "canceled":  # Printify iptal etti (ödeme, üretim sorunu) ya da panelden iptal: alıcıya gitmiyor
+                neden = f"Printify siparişi {r['printify_order_id']} iptal edildi, makbuz hâlâ açık: Printify'da yeniden aç ya da Etsy'de iade et"
+                _kaydet(c, r["etsy_receipt_id"], durum="elle", hata=neden)
+                continue
             g = next((s for s in o.get("shipments") or [] if s.get("number")), None)
             if not g:
                 continue
@@ -427,7 +438,44 @@ def siparisleri_isle(c, etsy, p: pf.Printify, simdi: datetime | None = None, yaz
         except Exception as e:
             _kaydet(c, r["etsy_receipt_id"], hata=f"takip: {type(e).__name__}: {e}"[:500])
             sayac["alarm"].append(f"isimli makbuz {r['etsy_receipt_id']}: takip Etsy'ye yazılamadı ({str(e)[:120]})")
+    # İnsan bekleyenler panelden "elle hallettim" denene kadar her gün hatırlatılır.
+    for r in c.execute("SELECT etsy_receipt_id, hata FROM isimli_siparis WHERE durum = 'elle'").fetchall():
+        sayac["alarm"].append(f"isimli makbuz {r[0]}: elle bakılmalı ({(r[1] or '')[:160]})")
     return sayac
+
+
+class DurumUyumsuz(RuntimeError):
+    """Panel eylemi siparişin şu anki durumunda yapılamaz (ör. üretimdeki siparişin ismi değişmez)."""
+
+
+def elle_isim(c, makbuz: str, isimler: dict[str, str]) -> dict[str, str]:
+    """Panelden verilen isimler {transaction_id: isim}: basılabilir mi denetlenir (`EksikGlif`/boş isim hatası yükselir), kayda
+    yazılır, sipariş `hata`ya alınır; sonraki koşu (ya da `matbaa isimli`) o isimle açar. Yalnız açılmamış siparişe uygulanır."""
+    from matbaa.tasarim import susleme
+
+    r = c.execute("SELECT durum, duzeltme FROM isimli_siparis WHERE etsy_receipt_id = ?", (makbuz,)).fetchone()
+    if r is None:
+        raise KeyError(makbuz)
+    if r["durum"] not in ("yeni", "hata"):
+        raise DurumUyumsuz(f"sipariş {r['durum']} durumunda: isim yalnız açılmamış siparişte düzeltilir")
+    temiz = {str(t): susleme.isim_temizle(i) for t, i in isimler.items()}
+    duz = json.loads(r["duzeltme"] or "{}") | temiz
+    _kaydet(
+        c, makbuz, durum="hata", duzeltme=json.dumps(duz, ensure_ascii=False), hata="panelden isim verildi, sonraki koşu açar"
+    )
+    return temiz
+
+
+def elle_kapat(c, makbuz: str) -> None:
+    """Panel: "elle hallettim" (Printify'da elle açıldı, iade edildi…): sipariş bir daha denenmez, alarm kalkar."""
+    r = c.execute("SELECT durum FROM isimli_siparis WHERE etsy_receipt_id = ?", (makbuz,)).fetchone()
+    if r is None:
+        raise KeyError(makbuz)
+    if r["durum"] not in ("yeni", "hata", "elle"):
+        raise DurumUyumsuz(f"sipariş {r['durum']} durumunda: kapatılacak bir sorun yok")
+    _kaydet(c, makbuz, durum="kapandi")
+    db.olay(c, "isimli", None, r["durum"], "kapandi", f"makbuz {makbuz} elle kapatıldı")
+    c.commit()
 
 
 def _yil(makbuz: dict, simdi: datetime) -> int:

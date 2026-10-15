@@ -94,6 +94,10 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
         f"{r[0]}/{r[1]}: {(r[2] or '')[:120]}"
         for r in c.execute("SELECT tasarim_id, urun, hata FROM urun WHERE durum = 'hata' ORDER BY tasarim_id").fetchall()
     ]
+    isimli = [  # Faz 11: açılamayan ya da insan bekleyen isimli süs siparişi alıcıya hiç gitmez
+        f"isimli makbuz {r[0]} ({r[1]}): {(r[2] or '')[:120]}"
+        for r in c.execute("SELECT etsy_receipt_id, durum, hata FROM isimli_siparis WHERE durum IN ('hata', 'elle') ORDER BY 1")
+    ]
     veri = {
         "hafta": hafta_adi(simdi),
         "ilan": {
@@ -109,7 +113,7 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
         "satanlar_30g": [{"nis": r[0], "ifade": " / ".join(json.loads(r[1])), "siparis": r[2]} for r in satanlar],
         "ilan_ucreti_usd": tavan.ilan_ucreti(c, bas),
         "ay": siparis.aylik(c, simdi.strftime("%Y-%m")),
-        "dikkat": {"gecikme": gecikme, "urun_hata": hatalar},
+        "dikkat": {"gecikme": gecikme, "urun_hata": hatalar, "isimli": isimli},
     }
     return veri, _metin(veri)
 
@@ -117,7 +121,7 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
 def _metin(v: dict) -> str:
     i, s, g, ay = v["ilan"], v["satis"], v["goruntulenme"], v["ay"]
     satirlar = [f"# Matbaa haftalık rapor — {v['hafta']}", ""]
-    dikkat = v["dikkat"]["gecikme"] + v["dikkat"]["urun_hata"]
+    dikkat = v["dikkat"]["gecikme"] + v["dikkat"]["urun_hata"] + v["dikkat"].get("isimli", [])
     if dikkat:
         satirlar += ["## Dikkat", *[f"- {x}" for x in dikkat], ""]
     satirlar += [

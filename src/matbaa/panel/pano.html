@@ -78,6 +78,12 @@
   .gorev.kotu > .ikon { color: var(--kirmizi); }
   .gorev.bilgi { color: var(--metin-2); }
   .gorev small { display: block; color: var(--metin-3); font-size: 12px; }
+  .isim-form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .isim-form input { width: 14ch; min-height: 34px; padding: 6px 10px; border-radius: var(--r-k); border: 1px solid var(--cizgi-2); background: var(--zemin); color: var(--metin); font: 14px var(--govde); }
+  .isim-form input:disabled, .isim-form button:disabled { opacity: .55; }
+  .isim-sonuc { flex-basis: 100%; font-size: 12px; color: var(--metin-2); }
+  .isim-sonuc:empty { display: none; }
+  .gizli-etiket { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 6px 12px; border-radius: var(--r-k); border: 1px solid var(--cizgi-2);
     background: var(--yuzey); color: var(--metin); font: 500 13px var(--govde); text-decoration: none; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s; }
   .btn:hover { background: var(--zemin-2); border-color: var(--metin-3); }
@@ -300,7 +306,7 @@
 const URUN = { tisort: "Tişört", sweatshirt: "Sweatshirt", hoodie: "Hoodie", susleme: "Süs", isimli_susleme: "İsimli süs", kupa: "Kupa" };
 const URUN_SIRA = ["tisort", "sweatshirt", "hoodie", "susleme", "isimli_susleme", "kupa"];
 const URUN_DURUM = { printify: "Printify'da", etsy_taslak: "taslak", olusturuldu: "hazırlanıyor", hata: "hata" };
-const ISIMLI = { yeni: "Yeni", acildi: "Printify'da", uretimde: "Üretimde", takip_yazildi: "Kargoda", iptal: "İptal", hata: "Hata" };
+const ISIMLI = { yeni: "Yeni", acildi: "Printify'da", uretimde: "Üretimde", takip_yazildi: "Kargoda", iptal: "İptal", hata: "Hata", elle: "Elle bakılmalı", kapandi: "Elle kapatıldı" };
 const ADIM = { yayin: "Yayın", etsy: "Etsy eşleme", gorsel: "Galeri", mevsimlik: "Süs ilanları", pinterest: "Pin kuyruğu", isimli: "İsimli siparişler", siparis: "Sipariş takibi" };
 
 const $ = id => document.getElementById(id);
@@ -357,9 +363,13 @@ function siradaki(d) {
   $("siradaki-alt").textContent = `${d.hat.gunluk_sinir} yeni tasarım yayına girer; süs ilanları, siparişler ve pinler güncellenir.`;
 
   const g = [], gizli = gizlenen();
-  const alarm = [...(d.son_kosu?.hatalar || []).map(h => "Koşu hatası: " + h), ...(d.son_kosu?.alarmlar || []), ...d.siparisler.geciken];
-  d.siparisler.isimli.filter(x => x.durum === "hata").forEach(x => alarm.push(`İsimli sipariş ${x.etsy_receipt_id} açılamadı: ${x.hata || ""}`));
+  // İsimli sipariş alarmları aşağıda eylemleriyle (isim düzelt / elle hallettim) tek satır olarak gelir.
+  const alarm = [...(d.son_kosu?.hatalar || []).map(h => "Koşu hatası: " + h), ...(d.son_kosu?.alarmlar || []).filter(a => !a.startsWith("isimli makbuz")), ...d.siparisler.geciken];
   [...new Set(alarm)].forEach(a => g.push({ tur: "kotu", ikon: "uyari", metin: esc(a) }));
+  d.siparisler.isimli.filter(x => x.durum === "hata" || x.durum === "elle").forEach(x => g.push({ tur: "kotu", ikon: "uyari",
+    metin: `İsimli sipariş ${esc(x.etsy_receipt_id)} ${x.durum === "elle" ? "elle bakılmalı" : "açılamadı"}`, alt: isimliNeden(x),
+    ek: x.durum === "hata" ? isimliForm(x) : "",
+    eylem: `<button class="btn sade" type="button" onclick="isimliKapat('${esc(x.etsy_receipt_id)}', this)">Elle hallettim</button>` }));
   const onay = d.hat.tasarim.onay_bekliyor || 0;
   if (onay) g.push({ ikon: "onay", metin: `${onay} tasarım onayını bekliyor`, alt: "Onaylananlar yayın sırasına girer", eylem: `<a class="btn" href="/onay">Onay masası</a>` });
   const p = d.pinterest;
@@ -378,8 +388,51 @@ function siradaki(d) {
         eylem: `<button class="btn sade" type="button" onclick="gizle('etsy-ads')">Yaptım</button>` });
     } else g.push({ tur: "bilgi", ikon: "hoparlor", metin: `Etsy Ads ${ads.toLocaleDateString("tr-TR", { day: "numeric", month: "long" })} tarihinde açılabilir`, alt: "Yeni mağazalarda 15 gün bekleme var" });
   }
-  $("gorevler").innerHTML = g.length ? g.map(x => `<li class="gorev ${x.tur || ""}">${ik(x.ikon)}<div>${x.metin}${x.alt ? `<small>${esc(x.alt)}</small>` : ""}</div><div>${x.eylem || ""}</div></li>`).join("")
+  // Yazılmakta olan isim formu 60 sn'lik yenilemede silinmesin
+  if ($("gorevler").contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;
+  $("gorevler").innerHTML = g.length ? g.map(x => `<li class="gorev ${x.tur || ""}">${ik(x.ikon)}<div>${x.metin}${x.alt ? `<small>${esc(x.alt)}</small>` : ""}${x.ek || ""}</div><div>${x.eylem || ""}</div></li>`).join("")
     : `<li class="gorev">${ik("tik")}<div>Şimdilik senden beklenen bir şey yok.</div><div></div></li>`;
+}
+
+// Ham hata metni (EksikGlif, Printify durumu) yerine ne oldu, neden, ne yapmalı.
+function isimliNeden(x) {
+  const h = x.hata || "";
+  if (h.startsWith("panelden isim verildi")) return "İsim kaydedildi; sonraki günlük koşu bu isimle açar.";
+  if (/EksikGlif|glif|fontunda yok/i.test(h)) return "İsimde baskı fontunun basamadığı bir harf var. Alıcıya Etsy'den yaz, basılabilir yazımı gir.";
+  if (/boş isim|isim yok/i.test(h)) return "Alıcı isim yazmamış. Etsy'den sor, gelen ismi gir.";
+  return h;
+}
+
+function isimliForm(x) {
+  const m = esc(x.etsy_receipt_id);
+  const alanlar = x.kalemler.map((k, i) => `<label class="gizli-etiket" for="isim-${m}-${i}">Basılacak isim${x.kalemler.length > 1 ? ` (${i + 1}. süs)` : ""}</label>
+    <input id="isim-${m}-${i}" name="${esc(k.transaction_id)}" value="${esc(k.isim || "")}" maxlength="14" required autocomplete="off" spellcheck="false" placeholder="İsim">`).join("");
+  return `<form class="isim-form" onsubmit="return isimliIsim(event, '${m}')">${alanlar}<button class="btn" type="submit">İsimle aç</button><output class="isim-sonuc" role="status"></output></form>`;
+}
+
+async function isimliGonder(url, govde, cikti) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: govde ? JSON.stringify(govde) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { if (cikti) cikti.textContent = j.detail || `Kaydedilemedi (${r.status})`; return false; }
+  return true;
+}
+
+async function isimliIsim(e, makbuz) {
+  e.preventDefault();
+  const f = e.target, isimler = {};
+  f.querySelectorAll("input").forEach(i => { isimler[i.name] = i.value; });
+  const cikti = f.querySelector("output");
+  cikti.textContent = "Denetleniyor…";
+  if (await isimliGonder(`/api/isimli/${encodeURIComponent(makbuz)}/isim`, { isimler }, cikti)) {
+    cikti.textContent = "Kaydedildi. Sonraki günlük koşu bu isimle açar; hemen açmak için: uv run matbaa isimli";
+    f.querySelectorAll("input, button[type=submit]").forEach(x => { x.disabled = true; });
+  }
+  return false;
+}
+
+async function isimliKapat(makbuz, dugme) {
+  const cikti = dugme.closest("li").querySelector("output") || dugme.closest("li").querySelector("small");
+  if (await isimliGonder(`/api/isimli/${encodeURIComponent(makbuz)}/kapat`, null, cikti)) yukle();
 }
 
 function vitrin(d) {
@@ -496,7 +549,7 @@ function siparisKart(d) {
     : `<div class="bos-durum">${ik("canta")}<div>Henüz sipariş yok.<br><span>İlk sipariş geldiğinde burada, Etsy ücretleri ve üretim düşülmüş gerçek kârıyla görünür.</span></div></div>`;
   if (s.isimli.length) h += `<div class="ust-etiket" style="margin:20px 0 4px">İsimli süs siparişleri</div><table class="liste"><tbody>${
     s.isimli.map(x => `<tr><td><b>${esc(x.isimler.filter(Boolean).join(", ") || "–")}</b><div class="soluk" style="font-size:12px">makbuz ${esc(x.etsy_receipt_id)}</div></td>
-      <td><span class="cip ${x.durum === "hata" ? "kotu" : ""}">${esc(ISIMLI[x.durum] || x.durum)}</span></td><td class="n">${esc(x.takip || "")}</td></tr>`).join("")}</tbody></table>`;
+      <td><span class="cip ${x.durum === "hata" || x.durum === "elle" ? "kotu" : ""}">${esc(ISIMLI[x.durum] || x.durum)}</span></td><td class="n">${esc(x.takip || "")}</td></tr>`).join("")}</tbody></table>`;
   $("siparisler").innerHTML = h;
 }
 

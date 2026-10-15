@@ -109,6 +109,10 @@ def test_haftalik_rapor_goruntulenme_farki_ve_gecikme(c, tmp_path, monkeypatch):
     g = veri["goruntulenme"]
     assert (g["toplam"], g["hafta"], g["favori_hafta"]) == (62, 22, 2)  # 15 + 7 (yeni ilan), 2 favori
     assert [x.split(":")[0] for x in veri["dikkat"]["gecikme"]] == ["makbuz geciken"]
+    c.execute("INSERT INTO isimli_siparis (etsy_receipt_id, durum, hata) VALUES ('77', 'elle', 'Printify siparişi iptal edildi')")
+    veri, metin = rapor.haftalik(c, None, SIMDI)
+    assert veri["dikkat"]["isimli"] == ["isimli makbuz 77 (elle): Printify siparişi iptal edildi"]
+    assert "isimli makbuz 77" in metin.split("## İlan")[0]
     assert veri["hafta"] == "2026-H47" and metin.startswith("# Matbaa haftalık rapor — 2026-H47")
     assert "## Dikkat" in metin.split("## İlan")[0]  # dikkat isteyen en üstte
     yol = rapor.yaz(veri, metin)

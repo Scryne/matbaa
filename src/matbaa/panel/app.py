@@ -297,6 +297,41 @@ def ilan_duzelt(tasarim_id: int, urun: str, d: IlanDuzelt, c: Baglanti) -> dict:
     return {"baslik": sonuc.baslik, "etiketler": sonuc.etiketler}
 
 
+class IsimliIsim(BaseModel):
+    isimler: dict[str, str]  # transaction_id → basılacak isim
+
+
+@app.post("/api/isimli/{makbuz}/isim")
+def isimli_isim(makbuz: str, d: IsimliIsim, c: Baglanti) -> dict:
+    """Açılamayan isimli süs siparişine (ör. fontta olmayan harf) elle isim: basılabilirse kaydedilir, sonraki koşu açar."""
+    from matbaa import isimli
+
+    if not d.isimler:
+        raise HTTPException(422, "isim yok")
+    try:
+        return {"isimler": isimli.elle_isim(c, makbuz, d.isimler)}
+    except KeyError:
+        raise HTTPException(404, "makbuz yok") from None
+    except isimli.DurumUyumsuz as e:
+        raise HTTPException(409, str(e)) from None
+    except ValueError as e:  # boş isim ya da fontta glifi olmayan harf
+        raise HTTPException(422, f"bu isim basılamıyor: {e}") from None
+
+
+@app.post("/api/isimli/{makbuz}/kapat")
+def isimli_kapat(makbuz: str, c: Baglanti) -> dict:
+    """ "Elle hallettim": sipariş otomatik denenmez, alarm kalkar."""
+    from matbaa import isimli
+
+    try:
+        isimli.elle_kapat(c, makbuz)
+    except KeyError:
+        raise HTTPException(404, "makbuz yok") from None
+    except isimli.DurumUyumsuz as e:
+        raise HTTPException(409, str(e)) from None
+    return {"durum": "kapandi"}
+
+
 def calistir(port: int = 8766) -> None:
     import uvicorn
 

@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS siparis (
 );
 CREATE TABLE IF NOT EXISTS isimli_siparis (   -- Faz 11: isimli süs makbuzu → Printify API siparişi (isimli.py)
     etsy_receipt_id TEXT PRIMARY KEY,
-    durum TEXT NOT NULL,              -- yeni | acildi | uretimde | takip_yazildi | iptal | hata
+    durum TEXT NOT NULL,              -- yeni | acildi | uretimde | takip_yazildi | iptal | hata | elle | kapandi
     kalemler TEXT,                    -- JSON: transaction_id, tasarim_id, isim, varyant_id, adet
     printify_order_id TEXT,
     takip TEXT, hata TEXT,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS pin (               -- Pinterest toplu pin kuyruğu (
     etsy_listing_id TEXT NOT NULL UNIQUE,
     tasarim_id INTEGER, urun TEXT,
     gorsel_url TEXT NOT NULL, baslik TEXT NOT NULL, aciklama TEXT, pano TEXT NOT NULL, anahtar TEXT,
-    durum TEXT NOT NULL,              -- bekliyor | verildi (CSV'ye girdi, yayın saati atandı)
+    durum TEXT NOT NULL,              -- bekliyor | verildi (CSV'ye girdi, yayın saati atandı) | atlandi (ilan yayından kalktı)
     yayin TEXT, dosya TEXT, olusturma TEXT
 );
 CREATE TABLE IF NOT EXISTS olay (
@@ -142,7 +142,8 @@ def baglan(yol: Path | str | None = None, thread_serbest: bool = False) -> sqlit
     c.execute("PRAGMA foreign_keys = ON")
     c.executescript(SEMA)
     # Sonradan eklenen sütunlar (eski veritabanlarına uygulanır).
-    for tablo, sutun in (("ifade", "yapi TEXT"),):
+    # isimli_siparis.duzeltme: panelden elle verilen isim {transaction_id: isim} (basılamayan isim, Faz 11).
+    for tablo, sutun in (("ifade", "yapi TEXT"), ("isimli_siparis", "duzeltme TEXT")):
         try:
             c.execute(f"ALTER TABLE {tablo} ADD COLUMN {sutun}")
         except sqlite3.OperationalError:

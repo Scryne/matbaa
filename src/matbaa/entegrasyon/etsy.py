@@ -59,10 +59,11 @@ class Etsy:
         gecici.write_text(json.dumps(kayit), encoding="utf-8")
         gecici.replace(self.token_dosyasi)
 
-    def _yenile(self) -> None:
+    def _yenile(self, zorla: bool = False) -> None:
+        """`zorla`: kayıttaki erişim token'ı süresi dolmamış görünse de kullanılmaz (Etsy 401 döndü: token geçersiz)."""
         kayit = self._kayit()
         # Aynı koşudaki başka bir istemcinin aldığı erişim token'ı hâlâ geçerliyse kullanılır: her `Etsy()` yeni yenileme yapmaz.
-        if kayit.get("access_token") and kayit.get("bitis", 0) > time.time():
+        if not zorla and kayit.get("access_token") and kayit.get("bitis", 0) > time.time():
             self._erisim, self._bitis = kayit["access_token"], kayit["bitis"]
             return
         yenileme = kayit.get("refresh_token") or os.environ.get("ETSY_REFRESH_TOKEN")
@@ -96,7 +97,15 @@ class Etsy:
         if not self._erisim or time.time() > self._bitis:
             self._yenile()
         ek = {"bekle": self._bekle} if self._bekle else {}
-        r = istek(self.http, yontem, f"{TABAN}{yol}", headers={"Authorization": f"Bearer {self._erisim}"}, **ek, **kw)
+        try:
+            r = istek(self.http, yontem, f"{TABAN}{yol}", headers={"Authorization": f"Bearer {self._erisim}"}, **ek, **kw)
+        except ApiHatasi as e:
+            # Süresi dolmamış görünen erişim token'ı Etsy'de geçersiz olabilir (yeniden yetki, Etsy tarafında iptal): bir kez
+            # zorla yenilenip istek yinelenir. 401'de istek işlenmemiştir, yinelemek mükerrer kaynak açmaz.
+            if e.durum != 401:
+                raise
+            self._yenile(zorla=True)
+            r = istek(self.http, yontem, f"{TABAN}{yol}", headers={"Authorization": f"Bearer {self._erisim}"}, **ek, **kw)
         return r.json() if r.content else {}
 
     def uretim_ortaklari(self) -> list[dict]:

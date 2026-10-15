@@ -75,6 +75,15 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   (renk, kol, yaka/kapanış, malzeme, "Humorous saying", Holiday = Christmas; `should_auto_renew` true). Aynı gün `shops_w` ile
   yeniden yetki alındı: "Fishing" ve "Knitting & Crochet" bölümleri açıldı, 6 ilan yerleşti. Onaylı kuyruk alarmı eklendi.
 
+- Denetim turu 3 (2026-10-15, K-33): tam kod ve canlı veri denetimi (13 aktif ilan, 40 onaylı tasarım, hata 0). Düzeltilen: ağ
+  titremesinin adımı düşürmesi, Etsy'nin geçersiz saydığı token'ın günü düşürmesi, adım dışı çöküşün sessiz kalması, elle
+  komutların günlük koşuyla aynı anda mükerrer açabilmesi, `matbaa uret`in `.env` okumaması, Printify'ın iptal ettiği isimli
+  siparişin sessizce takılması, yayından kalkan ilanın pinlenmesi, radar kıyas listesinin iki nişi eksik ölçmesi, `gunes`
+  şablonunun 68 sn'lik render'ı ve dağ çizimi bozulması. Eklenen: Etsy'de aktif olmayan ilan alarmı, panoda isimli siparişe
+  elle isim / elle kapatma, `matbaa isimli`, haftalık raporda isimli sorunlar. Testler 197 → 207, süre 5 dk → 1 dk 45 sn.
+- **Sonra (Eylül 2027'den önce):** süs ürün satırı tasarım başına tek; 2027 sezonu için kapanan süs satırını yeni yılla
+  yeniden açan adım (K-33 bilinen sınır).
+
 ### Faz 11: İsimli süs (K-31) 🔄 (2026-10-15)
 - **Yapılan:** `isimli.py` (ilan doğrudan Etsy API: taslak, envanter, isim sorusu, mockup + kartlar; sipariş: isimli baskı dosyası,
   Printify tek seferlik ürün + API siparişi, üretime gönderme, takip Etsy'ye, iptal edilen makbuzda Printify iptali; her hata

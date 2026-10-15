@@ -141,6 +141,11 @@ def csv_uret(c, simdi: datetime | None = None) -> tuple[str, bytes, int]:
     """Bekleyen pinlerden en çok `GUNLUK × GUN` tanesine yarından başlayan yayın saatleri verir ve onları `verildi` sayar.
     Önceki dosyanın son saatinden sonrasına eklenir: iki indirme aynı saate iki pin koymaz."""
     simdi = simdi or datetime.now(UTC)
+    # Kuyruktayken yayından kalkan ilan (mevsim bitti, Etsy kaldırdı) pine girmez: pin ölü sayfaya gider, hesabın güvenini yer.
+    c.execute(
+        """UPDATE pin SET durum = 'atlandi' WHERE durum = 'bekliyor' AND NOT EXISTS (
+             SELECT 1 FROM urun u WHERE u.etsy_listing_id = pin.etsy_listing_id AND u.durum = 'aktif')"""
+    )
     yarin = simdi.date() + timedelta(days=1)
     son = c.execute("SELECT max(yayin) FROM pin WHERE durum = 'verildi'").fetchone()[0]
     dolu = datetime.fromisoformat(son).date() + timedelta(days=1) if son else yarin

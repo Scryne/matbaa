@@ -40,3 +40,10 @@ def test_firsat_siralamasi_marka_ve_desen_suzgeci(monkeypatch):
     assert s["one_cikan"] == ["kucuk", "buyuk"]  # riskli marka ve desen dışarıda
     k = next(o for o in s["adaylar"] if o["kelime"] == "kucuk")
     assert k["talep"] == 1.0 and k["rekabet"] == 5000 and k["medyan_fiyat"] == 24.0
+
+
+def test_radar_her_mevcut_nisi_olcer():
+    from matbaa.ifade.uret import nisler
+
+    mevcut = radar.ayar()["mevcut"]
+    assert len(mevcut) == len(nisler())  # yeni niş kartı eklenince radar kıyas listesi de güncellenmeli

@@ -101,3 +101,12 @@ def test_panodan_indirme(c, monkeypatch):
     assert t.post("/pinterest/indir").status_code == 409  # bekleyen kalmadı
     assert _oku(t.get("/pinterest/son").content) == _oku(r.content)
     assert t.get("/api/pano").json()["pinterest"]["verilen"] == 6
+
+
+def test_yayindan_kalkan_ilanin_pini_dosyaya_girmez(c):
+    pinterest.kuyruga_ekle(c, SahteEtsy(), yazdir=lambda *_: None)
+    c.execute("UPDATE urun SET durum = 'kaldirildi' WHERE urun = 'susleme'")  # mevsim bitti (K-30)
+    _, veri, n = pinterest.csv_uret(c, SIMDI)
+    assert n == 4 and not [s for s in _oku(veri) if s["Pinterest board"] == "Christmas Ornaments"]
+    assert c.execute("SELECT count(*) FROM pin WHERE durum = 'atlandi'").fetchone()[0] == 2
+    assert pinterest.bekleyen(c) == 0

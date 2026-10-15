@@ -318,3 +318,37 @@ def yerlestir(ad: str, cx: float, ust: float, yukseklik: float, genislik_maks: f
         k = min(k, genislik_maks / (x1 - x0))
     tx, ty = cx - (x0 + x1) / 2 * k, ust - y0 * k
     return f'<g transform="translate({tx:.2f} {ty:.2f}) scale({k:.5f})">{IKONLAR[ad](ad)}</g>', (x1 - x0) * k, (y1 - y0) * k
+
+
+def genisletilmis_maske(ad: str, cx: float, ust: float, yukseklik: float, genislik_maks: float | None, ara: float) -> str:
+    """`yerlestir` ile aynı yerdeki simgenin `ara` px genişletilmiş silueti: maskede kullanılacak siyah `<image>` (PNG gömülü).
+
+    Önceden SVG `feMorphology` süzgeciydi: resvg onu tuval çözünürlüğünde naif uyguluyor, `gunes` şablonunda tek render 68 sn
+    sürüyordu (2026-10-15 ölçümü; üretim ve testlerin çoğu bu bekleme). Burada simge tek başına render edilir (~50 ms), genişleme
+    numpy'de gerçek Öklid uzaklığıyla yapılır (süzgeç kare çekirdekle köşeleri fazladan şişiriyordu); kırpılmış ya da maskeli
+    simge parçaları (trampet, dağ) da doğru genişler, kontur hilesinde eksik kalıyorlardı."""
+    import base64
+
+    import resvg_py
+    from scipy import ndimage
+
+    parca, g, h = yerlestir(ad, cx, ust, yukseklik, genislik_maks)
+    pay = ara + 6
+    x0, y0 = math.floor(cx - g / 2 - pay), math.floor(ust - pay)
+    gen, yuk = math.ceil(cx + g / 2 + pay) - x0, math.ceil(ust + h + pay) - y0
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{gen}" height="{yuk}" viewBox="{x0} {y0} {gen} {yuk}">'
+        f'<g fill="#000" color="#000">{parca}</g></svg>'
+    )
+    png = bytes(resvg_py.svg_to_bytes(svg_string=svg, width=gen, height=yuk, skip_system_fonts=True))
+    # İç boşluklar doldurulur (genişlemeden önce ve sonra: trampetin baklavaları gövdedeki ince çizgiyle dışarı açılıyor):
+    # delikten güneş şeridi kırıntısı görünmez, siluet tek parça kesilir.
+    dolu = ndimage.binary_fill_holes(np.asarray(Image.open(io.BytesIO(png)).getchannel("A")) > 127)
+    genis = ndimage.binary_fill_holes(ndimage.distance_transform_edt(~dolu) <= ara)
+    alfa = Image.fromarray(np.where(genis, 255, 0).astype(np.uint8), "L")
+    b = io.BytesIO()
+    Image.merge("LA", (Image.new("L", alfa.size, 0), alfa)).save(b, "PNG", optimize=True)
+    veri = base64.b64encode(b.getvalue()).decode()
+    return (
+        f'<image x="{x0}" y="{y0}" width="{gen}" height="{yuk}" preserveAspectRatio="none" href="data:image/png;base64,{veri}"/>'
+    )

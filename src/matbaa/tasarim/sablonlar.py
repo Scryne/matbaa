@@ -472,12 +472,12 @@ GUNES_SERITLER = (
 def gunes(ikon: str, satirlar: list[Yazi]) -> Cizim:
     """Retro gün batımı: vurgu renginde çizgili yarım güneş, önünde mürekkep renginde niş çizimi (güneşten boşlukla ayrık), altında yazı.
 
-    Tek renkte de okunur: çizimin çevresi güneşten `bosluk` kadar kesilir (maske + genişletme süzgeci).
+    Tek renkte de okunur: çizimin çevresi güneşten `ara` kadar kesilir (genişletilmiş siluet maskesi).
     """
     R = ICERIK_G * 0.30
     cx, taban = TUVAL_G / 2, UST_PAY + R
     c = Cizim()
-    kid, mid, fid = f"gk{id(c)}", f"gm{id(c)}", f"gf{id(c)}"
+    kid, mid = f"gk{id(c)}", f"gm{id(c)}"
     bantlar, y = [], UST_PAY
     for oran, bosluk in GUNES_SERITLER:
         y1 = UST_PAY + oran * R
@@ -486,14 +486,13 @@ def gunes(ikon: str, satirlar: list[Yazi]) -> Cizim:
     bantlar.append(f'<rect x="{cx - R:.1f}" y="{y:.1f}" width="{2 * R:.1f}" height="{taban - y:.1f}"/>')
     h_i = R * 0.92
     parca, _, h = ikonlar.yerlestir(ikon, cx, taban - h_i, h_i, genislik_maks=R * 1.25)
-    # Maske için ikinci kopya: çizimin kendi tanımları (clip/mask kimlikleri) her çağrıda yeni kimlik alır, çakışmaz.
-    maske_parca, _, _ = ikonlar.yerlestir(ikon, cx, taban - h_i, h_i, genislik_maks=R * 1.25)
     ara = max(CIZGI_MIN * 1.6, R * 0.035)
+    # Maske: çizimin `ara` kadar genişletilmiş silueti güneş şeritlerinden kesilir (genişleme numpy'de, bkz. genisletilmis_maske).
+    maske = ikonlar.genisletilmis_maske(ikon, cx, taban - h_i, h_i, R * 1.25, ara)
     c.tanimlar.append(
         f'<clipPath id="{kid}"><path d="M{cx - R:.1f},{taban:.1f} A{R:.1f},{R:.1f} 0 0 1 {cx + R:.1f},{taban:.1f} Z"/></clipPath>'
-        f'<filter id="{fid}" x="-20%" y="-20%" width="140%" height="140%"><feMorphology operator="dilate" radius="{ara:.1f}"/></filter>'
         f'<mask id="{mid}" maskUnits="userSpaceOnUse" x="0" y="0" width="{TUVAL_G}" height="{TUVAL_Y}">'
-        f'<rect width="{TUVAL_G}" height="{TUVAL_Y}" fill="#fff"/><g fill="#000" color="#000" filter="url(#{fid})">{maske_parca}</g></mask>'
+        f'<rect width="{TUVAL_G}" height="{TUVAL_Y}" fill="#fff"/>{maske}</mask>'
     )
     c.vurgu_parcalar.append(f'<g clip-path="url(#{kid})" mask="url(#{mid})">{"".join(bantlar)}</g>')
     c.parcalar.append(parca)

@@ -330,6 +330,21 @@ def gunluk(nis_sayisi: int = 2, adet: int = 12, yazdir=print, kilit=None) -> dic
     except kilit_mod.Kilitli as e:
         yazdir(f"Matbaa günlük koşu atlandı: {e}")
         return {"atlandi": str(e)}
+    except Exception as e:  # adım dışında düşen koşu (veritabanı açılamadı, config bozuk): sessiz kalmasın
+        from datetime import UTC, datetime
+
+        from matbaa import bildirim
+
+        hata = f"koşu düştü: {type(e).__name__}: {str(e)[:300]}"
+        rapor = {"basladi": datetime.now(UTC).isoformat(timespec="seconds"), "hatalar": [hata], "alarmlar": []}
+        try:
+            SON_KOSU.parent.mkdir(parents=True, exist_ok=True)
+            SON_KOSU.write_text(json.dumps(rapor, ensure_ascii=False, indent=1), encoding="utf-8")
+        except OSError:
+            pass
+        yazdir(f"HATA {hata}")
+        bildirim.goster("Matbaa: günlük koşu düştü", hata[:240], yazdir=yazdir)
+        return rapor
 
 
 def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
@@ -410,6 +425,8 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             goruntu_tamam = (
                 _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir) is not None
             )
+            if goruntu_tamam:  # bizde aktif, Etsy'de değil: marka şikâyeti, kural ihlali ya da süresi dolan ilan
+                alarmlar += yayin.etsy_disi_ilanlar(c, datetime.now(UTC).date().isoformat())
             s = _adim(rapor, "siparis", lambda: siparis.izle(c, e, p, yazdir=yazdir), yazdir)
             alarmlar += (s or {}).get("alarm", [])
             # Faz 11: isimli süs siparişleri Printify'a kendiliğinden düşmez; açılmazsa alıcıya hiç gitmez (alarm şart)
@@ -479,8 +496,23 @@ def durum(c=None) -> dict:
     }
 
 
+def _tek_kosuda(is_):
+    """Elle başlatılan, para harcayan ya da sipariş açan komutlar günlük koşuyla aynı kilidi alır: aynı onaylı tasarım ya da
+    makbuz iki süreçte birden Printify'a açılmasın (mükerrer ürün/sipariş)."""
+    from matbaa import kilit as kilit_mod
+
+    try:
+        with kilit_mod.tek_kosu(KILIT):
+            return is_()
+    except kilit_mod.Kilitli as e:
+        sys.exit(f"günlük koşu sürüyor, bitince yeniden dene ({e})")
+
+
 def main(argv: list[str] | None = None) -> None:
+    from matbaa.ayar import env_yukle
+
     sys.stdout.reconfigure(encoding="utf-8")
+    env_yukle()  # `uret` IP kapısı için TYPESAFE_API_KEY ister; her komut aynı ortamla koşsun
     p = argparse.ArgumentParser(prog="matbaa")
     alt = p.add_subparsers(dest="komut", required=True)
     u = alt.add_parser("uret", help="ifade üret → IP kapısı → tasarım → kalite")
@@ -500,6 +532,7 @@ def main(argv: list[str] | None = None) -> None:
     alt.add_parser("yayinla", help="onaylı tasarımları Printify'a (ısınma eğrisi sınırıyla)")
     alt.add_parser("etsy-esle", help="Printify'ın açtığı Etsy ilanlarına üretim ortağı + aktifleştirme")
     alt.add_parser("etsy-kargo-profili", help="Etsy'de ücretsiz ABD kargo profilini aç, config'e yaz (K-23)")
+    alt.add_parser("isimli", help="isimli süs siparişlerini şimdi işle (panelden isim düzeltmesinden sonra)")
     pn = alt.add_parser("panel", help="yerel onay paneli (127.0.0.1)")
     pn.add_argument("--port", type=int, default=8766)
     a = p.parse_args(argv)
@@ -533,14 +566,23 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"PRINTIFY_SHOP_ID={etsy_dukkan[0]['id']} ({etsy_dukkan[0].get('title')}) → .env")
             print(json.dumps({"dukkanlar": dukkanlar, "katalog": yayin.printify_kesif(p)}, ensure_ascii=False, indent=1))
         elif a.komut == "yayinla":
-            print(json.dumps(yayin.yayinla(db.baglan(), p), ensure_ascii=False))
+            from matbaa.entegrasyon.etsy import Etsy
+
+            e = Etsy() if _etsy_hazir() else None  # isimli süs ilanı doğrudan Etsy'de açılır
+            print(json.dumps(_tek_kosuda(lambda: yayin.yayinla(db.baglan(), p, etsy=e)), ensure_ascii=False))
         else:
             from matbaa.entegrasyon.etsy import Etsy
 
             if a.komut == "etsy-kargo-profili":
                 yayin.kargo_profili_kur(p, Etsy())
             else:
-                print(json.dumps(yayin.etsy_esle(db.baglan(), p, Etsy()), ensure_ascii=False))
+                print(json.dumps(_tek_kosuda(lambda: yayin.etsy_esle(db.baglan(), p, Etsy())), ensure_ascii=False))
+    elif a.komut == "isimli":
+        from matbaa.entegrasyon.etsy import Etsy
+        from matbaa.entegrasyon.printify import Printify
+
+        sonuc = _tek_kosuda(lambda: isimli.siparisleri_isle(db.baglan(), Etsy(), Printify()))
+        print(json.dumps(sonuc, ensure_ascii=False, indent=1))
     elif a.komut == "panel":
         from matbaa.panel.app import calistir
 

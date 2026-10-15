@@ -92,6 +92,8 @@ def on_yuz(koyu_png: str | Path, vurgu: str, yil: int, isim: str | None = None) 
 def isim_temizle(metin: str) -> str:
     """Alıcının yazdığı isim → basılacak metin: boşluklar sadeleşir, uzunluk `ISIM_MAKS`. Fontta glifi olmayan karakter
     `EksikGlif` yükseltir (sipariş insana düşer; sessizce kutu basılmaz)."""
+    # Alıcılar soruyu cevap kalıbıyla yazabiliyor ("Name: Emma", "\"Emma\""): etiket ve dış tırnak basılmaz.
+    metin = re.sub(r"^\s*(?:name|names)\s*[:=\-]\s*", "", metin, flags=re.I).strip().strip('"“”«»').strip()
     temiz = " ".join(metin.split())[:ISIM_MAKS].strip()
     if not temiz:
         raise ValueError("boş isim")

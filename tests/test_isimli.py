@@ -265,3 +265,59 @@ def test_yayinla_isimliyi_printifya_degil_etsye_acar(c, monkeypatch):
     assert not acilan and s["urun"] == 0
     s = yayin.yayinla(c, p, yazdir=lambda *_: None, etsy=SahteEtsy())
     assert acilan == [(1, "isimli_susleme")] and s["urun"] == 1 and not p.urunler  # Printify ürünü açılmadı
+
+
+def test_cevap_kalibi_ve_tirnak_basilmaz():
+    from matbaa.tasarim import susleme
+
+    assert susleme.isim_temizle("Name: emma") == "Emma"
+    assert susleme.isim_temizle('  "Grandpa Joe" ') == "Grandpa Joe"
+    assert susleme.isim_temizle("O'Neil") == "O'Neil"  # isim içindeki kesme işareti kalır
+
+
+def test_basilamayan_isim_panelden_duzeltilir_sonra_acilir(c):
+    from fastapi.testclient import TestClient
+
+    from matbaa.panel.app import app
+
+    p, e = SahtePrintify(), SahteEtsy([_makbuz(isim="李")])
+    isimli.siparisleri_isle(c, e, p, SIMDI, yazdir=lambda *_: None, bekle_sn=0)
+    t = TestClient(app, base_url="http://127.0.0.1:8766")
+    assert t.post("/api/isimli/91/isim", json={"isimler": {"5": "李"}}).status_code == 422  # yine basılamaz: kaydedilmez
+    assert t.post("/api/isimli/404/isim", json={"isimler": {"5": "Li"}}).status_code == 404
+    r = t.post("/api/isimli/91/isim", json={"isimler": {"5": "li wei"}})
+    assert r.status_code == 200 and r.json()["isimler"] == {"5": "Li Wei"}
+    kalem = t.get("/api/pano").json()["siparisler"]["isimli"][0]["kalemler"]
+    assert kalem == [{"transaction_id": "5", "isim": "Li Wei"}]  # panel elle verilen ismi gösterir
+    s = isimli.siparisleri_isle(c, e, p, SIMDI, yazdir=lambda *_: None, bekle_sn=0)
+    assert s["yeni"] == 1 and p.urunler[0]["title"] == "Order 91 - Li Wei"
+    assert t.post("/api/isimli/91/isim", json={"isimler": {"5": "Bo"}}).status_code == 409  # açılmış siparişin ismi değişmez
+
+
+def test_printify_iptal_ederse_elle_ve_her_gun_alarm_kapatinca_susar(c):
+    from fastapi.testclient import TestClient
+
+    from matbaa.panel.app import app
+
+    p, e = SahtePrintify(), SahteEtsy([_makbuz()])
+    isimli.siparisleri_isle(c, e, p, SIMDI, yazdir=lambda *_: None, bekle_sn=0)
+    p.siparisler["o1"]["status"] = "canceled"  # Printify üretimdeki siparişi iptal etti
+    s = isimli.siparisleri_isle(c, e, p, SIMDI, yazdir=lambda *_: None, bekle_sn=0)
+    assert c.execute("SELECT durum FROM isimli_siparis").fetchone()[0] == "elle" and len(s["alarm"]) == 1
+    s = isimli.siparisleri_isle(c, e, p, SIMDI, yazdir=lambda *_: None, bekle_sn=0)
+    assert len(s["alarm"]) == 1 and len(p.siparisler) == 1  # otomatik yeniden açılmaz, alarm sürer
+    assert TestClient(app, base_url="http://127.0.0.1:8766").post("/api/isimli/91/kapat").status_code == 200
+    s = isimli.siparisleri_isle(c, e, p, SIMDI, yazdir=lambda *_: None, bekle_sn=0)
+    assert not s["alarm"] and len(p.siparisler) == 1
+
+
+def test_uretimdeyken_iade_edilen_makbuz_elle_kargodan_sonra_sessiz(c):
+    c.execute("INSERT INTO isimli_siparis (etsy_receipt_id, durum, printify_order_id) VALUES ('91', 'uretimde', 'o1')")
+    c.execute("INSERT INTO isimli_siparis (etsy_receipt_id, durum, printify_order_id) VALUES ('92', 'takip_yazildi', 'o2')")
+    c.commit()
+    p = SahtePrintify()
+    p.siparisler.update({"o1": {"status": "in-production", "shipments": []}, "o2": {"status": "fulfilled", "shipments": []}})
+    m = [_makbuz(durum="fully refunded"), _makbuz(mid=92, durum="fully refunded")]
+    s = isimli.siparisleri_isle(c, SahteEtsy(m), p, SIMDI, yazdir=lambda *_: None, bekle_sn=0)
+    durum = dict(c.execute("SELECT etsy_receipt_id, durum FROM isimli_siparis").fetchall())
+    assert durum == {"91": "elle", "92": "iptal"} and len(s["alarm"]) == 1 and not p.iptal

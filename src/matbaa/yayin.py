@@ -68,6 +68,25 @@ def onay_pisti(c) -> str | None:
     return f"onaylı kuyruk {onayli} tasarım (~{onayli // sinir} günlük yayın): panelde {bekleyen} tasarım onay bekliyor"
 
 
+def etsy_disi_ilanlar(c, tarih: str) -> list[str]:
+    """Veritabanında `aktif` olup o günün Etsy aktif ilan anlık görüntüsünde (`goruntulenme`, `rapor.goruntu_al`) bulunmayan ilanlar.
+
+    Etsy bir ilanı marka bildirimiyle ya da kural ihlaliyle kendisi kaldırır; tekrarında mağazayı kapatır (araştırma 06). Bunu
+    gün içinde görmek gerekir: ilan sessizce satıştan düşer, hat onu canlı sanmaya devam eder. Anlık görüntü yoksa (Etsy okunamadı)
+    karşılaştırma yapılmaz: yanlış alarm yerine sessizlik."""
+    gorulen = {r[0] for r in c.execute("SELECT etsy_listing_id FROM goruntulenme WHERE tarih = ?", (tarih,))}
+    if not gorulen:
+        return []
+    return [
+        f"#{t}/{u}: Etsy ilanı {lid} artık aktif değil (kaldırılmış, süresi dolmuş ya da pasife alınmış olabilir): "
+        "Shop Manager → Listings ve mesajlar/bildirimler"
+        for t, u, lid in c.execute(
+            "SELECT tasarim_id, urun, etsy_listing_id FROM urun WHERE durum = 'aktif' AND etsy_listing_id IS NOT NULL ORDER BY 1, 2"
+        )
+        if str(lid) not in gorulen
+    ]
+
+
 def printify_kesif(p: pf.Printify) -> dict:
     """Katalog eşlemesi: her ürün için blueprint ve ABD sağlayıcı adayları. Seçim (K-20: numunesiz) config'e yazılır."""
     sonuc = {}
