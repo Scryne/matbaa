@@ -1,4 +1,4 @@
-"""Yerel onay paneli (Faz 5): onay_bekliyor tasarımlar → Scryne'ın onayı/reddi.
+"""Yerel panel: takip panosu (`/`, 2026-10-15) ve onay masası (`/onay`, Faz 5: onay_bekliyor tasarımlar → Scryne'ın onayı/reddi).
 
     uv run matbaa panel         # http://127.0.0.1:8766
 
@@ -24,7 +24,8 @@ from pydantic import BaseModel
 from matbaa import db, fiyat, siparis
 from matbaa.ayar import KOK
 
-SAYFA = Path(__file__).with_name("index.html")
+SAYFA = Path(__file__).with_name("index.html")  # onay masası
+PANO = Path(__file__).with_name("pano.html")  # takip panosu (açılış sayfası)
 RET_NEDENLERI = ["okunmuyor", "espri zayıf", "marka şüphesi", "tekrar / benzer", "niş dışı", "tasarım çirkin"]
 
 YEREL = {"127.0.0.1", "localhost"}
@@ -64,8 +65,20 @@ def _dosya(c, tasarim_id: int, murekkep: str) -> Path:
 
 
 @app.get("/", response_class=HTMLResponse)
+def pano_sayfa() -> str:
+    return PANO.read_text(encoding="utf-8")
+
+
+@app.get("/onay", response_class=HTMLResponse)
 def sayfa() -> str:
     return SAYFA.read_text(encoding="utf-8")
+
+
+@app.get("/api/pano")
+def pano_veri(c: Baglanti) -> dict:
+    from matbaa.panel import pano
+
+    return pano.pano(c)
 
 
 def _kanit(kayit_json: str | None) -> dict:

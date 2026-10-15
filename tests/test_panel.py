@@ -123,3 +123,37 @@ def test_ilan_duzeltilir_kurala_ve_markaya_uymayan_kaydedilmez(istemci, monkeypa
     c.execute("INSERT INTO urun (tasarim_id, urun, durum) VALUES (1, 'tisort', 'olusturuldu')")
     c.commit()
     assert istemci.post("/api/ilan/1/tisort", json={"baslik": "Y", "etiketler": etiketler}).status_code == 409
+
+
+def test_pano_acilis_sayfasi_ve_verisi(istemci, tmp_path, monkeypatch):
+    """Takip panosu `/`, onay masası `/onay`; pano verisi yalnız yerelden okunur (son koşu raporu, roadmap, veritabanı)."""
+    from matbaa import hat
+    from matbaa.panel import pano
+
+    monkeypatch.setattr(hat, "SON_KOSU", tmp_path / "son.json")
+    (tmp_path / "son.json").write_text(
+        json.dumps(
+            {
+                "basladi": "2026-11-20T07:30:00+00:00",
+                "sure_sn": 300,
+                "hatalar": [],
+                "alarmlar": [],
+                "yayin": {"urun": 4, "hata": 0},
+            }
+        )
+    )
+    monkeypatch.setattr(pano, "_sonraki_kosu", lambda: None)
+    c = db.baglan()
+    c.execute("UPDATE tasarim SET durum = 'yayinda' WHERE id = 1")
+    c.execute("INSERT INTO urun (tasarim_id, urun, durum, etsy_listing_id) VALUES (1, 'tisort', 'aktif', '42')")
+    c.execute("INSERT INTO urun (tasarim_id, urun, durum) VALUES (1, 'hoodie', 'bekliyor')")
+    c.execute(
+        "INSERT INTO goruntulenme (tarih, etsy_listing_id, views, favori) VALUES ('2026-11-19', '42', 3, 0), ('2026-11-20', '42', 10, 1)"
+    )
+    c.commit()
+    assert "Matbaa — Pano" in istemci.get("/").text and "Onay masası" in istemci.get("/onay").text
+    d = istemci.get("/api/pano").json()
+    assert d["ozet"]["aktif_ilan"] == 1 and d["ozet"]["views"] == 10 and d["ozet"]["son_gun_artis"] == 7
+    assert [x["urun"] for x in d["ilanlar"]] == ["tisort"]  # sırada bekleyen ürün ilan sayılmaz
+    assert d["ilanlar"][0]["url"].endswith("/42") and d["son_kosu"]["adimlar"]["yayin"] == {"urun": 4, "hata": 0}
+    assert len(d["roadmap"]) >= 10 and d["hat"]["urun"]["bekliyor"] == 1

@@ -48,6 +48,10 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 - Faz 9 🔄 (üçüncü tur): `Matbaa-Gunluk` Windows görevi kurulu (her gün 10:30); haftalık rapor (`matbaa rapor`, haftanın ilk koşusunda
   otomatik; ilan, Etsy görüntülenme farkı, satış, net, gecikme/hata en üstte); USPTO 30. günde yenilenir; verideki en yeni başvuru 60 günü geçerse üretim durur (K-21).
   Kalan: Faz 0 anahtarlarıyla günlük koşunun yayın + Etsy + sipariş adımlarını gerçek hesapta uçtan uca koşması.
+  Takip panosu (2026-10-15, Scryne'ın isteği): `http://127.0.0.1:8766/` açılış sayfası (onay masası `/onay`'a taşındı). Mağaza
+  özeti, günlük görüntülenme, canlı ilanlar (tasarım başına), siparişler (isimli dahil), hat ve ilan ücreti tavanı, son günlük koşu,
+  roadmap, olay akışı; 60 sn'de bir yenilenir, yalnız yerel veriden okur (Etsy/Printify kotası yemez). Oturum açılınca
+  Başlangıç kısayolu (`scripts/pano_kur.ps1` → `pano_baslat.ps1`) sunucuyu gizli başlatıp panoyu açar.
 - Denetim turu (K-21, 2026-10-13): tam kod denetimi + resmî API doğrulaması. Düzeltilen: yayın düşünce mükerrer Printify ürünü,
   Etsy eşlemesi bekleyen tasarımın günlük sınırı tıkaması, Printify siparişlerinin yalnız ilk 10'unun okunması, sipariş eşlemesinin
   belgelenmemiş alana dayanması, iptallerin gelire girmesi, gecikme alarmının değişmeyen siparişte kaybolması, tek adım hatasının

@@ -22,6 +22,8 @@
   header { display: flex; align-items: baseline; gap: calc(var(--b) * 2); padding: calc(var(--b) * 2) calc(var(--b) * 3); border-bottom: 1px solid var(--cizgi); flex-wrap: wrap; }
   header h1 { font-size: 20px; font-weight: 650; margin: 0; }
   .etiket { font: 12px/1.4 var(--mono); letter-spacing: .04em; color: var(--metin-2); }
+  .geri-link { text-decoration: none; }
+  .geri-link:hover { color: var(--metin); }
   main { flex: 1; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: calc(var(--b) * 3); padding: calc(var(--b) * 3); padding-bottom: 120px; }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: var(--b) 16px 140px; } }
   .provalar { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--b) * 2); align-content: start; }
@@ -78,6 +80,7 @@
 </head>
 <body>
 <header>
+  <a href="/" class="etiket geri-link">← Pano</a>
   <h1>Onay masası</h1>
   <span class="etiket" id="ozet">yükleniyor…</span>
 </header>
