@@ -1,4 +1,4 @@
-"""Mağaza vitrini görselleri: Etsy kapak görseli (banner), logo ile aynı dil (pul + kalp, krem/lacivert/mercan).
+"""Mağaza vitrini görselleri: Etsy kapak görseli (banner), TikTok profil fotoğrafı, logo ile aynı dil (pul + kalp, krem/lacivert/mercan).
 
 Yazılar fonttan yola çevrilir (tasarım motorunun `yazi` modülü, OFL fontlar), çizimler `tasarim.ikon`'dan gelir:
 görsel her makinede aynı çıkar, ölçü değişirse yeniden üretilir.
@@ -78,6 +78,15 @@ def kapak(g: int = 3360, y: int = 840) -> str:
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{g}" height="{y}" viewBox="0 0 {g} {y}">{"".join(parcalar)}</svg>'
 
 
+def profil(boy: int = 1000) -> str:
+    """Yuvarlak kırpılan profil fotoğrafı (TikTok): pulun köşeleri daireye sığar (kenar <= çap/sqrt2, payla %60)."""
+    k = boy * 0.6
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{boy}" height="{boy}" viewBox="0 0 {boy} {boy}">'
+        f'<rect width="{boy}" height="{boy}" fill="{KREM}"/>{pul((boy - k) / 2, (boy - k) / 2, k)}</svg>'
+    )
+
+
 def kaydet(svg: str, ad: str, g: int, y: int) -> Path:
     CIKTI.mkdir(parents=True, exist_ok=True)
     (CIKTI / f"{ad}.svg").write_text(svg, encoding="utf-8")
@@ -90,3 +99,4 @@ def kaydet(svg: str, ad: str, g: int, y: int) -> Path:
 if __name__ == "__main__":
     # Etsy önerisi 1600x400 (4:1, en az 1200x300); mobilde kenarlar kırpılır, içerik ortadaki ~%56 genişlikte (araştırma 2026-10-13).
     print(kaydet(kapak(1600, 400), "etsy-kapak", 1600, 400))
+    print(kaydet(profil(1000), "tiktok-profil", 1000, 1000))
