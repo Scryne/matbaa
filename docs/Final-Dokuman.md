@@ -193,6 +193,8 @@ iade kararı.
   **Seçilen:** Pinterest'in kendi toplu pin CSV'si (API onayı gerekmez; görsel Etsy'nin herkese açık ilan görseli): ilan başına bir
   pin, niş panosu, günde 3 pin, 14 gün ileri (`pinterest.py`, panoda "CSV indir"). Etsy Ads açılıştan 15 gün sonra (~10-28)
   günde $1-3 ile denenir. TikTok, satış verisi gelince gerçek ürün görselleriyle elle küçük deney olarak yeniden değerlendirilir.
+  2026-10-15: Pinterest işletme hesabı açıldı (HobbyHeartPrints, ülke Türkiye, profil mağaza adıyla); ilk CSV (13 pin, 10-16 → 10-20)
+  Pinterest'e yüklendi ("Yükleme başarılı"). Pinlerin hepsinin oluştuğu 10-16'da profilden doğrulanacak.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
