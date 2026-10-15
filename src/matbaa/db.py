@@ -98,6 +98,14 @@ CREATE TABLE IF NOT EXISTS isimli_siparis (   -- Faz 11: isimli süs makbuzu →
     takip TEXT, hata TEXT,
     olusturma TEXT, guncelleme TEXT
 );
+CREATE TABLE IF NOT EXISTS pin (               -- Pinterest toplu pin kuyruğu (pinterest.py): ilan başına bir pin
+    id INTEGER PRIMARY KEY,
+    etsy_listing_id TEXT NOT NULL UNIQUE,
+    tasarim_id INTEGER, urun TEXT,
+    gorsel_url TEXT NOT NULL, baslik TEXT NOT NULL, aciklama TEXT, pano TEXT NOT NULL, anahtar TEXT,
+    durum TEXT NOT NULL,              -- bekliyor | verildi (CSV'ye girdi, yayın saati atandı)
+    yayin TEXT, dosya TEXT, olusturma TEXT
+);
 CREATE TABLE IF NOT EXISTS olay (
     id INTEGER PRIMARY KEY,
     zaman TEXT NOT NULL,

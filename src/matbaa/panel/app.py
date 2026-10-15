@@ -81,6 +81,33 @@ def pano_veri(c: Baglanti) -> dict:
     return pano.pano(c)
 
 
+def _csv_yanit(dosya: str, veri: bytes) -> Response:
+    return Response(
+        veri, media_type="text/csv; charset=utf-8", headers={"Content-Disposition": f'attachment; filename="{dosya}"'}
+    )
+
+
+@app.post("/pinterest/indir")
+def pinterest_indir(c: Baglanti) -> Response:
+    """Bekleyen pinlere yayın saati verip CSV olarak indirir (POST: pinleri `verildi` sayar, yan etkili)."""
+    from matbaa import pinterest
+
+    dosya, veri, n = pinterest.csv_uret(c)
+    if not n:
+        raise HTTPException(409, "bekleyen pin yok ya da 14 günlük takvim dolu")
+    return _csv_yanit(dosya, veri)
+
+
+@app.get("/pinterest/son")
+def pinterest_son(c: Baglanti) -> Response:
+    from matbaa import pinterest
+
+    son = pinterest.son_csv(c)
+    if son is None:
+        raise HTTPException(404, "henüz indirilmiş dosya yok")
+    return _csv_yanit(son[0], son[1])
+
+
 def _kanit(kayit_json: str | None) -> dict:
     """IP kapısının ham kaydından panelde gösterilecek özet: aday/benzer markalar, Jev olasılıkları."""
     if not kayit_json:

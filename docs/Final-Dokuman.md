@@ -186,6 +186,13 @@ iade kararı.
   düz süsün neti $5.54'e indi, kural (> $5) tutuyor. İlk isimli ilan #2 (fishing grandpa) 2026-10-15 canlı (4595906587).
   **Videolar:** Whisper ile yazıya döküldü (2026-10-15); konuşmada yeni taktik yok, yalnız 7. video süsü, 6. video bebek
   battaniyesini (Printify, iyi görsel) anlatıyor; battaniye sonraki ürün ailesi adayı.
+- **K-32 Trafik kanalı: Pinterest (CSV), TikTok/heliosgen değil (2026-10-15):** Scryne TikTok'ta AI videolu mağaza hesabı ve
+  heliosgen önerdi, kararı bana bıraktı. heliosgen kendisi üretmiyor (ücretli kie.ai kredisi), Windows sürümü yok, lisans dosyası
+  yok; görselden video modelleri tişörtteki sloganı bozabilir. TikTok'ta denetimsiz API gönderisi yalnız sahibine görünür, profil
+  linki işletme doğrulaması ister, TikTok Shop Türkiye'den ABD'ye açılamaz, TikTok → Etsy dönüşümüne güvenilir veri yok.
+  **Seçilen:** Pinterest'in kendi toplu pin CSV'si (API onayı gerekmez; görsel Etsy'nin herkese açık ilan görseli): ilan başına bir
+  pin, niş panosu, günde 3 pin, 14 gün ileri (`pinterest.py`, panoda "CSV indir"). Etsy Ads açılıştan 15 gün sonra (~10-28)
+  günde $1-3 ile denenir. TikTok, satış verisi gelince gerçek ürün görselleriyle elle küçük deney olarak yeniden değerlendirilir.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

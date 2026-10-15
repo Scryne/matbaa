@@ -11,7 +11,7 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from matbaa import db, isimli, tavan
+from matbaa import db, isimli, pinterest, tavan
 from matbaa.ayar import KOK
 from matbaa.fiyat import tasarim_urunleri, urunler
 from matbaa.ifade import uret as ifade_uret
@@ -405,6 +405,7 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             _adim(rapor, "oznitelik", lambda: yayin.oznitelikleri_esitle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "vitrin", lambda: yayin.vitrin_esitle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "mevsim_kapat", lambda: yayin.mevsim_kapat(c, e, yazdir=yazdir), yazdir)
+            _adim(rapor, "pinterest", lambda: pinterest.kuyruga_ekle(c, e, yazdir=yazdir), yazdir)
             # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
             goruntu_tamam = (
                 _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir) is not None

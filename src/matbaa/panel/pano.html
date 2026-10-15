@@ -149,6 +149,10 @@
       <div id="hat"></div>
     </section>
     <section class="kart">
+      <h2>Pinterest <span class="etiket" id="pin-not"></span></h2>
+      <div id="pinterest"></div>
+    </section>
+    <section class="kart">
       <h2>Son günlük koşu <span class="etiket" id="kosu-not"></span></h2>
       <div id="son-kosu"></div>
     </section>
@@ -293,6 +297,17 @@ function hat(d) {
       <div class="ince sayi">${para(h.ilan_ucreti)} / ${para(h.ilan_tavani)} tavan</div></div>`;
 }
 
+function pinterestKart(d) {
+  const p = d.pinterest, son = p.son_dosya;
+  $("pin-not").textContent = `günde 3 pin · ${p.verilen} pin verildi`;
+  const sonSatir = son ? `<p class="ince" style="margin:10px 0 0">Son dosya: ${esc(son.adet)} pin, ${esc(son.ilk.slice(0, 10))} → ${esc(son.son.slice(0, 10))}.
+    <a href="/pinterest/son">Yeniden indir</a></p>` : "";
+  $("pinterest").innerHTML = `<ul class="satirlar"><li><span>Hazır pin</span><span class="sayi">${sayi(p.bekleyen)}</span></li></ul>
+    ${p.bekleyen ? `<form method="post" action="/pinterest/indir" style="margin-top:10px"><button class="dugme" type="submit">CSV indir (en çok ${Math.min(p.bekleyen, p.kapasite)} pin)</button></form>` : `<p class="bos">Yeni ilan açıldıkça pinler burada birikir.</p>`}
+    ${sonSatir}
+    <details style="margin-top:10px"><summary class="ince">Nasıl yüklenir</summary><p class="ince">Pinterest işletme hesabında, masaüstünde: Ayarlar → İçeriği içe aktar → .csv yükle. Panolar kendiliğinden açılır; pinler dosyadaki saatlerde yayınlanır.</p></details>`;
+}
+
 function sonKosu(d) {
   const k = d.son_kosu;
   if (!k) { $("son-kosu").innerHTML = `<p class="bos">Henüz günlük koşu kaydı yok.</p>`; return; }
@@ -327,7 +342,7 @@ async function yukle() {
     $("magaza").href = d.magaza_url;
     const onay = d.hat.tasarim.onay_bekliyor || 0;
     $("onay-sayi").hidden = !onay; $("onay-sayi").textContent = onay;
-    serit(d); dikkat(d); kosuDurumu(d); grafik(d); ilanlar(d); siparisler(d); hat(d); sonKosu(d); roadmap(d); olaylar(d);
+    serit(d); dikkat(d); kosuDurumu(d); grafik(d); ilanlar(d); siparisler(d); hat(d); pinterestKart(d); sonKosu(d); roadmap(d); olaylar(d);
     $("yenilendi").textContent = "güncellendi " + new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   } catch (e) {
     $("kosu").innerHTML = `<span class="nokta kotu"></span> Pano verisi alınamadı: ${esc(e.message)}. Sunucu kapalı olabilir.`;

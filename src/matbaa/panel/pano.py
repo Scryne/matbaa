@@ -9,7 +9,7 @@ import re
 import subprocess
 from datetime import UTC, date, datetime, timedelta
 
-from matbaa import fiyat, siparis, tavan
+from matbaa import fiyat, pinterest, siparis, tavan
 from matbaa.ayar import KOK
 
 MAGAZA_URL = "https://www.etsy.com/shop/HobbyHeartPrints"
@@ -201,4 +201,5 @@ def pano(c) -> dict:
         "sonraki_kosu": _sonraki_kosu(),
         "roadmap": _roadmap(),
         "olaylar": _olaylar(c),
+        "pinterest": pinterest.ozet(c),
     }
