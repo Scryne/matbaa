@@ -28,7 +28,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 14 | Kupa (ikinci ürün ailesi, koşullu) | ⏳ Bekliyor | İlk 30 gün verisinde ≥ 1 satış: tasarım motoru yatay kupa yerleşimi üretiyor (kapılardan geçiyor), satan tasarımlar önce kupaya da açılıyor; net > 0 fiyatla |
 | 15 | Niş radarı (koşullu) | 🔄 Devam Ediyor | Faz 13 çalışınca: Etsy arama önerileri + mevsim takviminden yükselen hobi/meslek nişleri aday listesi; marka kapısından geçen niş kartı otomatik taslaklanıyor, ilk 2 yeni niş canlı |
 | 16 | Yılbaşı süsü (Q4, K-30) | 🔄 Devam Ediyor | Uygun tasarımlara süs ilanı otomatik açılıyor (pencere 09-15 → 12-10); ilk süs Etsy'de aktif ve kurallara uygun; 10 Aralık'a kadar ≥ 20 süs canlı; 26 Aralık'tan sonra süs ilanları pasif; sezon sonu raporunda süs satışı ve neti |
-| 17 | TikTok (K-34) | 🔄 Devam Ediyor | Her yayındaki tasarıma kodla video hazırlanıyor; TikTok işletme hesabı açık, bio'da Etsy linki; ilk 10 video günde bir paylaşıldı; ülke dağılımı ölçüldü ve karar kayda geçti (ABD payı yeterliyse sürer, değilse ücretli/alternatif yeniden değerlendirilir) |
+| 17 | TikTok (K-34) | 🔄 Devam Ediyor | Her yayındaki tasarıma kodla video hazırlanıyor; TikTok hesabı açık, bio'da "Search HobbyHeartPrints on Etsy" (link 1.000 takipçide); ilk 10 video günde bir paylaşıldı; ülke dağılımı ölçüldü ve karar kayda geçti (ABD payı yeterliyse sürer, değilse ücretli/alternatif yeniden değerlendirilir) |
 
 ## Faz Detayları
 
@@ -90,7 +90,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   kartı; Claude kanca/açıklama/hashtag, marka süzgeci; günlük takvim), `video` tablosu, günlük hatta `tiktok` adımı (günde ≤ 2),
   `matbaa tiktok [--tasarim N]`, panoda TikTok bölümü (video indir, açıklamayı kopyala, önerilen saat, "Zamanladım") ve
   "Senden beklenenler" satırı. 5 test. Canlı 3 tasarımın videosu hazır (16-18 Ekim, TR 02:00).
-- **Scryne'ın işi:** TikTok işletme hesabı (HobbyHeartPrints), bio'ya Etsy mağaza linki; videoları TikTok Studio'dan zamanlamak.
+- **Scryne'ın işi:** TikTok hesabı (HobbyHeartPrints; link alanı şirket doğrulaması istiyor, 1.000 takipçiye kadar bio'da mağaza adı); videoları TikTok Studio'dan zamanlamak.
 - **Kalan:** ilk 10 videodan sonra ülke dağılımı (ABD payı) ve izlenme; karar kayda.
 
 ### Faz 11: İsimli süs (K-31) 🔄 (2026-10-15)

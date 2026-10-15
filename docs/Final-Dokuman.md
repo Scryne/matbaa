@@ -226,7 +226,9 @@ iade kararı.
   **Araştırma (2026-10-15, kaynaklar `docs/arastirma/07-tiktok.md`):** video fotoğraf karuselinden gönderi başına ~5,6 kat izlenme
   alıyor (Metricool, 2,3 milyon gönderi): karusel yok. Onaysız Content Posting API yalnız "sadece ben" paylaşıyor ve kendi
   hesabını yöneten araç denetimden geçmiyor: otomatik paylaşım yok, elle yükleme. İşletme hesabında profil linki takipçi eşiği
-  olmadan (resmî yardım özeti), bedeli müziğin ticari kütüphaneyle sınırlı olması: işletme hesabı açılır, bio'ya Etsy linki.
+  olmadan (resmî yardım özeti), bedeli müziğin ticari kütüphaneyle sınırlı olması. Hesap açılışında (2026-10-15) link
+  alanı "İşletmenizi doğrulayın" formu istedi (şirket sertifikası, yasal şirket adı, işletme ruhsatı): şirket yok, form
+  doldurulmaz. Link 1.000 takipçide açılır; o zamana kadar bio ve videonun kapanış kartı "Search HobbyHeartPrints on Etsy".
   **Açık risk:** Türkiye'den açılan hesabın videolarının ABD akışına ne kadar düştüğü için resmî kural yok; VPN/ABD SIM gibi
   yöntemler hesap kapatma riski (kullanılmaz). Ölçüm: ilk 10 videodan sonra TikTok Studio → Analiz → İzleyiciler'de ülke
   dağılımı. ABD payı düşükse karar yeniden açılır (ücretli TikTok reklamı Türkiye kayıtlı hesapla ABD'yi hedefleyebiliyor mu
