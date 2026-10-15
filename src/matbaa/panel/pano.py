@@ -9,7 +9,7 @@ import re
 import subprocess
 from datetime import UTC, date, datetime, timedelta
 
-from matbaa import fiyat, pinterest, siparis, tavan
+from matbaa import fiyat, pinterest, siparis, tavan, tiktok
 from matbaa.ayar import KOK
 
 MAGAZA_URL = "https://www.etsy.com/shop/HobbyHeartPrints"
@@ -25,7 +25,7 @@ def _son_kosu() -> dict | None:
     except (OSError, ValueError):
         return None
     adimlar = {}
-    for ad in ("yayin", "etsy", "gorsel", "mevsimlik", "isimli", "siparis"):
+    for ad in ("yayin", "etsy", "gorsel", "mevsimlik", "pinterest", "tiktok", "isimli", "siparis"):
         v = k.get(ad)
         if isinstance(v, dict):
             adimlar[ad] = {x: y for x, y in v.items() if isinstance(y, int | float) and not isinstance(y, bool)}
@@ -284,5 +284,6 @@ def pano(c) -> dict:
         "roadmap": _roadmap(),
         "olaylar": _olaylar(c),
         "pinterest": pinterest.ozet(c),
+        "tiktok": tiktok.ozet(c),
         "acilis": _acilis(c),
     }

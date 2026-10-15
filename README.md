@@ -20,6 +20,7 @@ ilan metni → onay → Printify → Etsy.
 | `yeniden-ciz` | Onaylanmamış tasarımları güncel motorla yeniden çizer. |
 | `yayinla` / `etsy-esle` | Onaylıları Printify'a açar (ısınma eğrisi + harcama tavanı) / Etsy ilanına üretim ortağı, kargo profili, aktif. Günlük koşu sürüyorsa beklemeden çıkar (aynı kilit). |
 | `isimli` | İsimli süs siparişlerini hemen işler (panelden isim düzelttikten sonra beklemeden açmak için). |
+| `tiktok [--tasarim N]` | TikTok videosu üretir (`calisma/tiktok/<id>/`: video, kapak, açıklama). Günlük koşu yeni yayındaki tasarımlar için kendisi yapar; panoda indirilir ve zamanlanır. |
 | `durum`, `ozet [--ay YYYY-MM]`, `rapor` | Kuyruk özeti, aylık kâr, haftalık rapor (`calisma/rapor/`). |
 | `printify-kesif`, `etsy-kargo-profili` | Kurulum: Printify katalog/sağlayıcı eşlemesi, Etsy ücretsiz ABD kargo profili. |
 

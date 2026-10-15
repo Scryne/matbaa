@@ -106,6 +106,13 @@ CREATE TABLE IF NOT EXISTS pin (               -- Pinterest toplu pin kuyruğu (
     durum TEXT NOT NULL,              -- bekliyor | verildi (CSV'ye girdi, yayın saati atandı) | atlandi (ilan yayından kalktı)
     yayin TEXT, dosya TEXT, olusturma TEXT
 );
+CREATE TABLE IF NOT EXISTS video (            -- TikTok videosu (tiktok.py, K-34): tasarım başına bir video + karusel
+    tasarim_id INTEGER PRIMARY KEY REFERENCES tasarim(id),
+    durum TEXT NOT NULL,              -- hazir | paylasildi
+    klasor TEXT, hook TEXT, aciklama TEXT, etiketler TEXT, sure REAL,
+    olusturma TEXT, paylasim TEXT,
+    plan TEXT                         -- paylaşım saati (UTC): günde bir, ABD doğu 19:00
+);
 CREATE TABLE IF NOT EXISTS olay (
     id INTEGER PRIMARY KEY,
     zaman TEXT NOT NULL,

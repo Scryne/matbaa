@@ -297,6 +297,38 @@ def ilan_duzelt(tasarim_id: int, urun: str, d: IlanDuzelt, c: Baglanti) -> dict:
     return {"baslik": sonuc.baslik, "etiketler": sonuc.etiketler}
 
 
+def _video_klasoru(c, tasarim_id: int) -> Path:
+    from matbaa import tiktok
+
+    r = c.execute("SELECT klasor FROM video WHERE tasarim_id = ?", (tasarim_id,)).fetchone()
+    if r is None or not r[0]:
+        raise HTTPException(404, "video yok")
+    return tiktok.KOK / r[0]  # kayıt proje köküne göreli
+
+
+@app.get("/tiktok/{tasarim_id}/{dosya}")
+def tiktok_dosya(tasarim_id: int, dosya: str, c: Baglanti) -> Response:
+    """Hazır TikTok videosu ya da kapağı. Dosya adı sabit listeden: yol enjeksiyonu yok."""
+    klasor = _video_klasoru(c, tasarim_id)
+    ad = f"hobbyheartprints-{tasarim_id:05d}"
+    if dosya not in ("video.mp4", "kapak.jpg") or not (klasor / dosya).is_file():
+        raise HTTPException(404, "dosya yok")
+    if dosya == "kapak.jpg":
+        return FileResponse(klasor / dosya, media_type="image/jpeg", headers={"Cache-Control": "max-age=3600"})
+    return FileResponse(klasor / dosya, media_type="video/mp4", filename=f"{ad}.mp4")
+
+
+@app.post("/api/tiktok/{tasarim_id}/paylasildi")
+def tiktok_paylasildi(tasarim_id: int, c: Baglanti) -> dict:
+    from matbaa import tiktok
+
+    try:
+        tiktok.paylasildi(c, tasarim_id)
+    except KeyError:
+        raise HTTPException(409, "paylaşılmayı bekleyen video yok") from None
+    return {"durum": "paylasildi"}
+
+
 class IsimliIsim(BaseModel):
     isimler: dict[str, str]  # transaction_id → basılacak isim
 

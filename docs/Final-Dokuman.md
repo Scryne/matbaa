@@ -186,7 +186,7 @@ iade kararı.
   düz süsün neti $5.54'e indi, kural (> $5) tutuyor. İlk isimli ilan #2 (fishing grandpa) 2026-10-15 canlı (4595906587).
   **Videolar:** Whisper ile yazıya döküldü (2026-10-15); konuşmada yeni taktik yok, yalnız 7. video süsü, 6. video bebek
   battaniyesini (Printify, iyi görsel) anlatıyor; battaniye sonraki ürün ailesi adayı.
-- **K-32 Trafik kanalı: Pinterest (CSV), TikTok/heliosgen değil (2026-10-15):** Scryne TikTok'ta AI videolu mağaza hesabı ve
+- **K-32 Trafik kanalı: Pinterest (CSV), TikTok/heliosgen değil (2026-10-15; TikTok kısmı K-34 ile değişti):** Scryne TikTok'ta AI videolu mağaza hesabı ve
   heliosgen önerdi, kararı bana bıraktı. heliosgen kendisi üretmiyor (ücretli kie.ai kredisi), Windows sürümü yok, lisans dosyası
   yok; görselden video modelleri tişörtteki sloganı bozabilir. TikTok'ta denetimsiz API gönderisi yalnız sahibine görünür, profil
   linki işletme doğrulaması ister, TikTok Shop Türkiye'den ABD'ye açılamaz, TikTok → Etsy dönüşümüne güvenilir veri yok.
@@ -215,6 +215,22 @@ iade kararı.
     hepsi gözle doğrulandı. Canlı ve onaylı 12 gunes tasarımında bozulma yoktu, yeniden basılmadı.
   - **Bilinen sınır:** süs ürün satırı tasarım başına tek (`urun` birincil anahtarı); 2027 sezonunda "CHRISTMAS 2027" süsleri
     için kapanan (`kaldirildi`) süs satırının yeniden açılması gerekecek. Eylül 2027'den önce roadmap'te.
+
+- **K-34 TikTok, K-32'nin yerine (2026-10-15):** Scryne "mağaza bilinirliği hiç yok, bekleyerek olmayacak" dedi ve TikTok'u
+  istedi; K-32'deki iki çekinceden biri yöntemle kalktı. Videolar yapay zekâyla değil kodla üretilir (`tiktok.py`): her kare
+  gerçek ürün (Etsy ilanındaki Printify mockup'ları, kendi baskı dosyamızın kumaş üstü yakın planı, marka kapanış kartı), yazı
+  fonttan yola: slogan bozulmaz. 9:16, ~13-15 sn, sert kesme + hafif yakınlaşma; kanca/açıklama/hashtag Claude'dan (son kancalar
+  verilir, tekrar etmez; güncel hediye sezonu verilir), hashtag'ler marka süzgecinden ("dadlife" tescilli çıktı). Günlük koşu
+  yayındaki her tasarıma bir video hazırlar (günde ≤ 2); pano videoyu, açıklamayı ve önerilen saati verir (günde bir, ABD doğu
+  19:00 = TR 02:00/03:00; Studio 10 gün ileri zamanlar), Scryne TikTok Studio'dan yükler, "Zamanladım"a basar.
+  **Araştırma (2026-10-15, kaynaklar `docs/arastirma/07-tiktok.md`):** video fotoğraf karuselinden gönderi başına ~5,6 kat izlenme
+  alıyor (Metricool, 2,3 milyon gönderi): karusel yok. Onaysız Content Posting API yalnız "sadece ben" paylaşıyor ve kendi
+  hesabını yöneten araç denetimden geçmiyor: otomatik paylaşım yok, elle yükleme. İşletme hesabında profil linki takipçi eşiği
+  olmadan (resmî yardım özeti), bedeli müziğin ticari kütüphaneyle sınırlı olması: işletme hesabı açılır, bio'ya Etsy linki.
+  **Açık risk:** Türkiye'den açılan hesabın videolarının ABD akışına ne kadar düştüğü için resmî kural yok; VPN/ABD SIM gibi
+  yöntemler hesap kapatma riski (kullanılmaz). Ölçüm: ilk 10 videodan sonra TikTok Studio → Analiz → İzleyiciler'de ülke
+  dağılımı. ABD payı düşükse karar yeniden açılır (ücretli TikTok reklamı Türkiye kayıtlı hesapla ABD'yi hedefleyebiliyor mu
+  doğrulanamadı; kampanya tabanı günlük $50).
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

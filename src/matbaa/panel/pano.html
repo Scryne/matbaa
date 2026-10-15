@@ -83,6 +83,15 @@
   .isim-form input:disabled, .isim-form button:disabled { opacity: .55; }
   .isim-sonuc { flex-basis: 100%; font-size: 12px; color: var(--metin-2); }
   .isim-sonuc:empty { display: none; }
+  .tiktok { padding-top: 16px; }
+  .videolar { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 16px; }
+  .video-kart { display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; border: 1px solid var(--cizgi); border-radius: var(--r-k); background: var(--zemin); min-width: 0; }
+  .video-kart > a { display: block; border-radius: 6px; overflow: hidden; aspect-ratio: 9 / 16; background: var(--zemin-2); align-self: start; }
+  .video-kart img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .video-kart .zaman { font: 12px/1.4 var(--mono); color: var(--kirmizi); }
+  .video-kart b { display: block; font-size: 14px; line-height: 1.35; margin: 4px 0 6px; }
+  .video-kart p { margin: 0 0 10px; font-size: 12px; line-height: 1.45; color: var(--metin-2); overflow-wrap: anywhere; }
+  .video-kart .eylemler { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .gizli-etiket { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 6px 12px; border-radius: var(--r-k); border: 1px solid var(--cizgi-2);
     background: var(--yuzey); color: var(--metin); font: 500 13px var(--govde); text-decoration: none; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s; }
@@ -217,6 +226,8 @@
   <symbol id="i-katman" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7l10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></symbol>
   <symbol id="i-yenile" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
   <symbol id="i-yol" viewBox="0 0 24 24"><path d="M3 12h4l3-9 4 18 3-9h4"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="m16 10 5-3v10l-5-3"/></symbol>
+  <symbol id="i-kopya" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
   <symbol id="i-kayit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v20M2 12h20"/></symbol>
 </svg>
 
@@ -282,6 +293,13 @@
     </article>
   </section>
 
+  <section class="kap tiktok belir" style="--s:8" id="tiktok-bolum" aria-labelledby="tiktok-bas" hidden>
+    <article class="doseme">
+      <header><h2 id="tiktok-bas"><svg class="ikon" aria-hidden="true"><use href="#i-video"/></svg>TikTok</h2><span class="ust-etiket" id="tiktok-not"></span></header>
+      <div id="tiktok"></div>
+    </article>
+  </section>
+
   <section class="kap alt" aria-label="Siparişler, yol haritası ve etkinlik">
     <div class="sol-sutun">
       <article class="doseme belir" style="--s:8">
@@ -307,7 +325,7 @@ const URUN = { tisort: "Tişört", sweatshirt: "Sweatshirt", hoodie: "Hoodie", s
 const URUN_SIRA = ["tisort", "sweatshirt", "hoodie", "susleme", "isimli_susleme", "kupa"];
 const URUN_DURUM = { printify: "Printify'da", etsy_taslak: "taslak", olusturuldu: "hazırlanıyor", hata: "hata" };
 const ISIMLI = { yeni: "Yeni", acildi: "Printify'da", uretimde: "Üretimde", takip_yazildi: "Kargoda", iptal: "İptal", hata: "Hata", elle: "Elle bakılmalı", kapandi: "Elle kapatıldı" };
-const ADIM = { yayin: "Yayın", etsy: "Etsy eşleme", gorsel: "Galeri", mevsimlik: "Süs ilanları", pinterest: "Pin kuyruğu", isimli: "İsimli siparişler", siparis: "Sipariş takibi" };
+const ADIM = { yayin: "Yayın", etsy: "Etsy eşleme", gorsel: "Galeri", mevsimlik: "Süs ilanları", pinterest: "Pin kuyruğu", tiktok: "TikTok videoları", isimli: "İsimli siparişler", siparis: "Sipariş takibi" };
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -370,6 +388,9 @@ function siradaki(d) {
     metin: `İsimli sipariş ${esc(x.etsy_receipt_id)} ${x.durum === "elle" ? "elle bakılmalı" : "açılamadı"}`, alt: isimliNeden(x),
     ek: x.durum === "hata" ? isimliForm(x) : "",
     eylem: `<button class="btn sade" type="button" onclick="isimliKapat('${esc(x.etsy_receipt_id)}', this)">Elle hallettim</button>` }));
+  const tt = d.tiktok.hazir;
+  if (tt.length) g.push({ ikon: "video", metin: `${tt.length} TikTok videosu paylaşılmayı bekliyor`,
+    alt: `Sıradaki: ${ttZaman(tt[0].plan_tr)}. TikTok Studio'da zamanla`, eylem: `<a class="btn" href="#tiktok-bolum">Videolar</a>` });
   const onay = d.hat.tasarim.onay_bekliyor || 0;
   if (onay) g.push({ ikon: "onay", metin: `${onay} tasarım onayını bekliyor`, alt: "Onaylananlar yayın sırasına girer", eylem: `<a class="btn" href="/onay">Onay masası</a>` });
   const p = d.pinterest;
@@ -522,6 +543,39 @@ function pinKart(d) {
     <details><summary>Nasıl yüklenir</summary><p>Pinterest işletme hesabında, bilgisayardan: Ayarlar, İçeriği içe aktar, .csv yükle. Panolar kendiliğinden açılır, pinler dosyadaki saatlerde yayınlanır.</p></details>`;
 }
 
+function ttZaman(s) {
+  const z = new Date(s);  // plan_tr: Türkiye saatiyle "YYYY-MM-DDTHH:MM" (tarayıcı da Türkiye'de)
+  return `${z.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })} ${saat(z)}`;
+}
+
+function tiktokKart(d) {
+  const t = d.tiktok, bolum = $("tiktok-bolum");
+  bolum.hidden = !t.hazir.length && !t.paylasilan;
+  if (bolum.hidden) return;
+  $("tiktok-not").textContent = `${t.paylasilan} paylaşıldı · günde 1, ABD akşamı 19:00`;
+  if ($("tiktok").contains(document.activeElement) && document.activeElement.matches("button")) return;
+  $("tiktok").innerHTML = (t.hazir.length ? `<div class="videolar">${t.hazir.map(v => `<div class="video-kart">
+      <a href="/tiktok/${v.tasarim_id}/video.mp4" target="_blank" rel="noopener" aria-label="Videoyu izle: ${esc(v.slogan)}"><img src="/tiktok/${v.tasarim_id}/kapak.jpg" alt="" loading="lazy"></a>
+      <div><span class="zaman">${esc(ttZaman(v.plan_tr))}</span><b>${esc(v.hook)}</b><p>${esc(v.gonderi)}</p>
+        <div class="eylemler"><a class="btn ana" href="/tiktok/${v.tasarim_id}/video.mp4" download>${ik("indir")}Video</a>
+          <button class="btn" type="button" onclick="ttKopyala(this, ${v.tasarim_id})">${ik("kopya")}Açıklama</button>
+          <button class="btn sade" type="button" onclick="ttPaylasildi(${v.tasarim_id}, this)">Zamanladım</button></div>
+        <output class="isim-sonuc" role="status"></output></div></div>`).join("")}</div>`
+    : `<p class="not">Paylaşılmayı bekleyen video yok. Yeni tasarım yayına girdikçe günlük koşu videosunu hazırlar.</p>`)
+    + `<details><summary>Nasıl paylaşılır</summary><p>Bilgisayarda tiktok.com/tiktokstudio/upload: videoyu seç, açıklamayı yapıştır, "Zamanla"da karttaki saati seç (10 güne kadar ileri), sonra burada "Zamanladım". Telefondan paylaşırsan TikTok'un ticari müzik kütüphanesinden popüler bir ses ekle. Ülke dağılımını ilk 10 videodan sonra TikTok Studio, Analiz, İzleyiciler'de kontrol et.</p></details>`;
+}
+
+async function ttKopyala(dugme, id) {
+  const v = son.tiktok.hazir.find(x => x.tasarim_id === id), cikti = dugme.closest(".video-kart").querySelector("output");
+  try { await navigator.clipboard.writeText(v.gonderi); cikti.textContent = "Açıklama kopyalandı."; }
+  catch { cikti.textContent = "Kopyalanamadı: metni seçip elle kopyala."; }
+}
+
+async function ttPaylasildi(id, dugme) {
+  const r = await fetch(`/api/tiktok/${id}/paylasildi`, { method: "POST" });
+  if (r.ok) yukle(); else dugme.closest(".video-kart").querySelector("output").textContent = "Kaydedilemedi, sayfayı yenile.";
+}
+
 function kosuKart(d) {
   const k = d.son_kosu;
   if (!k) { $("kosu").innerHTML = `<p class="not">Henüz günlük koşu kaydı yok.</p>`; return; }
@@ -529,7 +583,7 @@ function kosuKart(d) {
   const ozet = (ad, v) => {
     if (typeof v === "string") return [v, "bos"];
     const parca = { yayin: [v.tasarim && `${v.tasarim} tasarım`, v.urun && `${v.urun} ürün`], etsy: [v.aktif && `${v.aktif} aktif`], gorsel: [v.tamam && `${v.tamam} galeri`],
-      mevsimlik: [v.acilan && `${v.acilan} ilan`], pinterest: [v.eklenen && `${v.eklenen} pin`], isimli: [v.yeni && `${v.yeni} yeni`, v.takip && `${v.takip} kargo`],
+      mevsimlik: [v.acilan && `${v.acilan} ilan`], pinterest: [v.eklenen && `${v.eklenen} pin`], tiktok: [v.hazir && `${v.hazir} video`], isimli: [v.yeni && `${v.yeni} yeni`, v.takip && `${v.takip} kargo`],
       siparis: [v.yeni && `${v.yeni} yeni`] }[ad] || [];
     const metin = parca.filter(Boolean).join(", ");
     return v.hata ? [`${v.hata} hata`, "kotu"] : [metin || "iş yok", metin ? "" : "bos"];
@@ -579,7 +633,7 @@ function yol(d) {
 
 function ciz(d) {
   if (!d) return;
-  ust(d); giris(d); siradaki(d); vitrin(d); paraKart(d); grafik(d); hat(d); pinKart(d); kosuKart(d); siparisKart(d); olayKart(d); yol(d);
+  ust(d); giris(d); siradaki(d); vitrin(d); paraKart(d); grafik(d); hat(d); pinKart(d); kosuKart(d); tiktokKart(d); siparisKart(d); olayKart(d); yol(d);
   $("altbilgi").textContent = `Veriler bu bilgisayardan okunur, Etsy görüntülenmesi günlük koşuda ölçülür. Son güncelleme ${saat(new Date())}.`;
 }
 

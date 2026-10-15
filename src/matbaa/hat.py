@@ -11,7 +11,7 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from matbaa import db, isimli, pinterest, tavan
+from matbaa import db, isimli, pinterest, tavan, tiktok
 from matbaa.ayar import KOK
 from matbaa.fiyat import tasarim_urunleri, urunler
 from matbaa.ifade import uret as ifade_uret
@@ -421,6 +421,7 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             _adim(rapor, "vitrin", lambda: yayin.vitrin_esitle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "mevsim_kapat", lambda: yayin.mevsim_kapat(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "pinterest", lambda: pinterest.kuyruga_ekle(c, e, yazdir=yazdir), yazdir)
+            _adim(rapor, "tiktok", lambda: tiktok.hazirla(c, e, yazdir=yazdir), yazdir)  # K-34: yeni yayındaki tasarıma video
             # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
             goruntu_tamam = (
                 _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir) is not None
@@ -532,6 +533,9 @@ def main(argv: list[str] | None = None) -> None:
     alt.add_parser("yayinla", help="onaylı tasarımları Printify'a (ısınma eğrisi sınırıyla)")
     alt.add_parser("etsy-esle", help="Printify'ın açtığı Etsy ilanlarına üretim ortağı + aktifleştirme")
     alt.add_parser("etsy-kargo-profili", help="Etsy'de ücretsiz ABD kargo profilini aç, config'e yaz (K-23)")
+    tk = alt.add_parser("tiktok", help="TikTok videosu üret (calisma/tiktok/): verilen tasarıma ya da videosu olmayanlara")
+    tk.add_argument("--tasarim", type=int, help="yalnız bu tasarım (varsa yeniden üretir)")
+    tk.add_argument("--sinir", type=int, default=tiktok.GUNLUK)
     alt.add_parser("isimli", help="isimli süs siparişlerini şimdi işle (panelden isim düzeltmesinden sonra)")
     pn = alt.add_parser("panel", help="yerel onay paneli (127.0.0.1)")
     pn.add_argument("--port", type=int, default=8766)
@@ -577,6 +581,14 @@ def main(argv: list[str] | None = None) -> None:
                 yayin.kargo_profili_kur(p, Etsy())
             else:
                 print(json.dumps(_tek_kosuda(lambda: yayin.etsy_esle(db.baglan(), p, Etsy())), ensure_ascii=False))
+    elif a.komut == "tiktok":
+        from matbaa.entegrasyon.etsy import Etsy
+
+        c = db.baglan()
+        if a.tasarim:
+            print(json.dumps(tiktok.uret(c, Etsy(), a.tasarim), ensure_ascii=False))
+        else:
+            print(json.dumps(tiktok.hazirla(c, Etsy(), sinir=a.sinir), ensure_ascii=False))
     elif a.komut == "isimli":
         from matbaa.entegrasyon.etsy import Etsy
         from matbaa.entegrasyon.printify import Printify
