@@ -10,6 +10,7 @@ import pytest
 from PIL import Image
 
 from matbaa import db, tiktok
+from matbaa.ip import marka
 
 SIMDI = datetime(2026, 10, 20, 15, 0, tzinfo=UTC)  # ABD doğu 11:00 (EDT)
 
@@ -35,6 +36,12 @@ def _yazar(istem, sistem, sema):
         "caption": "Find HobbyHeartPrints on Etsy.",
         "hashtags": ["#Fishing Gifts", "dadlife", "!!"],
     }
+
+
+@pytest.fixture(autouse=True)
+def marka_dizini(monkeypatch):
+    """Gerçek USPTO dosyası git dışı (CI'de yok): tek tescilli hashtag'li küçük dizin."""
+    monkeypatch.setattr(marka, "dizin", lambda: marka.MarkaDizini([("DADLIFE", "88000001")]))
 
 
 @pytest.fixture
@@ -88,8 +95,6 @@ def test_etiket_kutusu_zemine_gore_renk_degistirir():
 
 def test_metin_hashtagleri_temizlenir_claude_dusunce_kalip_metin():
     m = tiktok.metin_yaz(["GONE FISHING"], "fishing", ["T-shirt"], yazar=_yazar)
-    from matbaa.ip import marka
-
     assert m.etiketler[0] == "fishinggifts" and "" not in m.etiketler  # "#Fishing Gifts" temizlendi, "!!" düştü
     assert not marka.dizin().kontrol("dadlife").temiz and "dadlife" not in m.etiketler  # tescilli marka hashtag olmaz
     assert m.gonderi().endswith("#" + m.etiketler[-1]) and m.gonderi().startswith("Find HobbyHeartPrints")
