@@ -74,6 +74,18 @@ def sayfa() -> str:
     return SAYFA.read_text(encoding="utf-8")
 
 
+FONTLAR = {"serif": "DMSerifDisplay-Regular.ttf"}  # panoda başlık fontu; yerelden, dış istek yok (OFL, varliklar/fontlar)
+
+
+@app.get("/font/{ad}")
+def font_dosyasi(ad: str) -> FileResponse:
+    if ad not in FONTLAR:
+        raise HTTPException(404)
+    return FileResponse(
+        KOK / "varliklar" / "fontlar" / FONTLAR[ad], media_type="font/ttf", headers={"Cache-Control": "max-age=604800"}
+    )
+
+
 @app.get("/api/pano")
 def pano_veri(c: Baglanti) -> dict:
     from matbaa.panel import pano

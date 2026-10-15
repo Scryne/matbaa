@@ -102,6 +102,7 @@ def _goruntulenme(c, gun: int = 21) -> dict:
 
 def _ilanlar(c, gor: dict) -> list[dict]:
     adlar = {u: p["etsy_turu"] for u, p in fiyat.urunler().items()}
+    gorsel = {r[0]: r[1] for r in c.execute("SELECT etsy_listing_id, gorsel_url FROM pin")}
     sonuc = []
     for r in c.execute(
         """SELECT u.tasarim_id, u.urun, u.durum, u.etsy_listing_id, u.guncelleme, i.satirlar, i.nis, il.fiyat
@@ -110,6 +111,7 @@ def _ilanlar(c, gor: dict) -> list[dict]:
            WHERE u.durum NOT IN ('kaldirildi', 'bekliyor') ORDER BY u.tasarim_id, u.rowid"""
     ):
         v, f = gor["ilan"].get(str(r["etsy_listing_id"]), (None, None))
+        g = gorsel.get(str(r["etsy_listing_id"]))
         sonuc.append(
             {
                 "tasarim": r["tasarim_id"],
@@ -122,6 +124,8 @@ def _ilanlar(c, gor: dict) -> list[dict]:
                 "views": v,
                 "favori": f,
                 "url": ILAN_URL.format(r["etsy_listing_id"]) if r["etsy_listing_id"] else None,
+                # Etsy'nin vitrin görseli (pin kuyruğu günlük koşuda alır); 570 px sürümü aynı adreste boyut adıyla durur
+                "gorsel": g.replace("/il_fullxfull.", "/il_570xN.") if g else None,
             }
         )
     return sonuc
@@ -167,15 +171,82 @@ def _hat(c) -> dict:
     }
 
 
-def _olaylar(c, n: int = 80) -> list[dict]:
-    return [
-        dict(r)
-        for r in c.execute(
-            "SELECT zaman, varlik, varlik_id, yeni, aciklama FROM olay WHERE NOT (varlik = 'siparis' AND yeni = 'izlendi') "
-            "ORDER BY id DESC LIMIT ?",
-            (n,),
-        )
-    ]
+URUN_AD = {
+    "tisort": "Tişört",
+    "sweatshirt": "Sweatshirt",
+    "hoodie": "Hoodie",
+    "susleme": "Süs",
+    "isimli_susleme": "İsimli süs",
+    "kupa": "Kupa",
+}
+URUN_ADIM = {"aktif": ("yayına girdi", "iyi"), "bekliyor": ("ilan metni yazıldı", ""), "kaldirildi": ("yayından kalktı", "")}
+TASARIM_ADIM = {"onay_bekliyor": ("onaya geldi", ""), "onaylandi": ("onaylandı", "iyi"), "ret": ("reddedildi", "kotu")}
+
+
+def _olay_metni(o) -> tuple[str, str, str | None] | None:
+    """Olay → (metin, tür, ürün) ya da None (ara adım/eşitleme kaydı: akışta gürültü)."""
+    yeni = o["yeni"] or ""
+    if o["varlik"] == "urun" and ":" in yeni:
+        urun, adim = yeni.split(":", 1)
+        if adim == "hata":
+            return f"hata: {(o['aciklama'] or '')[:90]}", "kotu", URUN_AD.get(urun, urun)
+        if adim in URUN_ADIM:
+            return (*URUN_ADIM[adim], URUN_AD.get(urun, urun))
+        return None
+    if o["varlik"] == "tasarim" and yeni in TASARIM_ADIM:
+        return (*TASARIM_ADIM[yeni], None)
+    if o["varlik"] == "pin" and yeni == "csv":
+        return f"Pinterest dosyası indirildi ({(o['aciklama'] or '').split(': ', 1)[-1]})", "", None
+    if o["varlik"] == "siparis" and yeni != "izlendi":
+        return f"sipariş: {yeni}", "iyi", None
+    return None
+
+
+def _olaylar(c, n: int = 12) -> list[dict]:
+    """İnsan dilinde, gruplanmış etkinlik. Aynı tasarımın aynı adımı ürünleri toplar ("Tişört, Hoodie yayına girdi"); ardışık
+    tasarımlarda aynı adım ve aynı ürünler tek satır olur ("12 tasarıma Süs ilan metni"). Gruplar 2 saatlik pencerede."""
+    slogan = {
+        r[0]: " ".join(json.loads(r[1]))
+        for r in c.execute("SELECT t.id, i.satirlar FROM tasarim t JOIN ifade i ON i.id = t.ifade_id")
+    }
+    yakin = lambda a, b: abs(datetime.fromisoformat(a) - datetime.fromisoformat(b)) < timedelta(hours=2)  # noqa: E731
+    adimlar: list[dict] = []  # 1. geçiş: tasarım + adım başına ürünler
+    for o in c.execute("SELECT zaman, varlik, varlik_id, yeni, aciklama FROM olay ORDER BY id DESC LIMIT 800"):
+        m = _olay_metni(o)
+        if m is None:
+            continue
+        metin, tur, urun = m
+        tasarim = o["varlik_id"] if o["varlik"] in ("urun", "tasarim") else None
+        x = adimlar[-1] if adimlar else None
+        if x and x["tasarim"] == tasarim and x["metin"] == metin and yakin(x["zaman"], o["zaman"]):
+            if urun and urun not in x["urunler"]:
+                x["urunler"].insert(0, urun)
+            continue
+        adimlar.append({"zaman": o["zaman"], "tasarim": tasarim, "metin": metin, "tur": tur, "urunler": [urun] if urun else []})
+    sonuc: list[dict] = []  # 2. geçiş: aynı adım + aynı ürünler, ardışık tasarımlar
+    for a in adimlar:
+        x = sonuc[-1] if sonuc else None
+        if (
+            x
+            and a["tasarim"] is not None
+            and x["tasarimlar"]
+            and x["metin"] == a["metin"]
+            and x["urunler"] == a["urunler"]
+            and yakin(x["zaman"], a["zaman"])
+        ):
+            x["tasarimlar"].append({"id": a["tasarim"], "slogan": slogan.get(a["tasarim"])})
+            continue
+        if len(sonuc) >= n:
+            break
+        t = [{"id": a["tasarim"], "slogan": slogan.get(a["tasarim"])}] if a["tasarim"] is not None else []
+        sonuc.append({k: a[k] for k in ("zaman", "metin", "tur", "urunler")} | {"tasarimlar": t})
+    return sonuc
+
+
+def _acilis(c) -> str | None:
+    """Mağazanın ilk ilanının yayına girdiği gün (Etsy Ads açılıştan 15 gün sonra açılabiliyor)."""
+    r = c.execute("SELECT min(zaman) FROM olay WHERE varlik = 'urun' AND yeni LIKE '%:aktif'").fetchone()[0]
+    return r[:10] if r else None
 
 
 def pano(c) -> dict:
@@ -202,4 +273,5 @@ def pano(c) -> dict:
         "roadmap": _roadmap(),
         "olaylar": _olaylar(c),
         "pinterest": pinterest.ozet(c),
+        "acilis": _acilis(c),
     }

@@ -12,7 +12,19 @@ colors:
   onay-yesil: "#3fb46b"
   uyari-sari: "#e2b23c"
   odak: "#8fb3ff"
+  kagit: "#f3efe6"
+  kagit-koyu: "#ebe5d8"
+  kagit-yuzey: "#fbf9f4"
+  kagit-cizgi: "#e0d9ca"
+  murekkep: "#1f1d1a"
+  murekkep-ikincil: "#605b52"
+  kagit-kirmizi: "#c2392a"
+  kagit-yesil: "#2a7f51"
 typography:
+  pano-baslik:
+    fontFamily: "'DM Serif Display', Georgia, serif"
+    fontSize: 54px
+    lineHeight: 1.06
   govde:
     fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif"
     fontSize: 15px
@@ -67,3 +79,17 @@ Sistem fontu: panel çevrimdışı ve yerel, dış font yüklemesi yok. Kanıt v
 - Kumaş provasını küçültüp kenara itme; ekranın en büyük öğesi odur.
 - Onay butonu klavye kısayolu olmadan eklenmez.
 - Toplu "hepsini onayla" yok: her tasarım tek tek görülür (marka kapısı insan gözünü de ister, K-13).
+
+## Pano (takip sayfası, 2026-10-15)
+
+Açılış sayfası (`/`) Scryne'ın her sabah oturum açınca gördüğü dükkân panosu; onay masası `/onay`'da kalır.
+
+- **Mood:** matbaa kâğıdı. Açık temada sıcak kâğıt zemin (`kagit`), mürekkep siyahı metin (`murekkep`), tek vurgu `kagit-kirmizi`
+  (prova kırmızısının kâğıt üstünde 4.5:1 sağlayan tonu). Koyu temada (`prefers-color-scheme: dark`) onay masasının `masa` paleti.
+  Onay masasındaki "nötr zemin" gerekçesi (kumaş rengi yargısı) panoda yok; burada ürün fotoğrafı Etsy'nin beyaz zeminiyle gelir.
+- **Tipografi:** manşet ve bölüm başlıkları DM Serif Display (projede OFL, `/font/serif` yerelden), sayılar monospace tabular.
+- **Farklılaştırıcı detay:** "Sıradaki" kartının köşelerinde baskı kesim işaretleri, tarih satırında kayıt işareti (crosshair).
+- **Düzen sırası:** asimetrik giriş (tek cümlelik durum manşeti + sıradaki iş/senden beklenenler) → tam genişlik vitrin bandı
+  (gerçek ürün fotoğrafları) → bento (para ve görüntülenme geniş, hat/Pinterest/koşu dar) → siparişler + yol haritası / etkinlik.
+- **Yapma:** emoji, renkli sol kenar şeridi, her kutuya gölge; olay akışına eşitleme kayıtlarını (öznitelik, vitrin, galeri) dökme.
+

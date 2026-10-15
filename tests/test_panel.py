@@ -151,7 +151,7 @@ def test_pano_acilis_sayfasi_ve_verisi(istemci, tmp_path, monkeypatch):
         "INSERT INTO goruntulenme (tarih, etsy_listing_id, views, favori) VALUES ('2026-11-19', '42', 3, 0), ('2026-11-20', '42', 10, 1)"
     )
     c.commit()
-    assert "Matbaa — Pano" in istemci.get("/").text and "Onay masası" in istemci.get("/onay").text
+    assert "Matbaa · Pano" in istemci.get("/").text and "Onay masası" in istemci.get("/onay").text
     d = istemci.get("/api/pano").json()
     assert d["ozet"]["aktif_ilan"] == 1 and d["ozet"]["views"] == 10 and d["ozet"]["son_gun_artis"] == 7
     assert [x["urun"] for x in d["ilanlar"]] == ["tisort"]  # sırada bekleyen ürün ilan sayılmaz
