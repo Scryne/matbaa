@@ -49,7 +49,7 @@ AI_BEYANI = (
 URETIM_ORTAGI = "Made to order: designed by our shop and printed and shipped by our US production partner (Printify)."
 BEDEN = "Sizing: unisex fit. Size up for a relaxed or oversized look. See the size chart in the photos before ordering."
 BAKIM = "Care: machine wash cold inside out, tumble dry low or hang dry, do not iron directly on the print."
-URETIM_SURESI = "Production takes 2-5 business days, then ships with tracking within the US."
+URETIM_SURESI = "Production takes 3-5 business days, then ships with tracking within the US."  # Etsy işlem profili (hazirlama_profili_id) ile aynı
 
 
 @dataclass

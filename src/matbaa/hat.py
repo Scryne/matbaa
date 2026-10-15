@@ -11,7 +11,7 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from matbaa import db, tavan
+from matbaa import db, isimli, tavan
 from matbaa.ayar import KOK
 from matbaa.fiyat import tasarim_urunleri, urunler
 from matbaa.ifade import uret as ifade_uret
@@ -390,11 +390,13 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
         p = Printify()
         _adim(rapor, "kupa", lambda: yayin.kupa_ac(c, _ilan_yaz, yazdir), yazdir)
         # Tavanda durmak beklenen davranış: alarm değil, kayıtta.
-        y = _adim(rapor, "yayin", lambda: yayin.yayinla(c, p, yazdir), yazdir)
+        e = None
         if _etsy_hazir():
             from matbaa.entegrasyon.etsy import Etsy
 
             e = Etsy()
+        y = _adim(rapor, "yayin", lambda: yayin.yayinla(c, p, yazdir, etsy=e), yazdir)
+        if e is not None:
             if y and y.get("urun"):  # bugün yayın istendi: Etsy ilanı düşene kadar bekleyip aynı koşuda eşle
                 _adim(rapor, "etsy", lambda: _esle_bekle(c, p, e, yazdir), yazdir)
             else:
@@ -409,6 +411,11 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             )
             s = _adim(rapor, "siparis", lambda: siparis.izle(c, e, p, yazdir=yazdir), yazdir)
             alarmlar += (s or {}).get("alarm", [])
+            # Faz 11: isimli süs siparişleri Printify'a kendiliğinden düşmez; açılmazsa alıcıya hiç gitmez (alarm şart)
+            s = _adim(rapor, "isimli", lambda: isimli.siparisleri_isle(c, e, p, yazdir=yazdir), yazdir)
+            alarmlar += (s or {}).get("alarm", [])
+            if s is None:
+                alarmlar.append("isimli sipariş adımı düştü: isimli süs siparişleri açılmamış olabilir")
         elif yayin.elle_mod():
             e = _adim(rapor, "etsy_elle", lambda: yayin.elle_denetle(c, p, yazdir), yazdir)
             alarmlar += (e or {}).get("alarm", [])

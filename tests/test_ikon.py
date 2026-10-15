@@ -133,3 +133,30 @@ def test_susleme_yuzleri_dairenin_guvenli_alaninda(tmp_path):
         assert np.hypot(xs - susleme.M, ys - susleme.M).max() <= susleme.GUVENLI * susleme.M
     ys, xs = np.nonzero(np.asarray(on.getchannel("A")) > 20)
     assert xs.max() - xs.min() > 0.6 * susleme.KENAR  # geniş tasarım daireyi doldurur
+
+
+def test_isimli_susleme_guvenli_alanda_ve_isim_temizlenir(tmp_path):
+    """Faz 11: isimli ön yüz de dairenin güvenli alanında kalır; uzun isim kutuya sığar; glifi olmayan isim sessizce basılmaz."""
+    import numpy as np
+    import pytest
+    from PIL import Image
+
+    from matbaa.tasarim import susleme
+    from matbaa.tasarim.yazi import EksikGlif
+
+    yol = tmp_path / "koyu.png"
+    t = Image.new("RGBA", (4500, 5400), (0, 0, 0, 0))
+    t.paste(Image.new("RGBA", (4000, 2000), (29, 29, 31, 255)), (250, 150))
+    t.save(yol)
+    for isim in ("Emma", "Christopher Lee"):
+        on = susleme.on_yuz(yol, "#2f5d46", 2026, isim)
+        ys, xs = np.nonzero(np.asarray(on.getchannel("A")) > 20)
+        assert np.hypot(xs - susleme.M, ys - susleme.M).max() <= susleme.GUVENLI * susleme.M
+    assert np.asarray(on.getchannel("A")).sum() != np.asarray(susleme.on_yuz(yol, "#2f5d46", 2026).getchannel("A")).sum()
+    assert susleme.isim_temizle("  grandpa   joe ") == "Grandpa Joe"
+    assert susleme.isim_temizle("McKenzie") == "McKenzie" and susleme.isim_temizle("Zoë") == "Zoë"
+    assert len(susleme.isim_temizle("A" * 40)) == susleme.ISIM_MAKS
+    with pytest.raises(EksikGlif):
+        susleme.isim_temizle("李")
+    with pytest.raises(ValueError):
+        susleme.isim_temizle("   ")

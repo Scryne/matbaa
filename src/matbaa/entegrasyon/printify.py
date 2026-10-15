@@ -127,6 +127,25 @@ class Printify:
     def urun(self, urun_id: str) -> dict:
         return self._i("GET", f"/shops/{self.shop_id}/products/{urun_id}.json")
 
+    def urun_sil(self, urun_id: str) -> dict:
+        return self._i("DELETE", f"/shops/{self.shop_id}/products/{urun_id}.json")
+
+    # --- API siparişi (isimli süs, Faz 11) ---
+    def siparis_ac(self, govde: dict) -> dict:
+        """`external_id` Printify'da `metadata.shop_order_id` olur (2026-10-15 canlı test): Etsy makbuzu yazılır, eşleme ve
+        mükerrer denetimi buradan. Sipariş pending → cost-calculation → on-hold ilerler; on-hold'da kendiliğinden üretime gitmez."""
+        return self._i("POST", f"/shops/{self.shop_id}/orders.json", json=govde, tekrar_5xx=False)
+
+    def siparis(self, siparis_id: str) -> dict:
+        return self._i("GET", f"/shops/{self.shop_id}/orders/{siparis_id}.json")
+
+    def uretime_gonder(self, siparis_id: str) -> dict:
+        return self._i("POST", f"/shops/{self.shop_id}/orders/{siparis_id}/send_to_production.json", tekrar_5xx=False)
+
+    def siparis_iptal(self, siparis_id: str) -> dict:
+        """Yalnız on-hold (ve ödeme alınamadı) durumunda: pending/cost-calculation 400 döner (2026-10-15)."""
+        return self._i("POST", f"/shops/{self.shop_id}/orders/{siparis_id}/cancel.json")
+
     def siparisler(self, sayfa: int = 1) -> dict:
         return self._i("GET", f"/shops/{self.shop_id}/orders.json", params={"page": sayfa, "limit": 10})
 

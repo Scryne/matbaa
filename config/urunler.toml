@@ -118,7 +118,7 @@ buyuk_beden_ek = { "Round + White Gift Packaging" = 3.00 }
 bedenler = ["Round", "Round + White Gift Packaging"]
 beden_anahtari = "shape"   # Printify varyant seçeneği: süsün "size"ı tek ("One size"), seçim "shape"te
 tahmini_maliyet = 4.93
-tahmini_abd_kargo = 5.89
+tahmini_abd_kargo = 6.29   # 2026-10-15 iki gerçek Printify siparişinde (NY) $6.29; katalog $5.89 diyor, ölçülen esas
 renkler = [{ ad = "White", murekkep = "koyu", hex = "#ffffff" }]
 detay = "Round white ceramic ornament, about 3 inches across, printed on the front with a matte finish, with a golden hanging string included."
 govde_etiketi = "Ornament"
@@ -131,3 +131,36 @@ istem_notu = "This is a dated Christmas keepsake ornament for this year's tree: 
 # Kimlere açılır: bu nişler + metninde Noel kelimesi geçen her tasarım. Pencere dışında açılmaz ve yayınlanmaz (ay-gün);
 # `kapanis`tan sonra aktif süs ilanları Etsy'de pasife alınır (yıllı ürün Ocak'ta satmaz, yenileme ücreti boşa gitmez).
 kosul = { nisler = ["fishing", "running", "knitting"], mevsim_kelimesi = true, bas = "09-15", son = "12-10", kapanis = "12-26" }
+
+[isimli_susleme]
+# Faz 11 öne alındı (2026-10-15): isimli yılbaşı süsü. Etsy'de üst sıralardaki süslerin çoğu kişiselleştirilmiş (K-30 ölçümü).
+# Aynı Printify 1632 / SwiftPOD süs, tek yüz; ön yüzde tasarım küçülür, ortada alıcının yazdığı isim (Pacifico), altta yıl yayı.
+# Kanal "etsy": ilan Printify'a bağlanmadan doğrudan Etsy API ile açılır (Printify'ın kendi kişiselleştirmesi her siparişi elle
+# onay bekletiyor, 2026-10-15 araştırma). Sipariş gelince `isimli.siparisleri_isle` ismi basar, Printify'da tek seferlik ürün +
+# API siparişi açar (external_id = Etsy makbuzu), üretime gönderir, takibi Etsy'ye yazar. Printify bağlı olmayan ilanın Etsy
+# siparişini otomatik içe aktarmaz ("Other orders"): çift üretim yok.
+# Fiyat $24.99 ücretsiz kargo: net $7.90 (Offsite $3.41, ölçülen kargo $6.29 ile); düz süsten $3 pahalı (isim primi), rakip isimli süsler ~$18-30.
+ad = "Personalized Ceramic Christmas Ornament"
+blank = "Ceramic Ornament"
+etsy_turu = "Personalized Christmas Ornament"
+kanal = "etsy"
+etsy_taksonomi = 1857   # Etsy "Ornaments" (Printify'ın süs ilanlarına verdiği kategori, 2026-10-15)
+fiyat = 24.99
+kargo = 0.0
+buyuk_beden_ek = { "Round + White Gift Packaging" = 3.00 }
+bedenler = ["Round", "Round + White Gift Packaging"]
+beden_anahtari = "shape"
+tahmini_maliyet = 4.93
+tahmini_abd_kargo = 6.29   # 2026-10-15 iki gerçek Printify siparişinde (NY) $6.29; katalog $5.89 diyor, ölçülen esas
+renkler = [{ ad = "White", murekkep = "koyu", hex = "#ffffff" }]
+detay = "Round white ceramic ornament, about 3 inches across, printed on the front with your name in script under the design, with a golden hanging string included."
+govde_etiketi = "Ornament"
+yuzey = "front of a round ceramic Christmas ornament: the design, the buyer's name in script under it, CHRISTMAS and the year curved at the bottom (back left plain glossy white)"
+iki_yuz = false
+oznitelik = { "Primary color" = ["White"], "Materials" = ["Ceramic"], "Holiday" = ["Christmas"] }
+beden_metni = "Personalization: type the name you want printed (up to 14 characters). We print it exactly as you type it, so please check the spelling. Options: the ornament on its own, or with a white gift box ready to wrap. The back is plain glossy white ceramic."
+bakim_metni = "Care: wipe clean with a soft dry cloth. Ceramic, handle with care; not a toy."
+istem_notu = "This is a PERSONALIZED dated Christmas keepsake ornament: the buyer's name is printed under the design. Start the title with 'Personalized' and put 'Christmas Ornament', 'Custom Name' and the year in it; gift angle for this Christmas."
+kisisel = { soru = "Name", aciklama = "Name to print under the design, up to 14 characters. We print it exactly as you type it.", maks = 14 }
+ornek_isimler = ["Grandpa Joe", "Emma", "Dad"]
+kosul = { nisler = ["fishing", "running", "knitting"], mevsim_kelimesi = true, bas = "09-15", son = "12-07", kapanis = "12-26" }

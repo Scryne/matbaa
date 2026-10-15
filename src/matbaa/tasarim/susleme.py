@@ -27,6 +27,9 @@ M = KENAR / 2  # merkez ve yarıçap
 GUVENLI = 0.86  # içerik bu yarıçap kesrinin dışına taşmaz
 TASARIM_R = 0.80  # ön yüzde tasarımın köşeleri bu yarıçapın içinde kalır (askı deliği ve seramik kenarı)
 TASARIM_ALT = 0.46  # tasarımın alt kenarı merkezden bu kadar aşağıda biter: altındaki yay yazısına yer
+ISIMLI_TASARIM_R, ISIMLI_TASARIM_ALT = 0.78, 0.16  # isimli süste tasarım biraz küçük ve yukarıda: altında isme yer
+ISIM_FONT = "Pacifico-Regular.ttf"  # el yazısı; HarfBuzz harfleri birleştirir
+ISIM_MAKS = 14  # Etsy kişiselleştirme sorusunun karakter sınırı da bu
 YAY_FONT = "BebasNeue-Regular.ttf"
 YIL_FONT_YEDEK = "AlfaSlabOne-Regular.ttf"
 
@@ -65,25 +68,51 @@ def _yildizlar(r: float, yarim_aci: float, boy: float, renk: str, ustte: bool) -
     return f'<g fill="{renk}">{"".join(p)}</g>'
 
 
-def on_yuz(koyu_png: str | Path, vurgu: str, yil: int) -> Image.Image:
+def on_yuz(koyu_png: str | Path, vurgu: str, yil: int, isim: str | None = None) -> Image.Image:
+    """`isim` verilirse (isimli süs, Faz 11): tasarım küçülüp yukarı çıkar, ortada el yazısı isim, altta daha dar yıl yayı."""
     tasarim = Image.open(koyu_png).convert("RGBA")
     kutu = tasarim.getchannel("A").getbbox()
     if kutu is None:
         raise ValueError(f"{koyu_png}: boş tasarım")
     icerik = tasarim.crop(kutu)
-    g, h = _sigdir(icerik.width / icerik.height)
+    alt_kesir, r_kesir = (ISIMLI_TASARIM_ALT, ISIMLI_TASARIM_R) if isim else (TASARIM_ALT, TASARIM_R)
+    g, h = _sigdir(icerik.width / icerik.height, r_kesir, alt_kesir)
     icerik = icerik.resize((round(g), round(h)), Image.LANCZOS)
-    r_taban, boy = 0.82 * M, 0.10 * M
-    yay, yarim = _yay(f"CHRISTMAS {yil}", False, r_taban, boy, vurgu, math.radians(100))
-    tuval = _png([yay, _yildizlar(r_taban - boy / 2, yarim, boy * 0.42, vurgu, ustte=False)])
-    alt = M + TASARIM_ALT * M
+    r_taban, boy = 0.82 * M, (0.085 if isim else 0.10) * M
+    yay, yarim = _yay(f"CHRISTMAS {yil}", False, r_taban, boy, vurgu, math.radians(90 if isim else 100))
+    parcalar = [yay, _yildizlar(r_taban - boy / 2, yarim, boy * 0.42, vurgu, ustte=False)]
+    if isim:
+        parcalar.append(_isim(isim))
+    tuval = _png(parcalar)
+    alt = M + alt_kesir * M
     tuval.alpha_composite(icerik, (round(M - g / 2), round(alt - h)))
     return tuval
 
 
-def _sigdir(oran: float) -> tuple[float, float]:
-    """Alt kenarı `TASARIM_ALT`ta biten, dört köşesi `TASARIM_R` dairesinde kalan en büyük dikdörtgen (genişlik, yükseklik)."""
-    r, alt = TASARIM_R * M, TASARIM_ALT * M
+def isim_temizle(metin: str) -> str:
+    """Alıcının yazdığı isim → basılacak metin: boşluklar sadeleşir, uzunluk `ISIM_MAKS`. Fontta glifi olmayan karakter
+    `EksikGlif` yükseltir (sipariş insana düşer; sessizce kutu basılmaz)."""
+    temiz = " ".join(metin.split())[:ISIM_MAKS].strip()
+    if not temiz:
+        raise ValueError("boş isim")
+    if temiz == temiz.lower():  # "grandpa joe" → "Grandpa Joe"; "McKenzie" yazıldığı gibi kalır
+        temiz = " ".join(p[:1].upper() + p[1:] for p in temiz.split(" "))
+    font(ISIM_FONT).satir(temiz)
+    return temiz
+
+
+def _isim(isim: str) -> str:
+    """Ortada, tasarımla yıl yayı arasında el yazısı isim: kutuya (genişlik 1.2M, yükseklik 0.26M) orantılı sığar."""
+    s = font(ISIM_FONT).satir(isim_temizle(isim))
+    k = min(0.26 * M / s.yukseklik, 1.20 * M / s.genislik)
+    yc = M + 0.40 * M
+    tx, ty = M - (s.x0 + s.genislik / 2) * k, yc - (s.y0 + s.yukseklik / 2) * k
+    return f'<path fill="{KOYU_MUREKKEP}" d="{s.yol}" transform="translate({tx:.2f} {ty:.2f}) scale({k:.5f})"/>'
+
+
+def _sigdir(oran: float, r_kesir: float = TASARIM_R, alt_kesir: float = TASARIM_ALT) -> tuple[float, float]:
+    """Alt kenarı merkezden `alt_kesir` aşağıda biten, dört köşesi `r_kesir` dairesinde kalan en büyük dikdörtgen (genişlik, yükseklik)."""
+    r, alt = r_kesir * M, alt_kesir * M
     g_maks = 2 * math.sqrt(r**2 - alt**2)  # alt köşeler
     lo, hi = 0.0, 2 * r
     for _ in range(40):

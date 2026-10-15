@@ -10,6 +10,7 @@ tisort = { blueprint_ara = "Comfort Colors 1717", blueprint_id = 706, saglayici_
 sweatshirt = { blueprint_ara = "Gildan 18000", blueprint_id = 49, saglayici_id = 39 }        # SwiftPOD, CA
 kupa = { blueprint_id = 478, saglayici_id = 39 }   # Ceramic Mug 11/15oz, SwiftPOD (Faz 14; katalog "Generic brand", arama adı yok)
 susleme = { blueprint_id = 1632, saglayici_id = 39 }   # K-30: Ceramic Decoration Ornament (1pc), SwiftPOD; yuvarlak, iki yüz
+isimli_susleme = { blueprint_id = 1632, saglayici_id = 39 }   # Faz 11: aynı süs; ilan doğrudan Etsy API, sipariş Printify API (isimli.py)
 hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 77, saglayici_id = 410 }           # Printful, NC
 
 [etsy]
@@ -19,4 +20,5 @@ mod = "api"  # 2026-10-13 21:20: Etsy kişisel uygulama onaylandı, OAuth alınd
 elle_kargo_hazir = true  # 2026-10-13: Etsy'de "Free US shipping" (33014, yalnız ABD, ücretsiz) + "Made to order (3-5 days)" kuruldu
 uretim_ortagi_id = 5837094   # Etsy "Printify" üretim ortağı (vitrin başlığı "A print-on-demand print shop"); 0 iken yayın durur
 hazirlama_profili_id = 1523987889533   # Etsy işlem süresi "Made to order, 3-5 days"; Printify ilanı kendi "2-5 days" (1522739069412) profiline bağlar, eşlemede düzeltilir. 0 iken dokunulmaz
+iade_politikasi_id = 1522689119248   # Printify'ın ilanlara bağladığı iade politikası (isimli ilan doğrudan açılırken aynısı)
 kargo_profili_id = 317951156022   # Etsy "Free US shipping" (elle kuruldu 2026-10-13); `uv run matbaa etsy-kargo-profili` açar ve yazar: ABD'ye ücretsiz kargo (K-23); 0 iken yayın durur

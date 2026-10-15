@@ -22,7 +22,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 8 | Fiyat ve kâr defteri | 🔄 Devam Ediyor | Fiyatlar `config/`'te; sipariş başına gerçek net (Etsy TR ücretleri + Printify maliyeti + kur) hesaplanıyor; aylık özet; harcama tavanları kodla korunuyor |
 | 9 | Zamanlama ve izleme | 🔄 Devam Ediyor | Günlük Windows görevi uçtan uca koşuyor; takip numarası 5 iş gününde düşmeyen sipariş için alarm; haftalık rapor (ilan, görüntülenme, satış, net); USPTO aylık yenileme görevi |
 | 10 | Gerçek kullanım (v1) | ⏳ Bekliyor | 30 ilan Scryne onayıyla canlı; ilk gerçek siparişte Etsy → Printify → takip zinciri elle dokunulmadan çalıştı (ya da 4 hafta dolup v1 "30 ilan canlı" ile kapandı); bulgular roadmap'e işlendi |
-| 11 | Kişiselleştirme — Class of 2027 (koşullu) | ⏳ Bekliyor | v1 kapandıysa ve Ocak 2027 geldiyse: Etsy kişiselleştirme alanı → sipariş anında tasarım → Printify API siparişi; 5 test siparişi doğru basıldı |
+| 11 | Kişiselleştirme — isimli süs (K-31), Class of 2027 Ocak'ta | 🔄 Devam Ediyor | İsimli süs ilanları uygun tasarımlara otomatik açılıyor; ilk gerçek isimli sipariş insansız açıldı, doğru isim ve varyantla basıldı (alıcı şikâyeti yok), takip Etsy'ye yazıldı; Class of 2027 Ocak'ta aynı altyapıyla (K-20: test siparişi yok, ilk gerçek sipariş doğrular) |
 | 12 | Shopify (koşullu) | ⏳ Bekliyor | Etsy'de ≥ 30 satış ve TR ödeme yolu (iyzico ya da LLC) netleştiyse: aynı Printify kataloğu Shopify'a; ilk sipariş zinciri çalıştı |
 | 13 | Performansa göre üretim | 🔄 Devam Ediyor | Günlük üretim niş seçimini görüntülenme/favori/satış verisinden yapıyor (ölü niş kısılır, satan niş büyür); satan ifadenin benzerleri üretiliyor; fiyat testi satış verisiyle; mağaza açılmadan sahte veriyle testli, açıldıktan 30 gün sonra raporda niş dağılımı veriyle değişmiş |
 | 14 | Kupa (ikinci ürün ailesi, koşullu) | ⏳ Bekliyor | İlk 30 gün verisinde ≥ 1 satış: tasarım motoru yatay kupa yerleşimi üretiyor (kapılardan geçiyor), satan tasarımlar önce kupaya da açılıyor; net > 0 fiyatla |
@@ -70,6 +70,14 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   açıyordu (hoodie'de zorunlu "Clothing closure" boştu). Günlük hatta `oznitelik` ve `vitrin` adımları; 6 ilana yazıldı ve geri okundu
   (renk, kol, yaka/kapanış, malzeme, "Humorous saying", Holiday = Christmas; `should_auto_renew` true). Aynı gün `shops_w` ile
   yeniden yetki alındı: "Fishing" ve "Knitting & Crochet" bölümleri açıldı, 6 ilan yerleşti. Onaylı kuyruk alarmı eklendi.
+
+### Faz 11: İsimli süs (K-31) 🔄 (2026-10-15)
+- **Yapılan:** `isimli.py` (ilan doğrudan Etsy API: taslak, envanter, isim sorusu, mockup + kartlar; sipariş: isimli baskı dosyası,
+  Printify tek seferlik ürün + API siparişi, üretime gönderme, takip Etsy'ye, iptal edilen makbuzda Printify iptali; her hata
+  günlük alarm), `susleme.on_yuz(isim=...)` + `isim_temizle` (14 karakter, glifi olmayan isim basılmaz), `gorsel.isim_karti`,
+  `isimli_siparis` tablosu, günlük hatta `isimli` adımı. 8 yeni test. Canlı: Printify API siparişi açılıp iptal edildi (uçtan uca
+  `_ac`), ilk isimli ilan #2 aktif (4595906587): $24.99/$27.99, zorunlu "Name", 10 görsel.
+- **Kalan:** ilk gerçek isimli siparişte baskıyı (isim, varyant) ve takip yazımını görmek; Ocak'ta Class of 2027.
 
 ### Faz 16: Yılbaşı süsü (K-30) 🔄 (2026-10-14)
 - **Yapılan:** `tasarim/susleme.py` (daireye sığan tasarım + alt yayda yıl; arka yüz kodu duruyor, `iki_yuz = false`),

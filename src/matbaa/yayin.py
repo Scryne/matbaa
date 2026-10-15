@@ -246,6 +246,7 @@ def gorselleri_tamamla(c, etsy, sinir: int = 9, yazdir=print) -> dict:
     Bir kez yapılır (`olay`: "<ürün>:gorsel"); hata ilanı düşürmez, ertesi gün yeniden denenir. `sinir`: bir koşuda en çok ilan
     (her ilan ~5 Etsy isteği; Etsy hız sınırı 5/sn).
     """
+    from matbaa import isimli
     from matbaa.ilan import gorsel
 
     sayac = {"tamam": 0, "hata": 0}
@@ -264,6 +265,8 @@ def gorselleri_tamamla(c, etsy, sinir: int = 9, yazdir=print) -> dict:
         if r["urun"] == "susleme":
             y = susleme_dosyalari(ham, json.loads(r["fontlar"] or "[]"), r["nis"])
             dos["susleme_on_png"], dos["susleme_arka_png"] = y["on"], y["arka"]
+        if r["urun"] == isimli.URUN:
+            dos["isimli_ornekler"] = isimli.ornekler(ham)
         try:
             s = gorsel.ilana_ekle(etsy, int(r["etsy_listing_id"]), r["urun"], dos, tohum=r["tasarim_id"])
         except Exception as e:  # görsel eklenemezse ilan yine satışta; ertesi koşu yeniden dener
@@ -396,7 +399,10 @@ def elle_mod() -> bool:
     return ayar()["etsy"].get("mod", "api") == "elle"
 
 
-def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
+def yayinla(c, p: pf.Printify, yazdir=print, etsy=None) -> dict:
+    """`etsy`: isimli süs (kanal "etsy", Faz 11) ilanı doğrudan Etsy'de açılır; istemci yoksa o ürün bekler."""
+    from matbaa import isimli
+
     if eksik := etsy_eksik():
         yazdir(f"  Etsy hazır değil ({', '.join(eksik)} boş): yayın bekletildi")
         return {"bekliyor": f"Etsy hazır değil: {', '.join(eksik)}", "tasarim": 0, "urun": 0, "hata": 0}
@@ -438,6 +444,8 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
     for t, bekleyen in ek + yeni:
         dosyalar = json.loads(t["dosyalar"])
         for urun, adim in bekleyen:
+            if isimli.etsy_kanali(urun) and etsy is None:
+                continue
             try:
                 tavan.ilan_kontrol(c)
             except tavan.TavanAsildi as e:  # para harcamadan dur; kalan ürünler sonraki ay/onaydan sonra açılır
@@ -449,6 +457,11 @@ def yayinla(c, p: pf.Printify, yazdir=print) -> dict:
                 if c.execute("SELECT durum FROM urun WHERE tasarim_id = ? AND urun = ?", (t["id"], urun)).fetchone()[0] == "hata":
                     db.urun_gecis(c, t["id"], urun, adim, "yeniden deneme")
                     c.commit()  # yazma kilidi Printify çağrıları boyunca tutulmasın (panel aynı anda onay yazabilir)
+                if isimli.etsy_kanali(urun):
+                    isimli.ilan_ac(c, etsy, p, t, il, yazdir)
+                    sayac["urun"] += 1
+                    c.commit()
+                    continue
                 if adim == "bekliyor":
                     bp, sg = ycfg[urun]["blueprint_id"], ycfg[urun]["saglayici_id"]
                     anahtar = k.get("beden_anahtari", "size")

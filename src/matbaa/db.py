@@ -90,6 +90,14 @@ CREATE TABLE IF NOT EXISTS siparis (
     durum TEXT, takip TEXT,
     olusturma TEXT, guncelleme TEXT
 );
+CREATE TABLE IF NOT EXISTS isimli_siparis (   -- Faz 11: isimli süs makbuzu → Printify API siparişi (isimli.py)
+    etsy_receipt_id TEXT PRIMARY KEY,
+    durum TEXT NOT NULL,              -- yeni | acildi | uretimde | takip_yazildi | iptal | hata
+    kalemler TEXT,                    -- JSON: transaction_id, tasarim_id, isim, varyant_id, adet
+    printify_order_id TEXT,
+    takip TEXT, hata TEXT,
+    olusturma TEXT, guncelleme TEXT
+);
 CREATE TABLE IF NOT EXISTS olay (
     id INTEGER PRIMARY KEY,
     zaman TEXT NOT NULL,

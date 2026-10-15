@@ -229,5 +229,32 @@ class Etsy:
         )
         return self._i("POST", f"/shops/{self.shop_id}/listings/{listing_id}/images", data=veri)
 
+    # --- isimli süs (Faz 11): Printify'a bağlı olmayan, doğrudan açılan ilan ---
+    def taslak_ilan(self, **alanlar) -> dict:
+        """createDraftListing (form; dizi alanları virgülle). Taslak ücretsiz; listeleme ücreti aktifleşince."""
+        form = {k: ",".join(map(str, v)) if isinstance(v, list | tuple) else v for k, v in alanlar.items()}
+        return self._i("POST", f"/shops/{self.shop_id}/listings", data=form)
+
+    def envanter_yaz(self, listing_id: int, govde: dict) -> dict:
+        return self._i("PUT", f"/listings/{listing_id}/inventory", json=govde)
+
+    def kisisellestirme_yaz(self, listing_id: int, sorular: list[dict]) -> dict:
+        """updateListingPersonalization: soruların tamamını değiştirir. Eski `personalization_*` ilan alanları 2026'da kalktı
+        (migration guide); alıcının cevabı makbuzda `transactions[].variations[]`, `property_id == 54`."""
+        return self._i(
+            "POST", f"/shops/{self.shop_id}/listings/{listing_id}/personalization", json={"personalization_questions": sorular}
+        )
+
+    def kisisellestirme(self, listing_id: int) -> dict:
+        return self._i("GET", f"/listings/{listing_id}/personalization")
+
+    def takip_yaz(self, receipt_id: int, takip: str, tasiyici: str) -> dict:
+        """createReceiptShipment: alıcıya Etsy'den kargo e-postası gider. 2026-10-15 denendi: uygulamamız erişebiliyor (403 değil)."""
+        return self._i(
+            "POST",
+            f"/shops/{self.shop_id}/receipts/{receipt_id}/tracking",
+            data={"tracking_code": takip, "carrier_name": tasiyici},
+        )
+
     def gorsel_sil(self, listing_id: int, listing_image_id: int) -> dict:
         return self._i("DELETE", f"/shops/{self.shop_id}/listings/{listing_id}/images/{listing_image_id}")

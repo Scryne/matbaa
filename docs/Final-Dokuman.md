@@ -171,6 +171,21 @@ iade kararı.
   İlk iki süs (#2, #21; çift yüzlü, net $4.30) 2026-10-14 canlı. Kişiselleştirme (isimli süs) araştırıldı: otomatik yol var ama
   ağır (Printify'da manuel onay + içe aktarılan siparişi iptal edip API ile yeniden açma + takibi Etsy'ye `createReceiptShipment`
   ile yazma; Etsy kişiselleştirme API'si 2026'da çoklu soruya geçti); Faz 11'e taşındı, süs satışı gelirse öne alınır.
+- **K-31 İsimli süs, Faz 11 öne alındı (2026-10-15):** Scryne "her şeyi sana bırakıyorum, en iyi halinle çalış" dedi; Q4'e 8 hafta
+  kala en büyük kaldıraç isimli süs (üst sıralardaki süslerin çoğu kişiselleştirilmiş). Satış beklemeden açıldı. **Yol:** ilan
+  Printify'a bağlanmadan doğrudan Etsy API'siyle açılır (taslak → iki varyantlı envanter, SKU = Printify varyantı → isim sorusu
+  `updateListingPersonalization`, eski `personalization_*` alanları 2026'da kalktı → Printify'ın örnek isimli geçici ürününden
+  mockup'lar, arka yüz kameraları hariç → isim ve güven kartları → `etsy_esle` aktifleştirir). Sipariş: makbuzdaki isim
+  (`variations[].property_id == 54`) ön yüze el yazısıyla (Pacifico) basılır, Printify'da tek seferlik ürün + API siparişi
+  (`external_id` = makbuz → `metadata.shop_order_id`; `siparis.izle` buradan eşler, mükerrer denetimi de), on-hold olunca üretime,
+  kargo takibi `createReceiptShipment` ile Etsy'ye. **Neden bu yol:** Printify'ın kendi Etsy kişiselleştirmesi her siparişi panelde
+  elle onay bekletiyor ve katmanı API'den tanımlatmıyor; Printify'a bağlı olmayan ilanın siparişi Printify'a otomatik aktarılmıyor
+  ("Other orders"), çift üretim yok. **Canlı doğrulama:** Etsy'ye bağlı Printify mağazasında API siparişi açıldı ve iptal edildi
+  (2 kez; boş alıcı e-postası kabul), `createReceiptShipment` uygulamamıza açık (sahte makbuzla 404, 403 değil). **Fiyat** $24.99
+  ücretsiz kargo, hediye kutusu +$3; net $7.90 (Offsite $3.41). **Ölçülen:** süs kargosu gerçek siparişte $6.29 (katalog $5.89);
+  düz süsün neti $5.54'e indi, kural (> $5) tutuyor. İlk isimli ilan #2 (fishing grandpa) 2026-10-15 canlı (4595906587).
+  **Videolar:** Whisper ile yazıya döküldü (2026-10-15); konuşmada yeni taktik yok, yalnız 7. video süsü, 6. video bebek
+  battaniyesini (Printify, iyi görsel) anlatıyor; battaniye sonraki ürün ailesi adayı.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

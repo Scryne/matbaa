@@ -206,6 +206,36 @@ def tek_yuz_karti(on_png: str | Path) -> Image.Image:
     return zemin.convert("RGB")
 
 
+def isim_karti(ornekler: list[str | Path]) -> Image.Image:
+    """İsimli süs (Faz 11): aynı tasarım üç farklı isimle yan yana; alıcı ismin nasıl duracağını ve sınırı görür."""
+    p: list[str] = [_yazi("PERSONALIZED WITH ANY NAME", BASLIK_F, KENAR / 2, 170, 92, LACIVERT, ara=0.04, maks_g=KENAR - 200)[0]]
+    p.append(
+        _yazi(
+            "UP TO 14 CHARACTERS  ·  PRINTED EXACTLY AS YOU TYPE IT",
+            RAKAM_F,
+            KENAR / 2,
+            320,
+            56,
+            MERCAN,
+            ara=0.06,
+            maks_g=KENAR - 200,
+        )[0]
+    )
+    p.append(_yazi("ADD A WHITE GIFT BOX AT CHECKOUT", RAKAM_F, KENAR / 2, 1800, 64, MERCAN, ara=0.06)[0])
+    zemin = _png(_svg(p)).convert("RGBA")
+    yerler = [(KENAR / 4, 470, 760), (3 * KENAR / 4, 470, 760), (KENAR / 2, 1000, 700)][: len(ornekler)]
+    for yol, (mx, ust, cap) in zip(ornekler, yerler, strict=False):
+        disk, maske = _disk(yol, cap)
+        x = round(mx - cap / 2)
+        a = Image.new("L", zemin.size, 0)
+        a.paste(maske.point(lambda v: v * 55 // 255), (x + 10, ust + 16))
+        golge = Image.new("RGBA", zemin.size, (60, 50, 40, 0))
+        golge.putalpha(a.filter(ImageFilter.GaussianBlur(14)))
+        zemin.alpha_composite(golge)
+        zemin.paste(disk, (x, ust), maske)
+    return zemin.convert("RGB")
+
+
 def iki_yuz_karti(on_png: str | Path, arka_png: str | Path) -> Image.Image:
     """Süsün iki yüzü yan yana (K-30): alıcı arkada ne yazdığını görür; Printify mockup'ı yalnız önü gösteriyor."""
     p: list[str] = [_yazi("PRINTED ON BOTH SIDES", BASLIK_F, KENAR / 2, 170, 96, LACIVERT, ara=0.04, maks_g=KENAR - 200)[0]]
@@ -272,6 +302,11 @@ def ilan_gorselleri(urun: str, dosyalar: dict[str, Path], tohum: int = 0) -> lis
     Yakın plan vitrin rengindeki kumaşta (o rengin mürekkebiyle): ilk iki görsel aynı ürünü gösterir.
     """
     u = urunler()[urun]
+    if urun == "isimli_susleme":
+        return [
+            ("isim", isim_karti(dosyalar["isimli_ornekler"]), "Personalized Christmas ornament shown with three example names"),
+            ("guven", guven_karti(), "Printed to order in the USA with free US shipping"),
+        ]
     if urun == "susleme":
         if u.get("iki_yuz"):
             kart = (
@@ -373,7 +408,7 @@ def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohu
         kendi[ad] = (y or {}).get("listing_image_id")
         sonuc["eklenen"].append(ad)
     mockuplar = [g["listing_image_id"] for g in mockup_g if not vitrin or g["listing_image_id"] != vitrin["listing_image_id"]]
-    ikinci = next((ad for ad in ("yakin-plan", "iki-yuz") if kendi.get(ad)), None)  # galerinin 2. görseli
+    ikinci = next((ad for ad in ("yakin-plan", "iki-yuz", "isim") if kendi.get(ad)), None)  # galerinin 2. görseli
     bas = ([vitrin["listing_image_id"]] if vitrin else mockuplar[:1]) + ([kendi[ikinci]] if ikinci else [])
     kartlar = [kendi[ad] for ad, _, _ in plan if ad != ikinci and kendi.get(ad)]
     sira = bas + [g for g in mockuplar if g not in bas] + kartlar

@@ -755,8 +755,10 @@ def test_mevsimlik_ac_uygun_tasarimlara_bir_kez_acar(sus_ortam):
 
     sessiz = lambda *_: None  # noqa: E731
     sus_ortam.execute("UPDATE ifade SET nis = 'bowling' WHERE id = 3")  # bowling, Noel kelimesi yok: açılmaz
-    assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 10, 14), yazdir=sessiz)["acilan"] == 2
-    assert sus_ortam.execute("SELECT count(*) FROM urun WHERE urun = 'susleme' AND durum = 'bekliyor'").fetchone()[0] == 2
+    assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 10, 14), yazdir=sessiz)["acilan"] == 4  # süs + isimli süs
+    for urun in ("susleme", "isimli_susleme"):
+        n = sus_ortam.execute("SELECT count(*) FROM urun WHERE urun = ? AND durum = 'bekliyor'", (urun,)).fetchone()[0]
+        assert n == 2
     assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 10, 14), yazdir=sessiz)["acilan"] == 0
     assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 12, 20), yazdir=sessiz)["acilan"] == 0
 
