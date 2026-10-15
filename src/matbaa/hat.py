@@ -533,6 +533,8 @@ def main(argv: list[str] | None = None) -> None:
     alt.add_parser("yayinla", help="onaylı tasarımları Printify'a (ısınma eğrisi sınırıyla)")
     alt.add_parser("etsy-esle", help="Printify'ın açtığı Etsy ilanlarına üretim ortağı + aktifleştirme")
     alt.add_parser("etsy-kargo-profili", help="Etsy'de ücretsiz ABD kargo profilini aç, config'e yaz (K-23)")
+    gy = alt.add_parser("giyim", help="giyilmiş ürün videosu denemesi (kie.ai; calisma/giyim/): tek tasarım")
+    gy.add_argument("--tasarim", type=int, required=True)
     tk = alt.add_parser("tiktok", help="TikTok videosu üret (calisma/tiktok/): verilen tasarıma ya da videosu olmayanlara")
     tk.add_argument("--tasarim", type=int, help="yalnız bu tasarım (varsa yeniden üretir)")
     tk.add_argument("--sinir", type=int, default=tiktok.GUNLUK)
@@ -581,6 +583,11 @@ def main(argv: list[str] | None = None) -> None:
                 yayin.kargo_profili_kur(p, Etsy())
             else:
                 print(json.dumps(_tek_kosuda(lambda: yayin.etsy_esle(db.baglan(), p, Etsy())), ensure_ascii=False))
+    elif a.komut == "giyim":
+        from matbaa import giyim
+        from matbaa.entegrasyon.etsy import Etsy
+
+        print(json.dumps(giyim.uret(db.baglan(), Etsy(), giyim.Kie(), a.tasarim), ensure_ascii=False, indent=1))
     elif a.komut == "tiktok":
         from matbaa.entegrasyon.etsy import Etsy
 
