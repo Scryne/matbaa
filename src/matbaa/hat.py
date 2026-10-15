@@ -422,6 +422,8 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             _adim(rapor, "mevsim_kapat", lambda: yayin.mevsim_kapat(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "pinterest", lambda: pinterest.kuyruga_ekle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "tiktok", lambda: tiktok.hazirla(c, e, yazdir=yazdir), yazdir)  # K-34: yeni yayındaki tasarıma video
+            # K-35: insan üstünde video (yerel ComfyUI, ~20 dk GPU); kurulu değilse adım kendini atlar
+            _adim(rapor, "giyim", lambda: __import__("matbaa.giyim", fromlist=["giyim"]).hazirla(c, yazdir=yazdir), yazdir)
             # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
             goruntu_tamam = (
                 _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir) is not None

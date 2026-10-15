@@ -114,14 +114,14 @@ def test_gunluk_adim_video_uretir_tekrar_uretmez_takvim_ve_pano(c):
     indir = lambda url: _mockup("#1f2a44" if url.endswith("b") else "#f3dfa2")  # noqa: E731
     s = tiktok.hazirla(c, SahteEtsy(), sinir=1, yazdir=lambda *_: None, indir=indir, yazar=_yazar)
     assert s == {"hazir": 1, "hata": 0}
-    v = c.execute("SELECT * FROM video").fetchone()
-    assert v["tasarim_id"] == 1 and v["durum"] == "hazir"  # en eski yayın önce
+    v = c.execute("SELECT * FROM tiktok_video").fetchone()
+    assert v["tasarim_id"] == 1 and v["durum"] == "hazir" and v["tur"] == "urun" and not v["ai"]  # en eski yayın önce
     mp4 = tiktok.CIKTI / "00001" / "video.mp4"
     assert mp4.stat().st_size > 10_000 and mp4.read_bytes()[4:8] == b"ftyp"
     assert tiktok.hazirla(c, SahteEtsy(), sinir=5, yazdir=lambda *_: None, indir=indir, yazar=_yazar)["hazir"] == 1  # yalnız #2
     o = tiktok.ozet(c, SIMDI)
-    assert [h["plan"] for h in o["hazir"]] == ["2026-10-20T23:00+00:00", "2026-10-21T23:00+00:00"]  # günde bir, ABD 19:00
-    assert o["hazir"][0]["plan_tr"] == "2026-10-21T02:00"  # Studio Türkiye saatiyle zamanlar
+    assert [h["plan"] for h in o["hazir"]] == ["2026-10-20T16:00+00:00", "2026-10-20T23:00+00:00"]  # ABD 12:00 ve 19:00
+    assert o["hazir"][1]["plan_tr"] == "2026-10-21T02:00"  # Studio Türkiye saatiyle zamanlar
     t = TestClient(app, base_url="http://127.0.0.1:8766")
     r = t.get("/tiktok/1/video.mp4")
     assert r.status_code == 200 and r.headers["content-type"] == "video/mp4" and "attachment" in r.headers["content-disposition"]
@@ -132,14 +132,16 @@ def test_gunluk_adim_video_uretir_tekrar_uretmez_takvim_ve_pano(c):
     assert pano["paylasilan"] == 1 and [h["tasarim_id"] for h in pano["hazir"]] == [2]
 
 
-def test_takvim_aksam_gecince_ertesi_gun_ve_zamanlanandan_sonra(c):
-    gec = datetime(2026, 10, 20, 23, 30, tzinfo=UTC)  # ABD 19:30: bugünkü saat geçti
-    assert tiktok.plan(c, 1, gec)[0].isoformat() == "2026-10-21T23:00:00+00:00"
-    c.execute("INSERT INTO video (tasarim_id, durum, plan) VALUES (1, 'paylasildi', '2026-10-25T23:00+00:00')")
-    assert tiktok.plan(c, 2, SIMDI)[1].isoformat() == "2026-10-27T23:00:00+00:00"
-    kis = datetime(2026, 11, 3, 15, 0, tzinfo=UTC)  # yaz saati bitti (EST): 19:00 = 00:00 UTC
-    c.execute("DELETE FROM video")
-    assert tiktok.plan(c, 1, kis)[0].isoformat() == "2026-11-04T00:00:00+00:00"
+def test_takvim_gunde_iki_saat_aksam_gecince_ertesi_gun_ve_zamanlanandan_sonra(c):
+    gec = datetime(2026, 10, 20, 23, 30, tzinfo=UTC)  # ABD 19:30: bugünkü iki saat de geçti
+    assert tiktok.plan(c, 1, gec)[0].isoformat() == "2026-10-21T16:00:00+00:00"
+    c.execute(
+        "INSERT INTO tiktok_video (tasarim_id, tur, durum, plan) VALUES (1, 'urun', 'paylasildi', '2026-10-25T23:00+00:00')"
+    )
+    assert [z.isoformat() for z in tiktok.plan(c, 2, SIMDI)] == ["2026-10-26T16:00:00+00:00", "2026-10-26T23:00:00+00:00"]
+    kis = datetime(2026, 11, 3, 15, 0, tzinfo=UTC)  # yaz saati bitti (EST): 12:00 = 17:00 UTC
+    c.execute("DELETE FROM tiktok_video")
+    assert tiktok.plan(c, 1, kis)[0].isoformat() == "2026-11-03T17:00:00+00:00"
 
 
 def test_yeniden_uretim_metni_korur(c):
@@ -147,4 +149,20 @@ def test_yeniden_uretim_metni_korur(c):
     tiktok.uret(c, SahteEtsy(), 1, indir=indir, yazar=_yazar)
     baska = lambda *a: {"hook": "Yepyeni kanca", "caption": "Başka.", "hashtags": ["x", "y", "z"]}  # noqa: E731
     tiktok.uret(c, SahteEtsy(), 1, indir=indir, yazar=baska)
-    assert c.execute("SELECT hook FROM video WHERE tasarim_id = 1").fetchone()[0] == "POV: your dad found a new lake"
+    assert c.execute("SELECT hook FROM tiktok_video WHERE tasarim_id = 1").fetchone()[0] == "POV: your dad found a new lake"
+
+
+def test_eski_video_tablosu_tasinir(c):
+    c.execute("CREATE TABLE video (tasarim_id INTEGER PRIMARY KEY, durum TEXT, klasor TEXT, hook TEXT, aciklama TEXT, "
+              "etiketler TEXT, sure REAL, olusturma TEXT, paylasim TEXT, plan TEXT)")  # fmt: skip
+    c.execute("INSERT INTO video (tasarim_id, durum, hook) VALUES (2, 'hazir', 'POV: 1 a.m.')")
+    c.commit()
+    c2 = db.baglan()
+    assert tuple(c2.execute("SELECT tasarim_id, tur, durum, hook FROM tiktok_video").fetchone()) == (
+        2,
+        "urun",
+        "hazir",
+        "POV: 1 a.m.",
+    )
+    assert not c2.execute("SELECT 1 FROM sqlite_master WHERE name = 'video'").fetchone()
+    db.baglan().close()  # ikinci bağlantı: taşıma yinelenmez

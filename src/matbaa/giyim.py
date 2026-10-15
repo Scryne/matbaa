@@ -178,7 +178,8 @@ def foto_istemi(nis: str, renk: str) -> str:
     sahne = SAHNE.get(nis, "a smiling adult standing outdoors on a sunny day")
     return (
         f"candid smartphone photo, {sahne}, wearing a plain solid {renk} crew neck t-shirt with nothing printed on it, "
-        "standing straight and facing the camera, arms relaxed at the sides, the whole chest clearly visible, waist-up framing, "
+        "standing straight and facing the camera, arms relaxed at the sides, the whole chest clearly visible, waist-up framing "
+        "with some headroom above the head, "
         "natural light, realistic skin texture, shallow depth of field, photorealistic"
     )
 
@@ -432,12 +433,105 @@ def uret(c, comfy: Comfy, tasarim_id: int, tohum: int | None = None, video: bool
             klip, rapor["hareket"] = klasor / "model_klip.mp4", "model"
     if rapor["hareket"] == "kamera":
         kareden_video(kamera_hareketi(foto), klip, 30)
-    kapanis, kanca = klasor / "kapanis.png", klasor / "kanca.png"
-    tiktok.kapanis(KOK / dos["koyu_png"], "Free US shipping  ·  Made to order").save(kapanis)
-    # Kanca: tasarımın ürün videosundakiyle aynı (varsa), yoksa yeni yazılır; foto açık zeminli değil, lacivert kutu okunur.
-    v = c.execute("SELECT hook FROM video WHERE tasarim_id = ?", (tasarim_id,)).fetchone()
-    rapor["kanca"] = v[0] if v and v[0] else tiktok.metin_yaz(satirlar, t["nis"], ["T-shirt"]).hook
-    tiktok.etiket_katmani(rapor["kanca"], tiktok.GUVENLI[1] + 30, 60, maks_satir=3)[0].save(kanca)
-    kapanisla_birlestir(klip, kapanis, klasor / "video.mp4", kanca)
+    m = tiktok.kayitli_metin(c, tasarim_id, "giyim") or tiktok.metin_yaz(
+        satirlar, t["nis"], ["T-shirt worn by a real-looking person"], onceki=tiktok.son_kancalar(c)
+    )  # kendi kancası: aynı tasarımın ürün videosuyla aynı cümle iki kez paylaşılmasın
+    rapor["kanca"] = m.hook
+    sure = bitir(klasor, klip, KOK / dos["koyu_png"], m.hook)
     (klasor / "rapor.json").write_text(json.dumps(rapor, ensure_ascii=False, indent=1), encoding="utf-8")
+    tiktok.kaydet(c, tasarim_id, "giyim", klasor, m, sure, ai=True)
     return rapor
+
+
+def kare_al(mp4: Path, saniye: float) -> Image.Image:
+    p = subprocess.run(
+        [_ffmpeg(), "-v", "error", "-ss", str(saniye), "-i", str(mp4), "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "-"],
+        capture_output=True, check=True,
+    )  # fmt: skip
+    return Image.open(io.BytesIO(p.stdout)).convert("RGB")
+
+
+def bitir(klasor: Path, klip: Path, baski_png: Path, kanca: str) -> float:
+    """Klip + kanca yazısı + kapanış kartı → `video.mp4`, ilk kareden `kapak.jpg`. Süre (sn) döner."""
+    from matbaa import tiktok
+
+    kapanis, kanca_png = klasor / "kapanis.png", klasor / "kanca.png"
+    tiktok.kapanis(baski_png, "Free US shipping  ·  Made to order").save(kapanis)
+    tiktok.etiket_katmani(kanca, tiktok.GUVENLI[1] + 30, 60, maks_satir=3)[0].save(kanca_png)
+    hedef = kapanisla_birlestir(klip, kapanis, klasor / "video.mp4", kanca_png)
+    kapak = kare_al(hedef, 1.0)
+    kapak.thumbnail((360, 640))
+    kapak.save(klasor / "kapak.jpg", "JPEG", quality=85)
+    p = subprocess.run([_ffmpeg(), "-i", str(hedef)], capture_output=True, text=True, errors="replace")
+    m = re.search(r"Duration: (\d+):(\d+):([\d.]+)", p.stderr)
+    return round(int(m[1]) * 3600 + int(m[2]) * 60 + float(m[3]), 1) if m else 0.0
+
+
+# --- günlük hat ---
+
+GUNLUK = 1  # günde bir giyilmiş video: bu laptopta ~20 dk ekran kartı (fotoğraf ~1,5 dk, video ~18 dk)
+
+
+def comfy_ac(comfy: Comfy) -> bool:
+    """ComfyUI kapalıysa başlatır (`scripts/comfy_baslat.ps1`). Bu çağrı başlattıysa True: iş bitince `comfy_kapat`."""
+    if comfy.hazir_mi():
+        return False
+    subprocess.run(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(KOK / "scripts" / "comfy_baslat.ps1")],
+        check=True, capture_output=True, timeout=300,
+    )  # fmt: skip
+    if not comfy.hazir_mi():
+        raise ComfyHatasi("ComfyUI başlatılamadı (bkz. ComfyUI/comfy.log)")
+    return True
+
+
+def comfy_kapat(port: int = 8188) -> None:
+    """Bizim açtığımız ComfyUI'yi kapatır: ekran kartı ve ~10 GB bellek boşalır."""
+    subprocess.run(
+        ["powershell.exe", "-NoProfile", "-Command",
+         f"Get-NetTCPConnection -LocalPort {port} -State Listen -ErrorAction SilentlyContinue | "
+         "ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }"],
+        capture_output=True, timeout=60, check=False,
+    )  # fmt: skip
+
+
+def hazirla(c, comfy: Comfy | None = None, sinir: int = GUNLUK, yazdir=print, uretici=None) -> dict:
+    """Günlük adım: giyilmiş videosu olmayan, tişörtü Etsy'de aktif tasarımlar (en eski yayın önce), en çok `sinir` tanesi.
+
+    ComfyUI kurulu değilse adım atlanır. Üretilemeyen tasarım `hata` ile kaydedilir ve yeniden denenmez (her gün 20 dk boşa
+    gitmesin); `matbaa giyim --tasarim N` elle yeniden dener."""
+    if not _comfy_python().exists():
+        return {"atlandi": f"ComfyUI kurulu değil ({_comfy_python().parent.parent.parent})"}
+    adaylar = c.execute(
+        """SELECT u.tasarim_id, min(u.guncelleme) AS ilk FROM urun u WHERE u.durum = 'aktif' AND u.urun = 'tisort'
+             AND u.etsy_listing_id IS NOT NULL
+             AND NOT EXISTS (SELECT 1 FROM tiktok_video v WHERE v.tasarim_id = u.tasarim_id AND v.tur = 'giyim')
+           GROUP BY u.tasarim_id ORDER BY ilk LIMIT ?""",
+        (sinir,),
+    ).fetchall()
+    sayac: dict = {"hazir": 0, "hata": 0}
+    if not adaylar:
+        return sayac
+    comfy = comfy or Comfy()
+    uretici = uretici or uret
+    actik = comfy_ac(comfy)
+    try:
+        for r in adaylar:
+            try:
+                s = uretici(c, comfy, r["tasarim_id"], yazdir=yazdir)
+            except Exception as e:
+                c.execute(
+                    """INSERT INTO tiktok_video (tasarim_id, tur, durum, hata, olusturma) VALUES (?, 'giyim', 'hata', ?, ?)
+                       ON CONFLICT (tasarim_id, tur) DO UPDATE SET durum = 'hata', hata = excluded.hata""",
+                    (r["tasarim_id"], f"{type(e).__name__}: {e}"[:500], time.strftime("%Y-%m-%dT%H:%M:%S")),
+                )
+                c.commit()
+                sayac["hata"] += 1
+                yazdir(f"  giyim hata {r['tasarim_id']}: {type(e).__name__}: {str(e)[:150]}")
+                continue
+            sayac["hazir"] += 1
+            yazdir(f"  giyilmiş video: tasarım {r['tasarim_id']}: {s.get('kanca')}")
+    finally:
+        if actik:
+            comfy_kapat()
+    return sayac

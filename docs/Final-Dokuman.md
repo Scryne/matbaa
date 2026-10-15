@@ -244,7 +244,10 @@ iade kararı.
   kartı. Renk eşiğiyle tişört bulma ilk denemede gün batımı göğünü tişört sandı, baskı yüze kaydı: SAM'e geçildi.
   **İlk deneme (#2 Grandpa's Fishing Crew):** 4 aday 83 sn, dördünde slogan birebir; video 81 kare 18,6 dk, örnek karelerin
   %100'ünde slogan birebir; çıktı 6,5 sn. Gerçekçi AI insanı içerdiği için TikTok'ta "AI ile oluşturulmuş içerik" açık
-  paylaşılır; Etsy ilanına girmez. Sonuç iyiyse günlük hatta tasarım başına bir giyilmiş video eklenir (GPU ~20 dk/video).
+  paylaşılır; Etsy ilanına girmez. Scryne "gayet güzel olmuş" dedi (2026-10-15): günlük hatta `giyim` adımı her gün bir
+  tasarıma giyilmiş video üretir (ComfyUI'yi gerekirse açar, iş bitince kapatır; üretilemeyen tasarım `hata` kalır, her gün
+  20 dk boşa denenmez). Videolar `tiktok_video` tablosunda ürün videolarıyla tek sırada; her tasarım iki video verdiği için
+  paylaşım takvimi günde iki saat (ABD doğu 12:00 ve 19:00). Giyilmiş videonun kendi kancası olur (aynı cümle iki kez gitmez).
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

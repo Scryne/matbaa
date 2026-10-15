@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import io
 import json
+from pathlib import Path
 
 import httpx
 import numpy as np
@@ -128,3 +129,35 @@ def test_kamera_hareketi_baskiyi_bozmaz():
     kareler = giyim.kamera_hareketi(foto, sure=1.0, fps=10)
     assert len(kareler) == 10 and kareler[0].size == foto.size
     assert np.abs(np.asarray(kareler[0]).astype(int) - np.asarray(foto).astype(int)).mean() < 2  # ilk kare fotoğrafın kendisi
+
+
+def test_gunluk_giyim_adimi_secer_hatayi_kaydeder_yinelemez(tmp_path, monkeypatch):
+    from matbaa import db
+
+    monkeypatch.setattr(db, "DB", tmp_path / "g.db")
+    monkeypatch.setattr(giyim, "_comfy_python", lambda: Path(__file__))  # "kurulu"
+    acilan, kapanan = [], []
+    monkeypatch.setattr(giyim, "comfy_ac", lambda comfy: acilan.append(1) or True)
+    monkeypatch.setattr(giyim, "comfy_kapat", lambda port=8188: kapanan.append(1))
+    c = db.baglan()
+    for n in range(2):
+        i = db.ifade_ekle(c, "fishing", [f"S {n}"])
+        db.kapi_yaz(c, i, "temiz", [], [])
+        tid = db.tasarim_ekle(c, i, "yigin", [])
+        c.execute("INSERT INTO urun (tasarim_id, urun, durum, etsy_listing_id, guncelleme) VALUES (?, 'tisort', 'aktif', ?, ?)",
+                  (tid, str(10 + tid), f"2026-10-1{n}"))  # fmt: skip
+    c.commit()
+
+    def dusen(c_, comfy, tid, yazdir=print):
+        raise giyim.ComfyHatasi("hiçbir adayda tişört bulunamadı")
+
+    s = giyim.hazirla(c, comfy=object(), sinir=1, yazdir=lambda *_: None, uretici=dusen)
+    assert s == {"hazir": 0, "hata": 1} and acilan and kapanan  # açtığı ComfyUI'yi kapatır
+    assert c.execute("SELECT tasarim_id, durum FROM tiktok_video").fetchall()[0][:] == (1, "hata")
+    uretilen = []
+    s = giyim.hazirla(
+        c, comfy=object(), sinir=5, yazdir=lambda *_: None, uretici=lambda c_, cm, tid, yazdir=print: uretilen.append(tid) or {}
+    )
+    assert uretilen == [2]  # hatalı #1 her gün yeniden denenmez
+    monkeypatch.setattr(giyim, "_comfy_python", lambda: tmp_path / "yok" / "python.exe")
+    assert "atlandi" in giyim.hazirla(c, comfy=object())

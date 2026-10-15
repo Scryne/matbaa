@@ -106,12 +106,16 @@ CREATE TABLE IF NOT EXISTS pin (               -- Pinterest toplu pin kuyruğu (
     durum TEXT NOT NULL,              -- bekliyor | verildi (CSV'ye girdi, yayın saati atandı) | atlandi (ilan yayından kalktı)
     yayin TEXT, dosya TEXT, olusturma TEXT
 );
-CREATE TABLE IF NOT EXISTS video (            -- TikTok videosu (tiktok.py, K-34): tasarım başına bir video + karusel
-    tasarim_id INTEGER PRIMARY KEY REFERENCES tasarim(id),
-    durum TEXT NOT NULL,              -- hazir | paylasildi
+CREATE TABLE IF NOT EXISTS tiktok_video (     -- TikTok videoları (tiktok.py K-34, giyim.py K-35): tasarım başına tür başına bir
+    id INTEGER PRIMARY KEY,
+    tasarim_id INTEGER NOT NULL REFERENCES tasarim(id),
+    tur TEXT NOT NULL,                -- urun (mockup'lardan, kod) | giyim (insan üstünde, yerel ComfyUI)
+    durum TEXT NOT NULL,              -- hazir | paylasildi | hata (giyim üretilemedi, yeniden denenmez)
     klasor TEXT, hook TEXT, aciklama TEXT, etiketler TEXT, sure REAL,
-    olusturma TEXT, paylasim TEXT,
-    plan TEXT                         -- paylaşım saati (UTC): günde bir, ABD doğu 19:00
+    ai INTEGER NOT NULL DEFAULT 0,    -- 1: gerçekçi AI insanı içerir, TikTok'ta "AI ile oluşturulmuş içerik" açık paylaşılır
+    hata TEXT, olusturma TEXT, paylasim TEXT,
+    plan TEXT,                        -- paylaşım saati (UTC): günde iki, ABD doğu 12:00 ve 19:00
+    UNIQUE (tasarim_id, tur)
 );
 CREATE TABLE IF NOT EXISTS olay (
     id INTEGER PRIMARY KEY,
@@ -155,6 +159,15 @@ def baglan(yol: Path | str | None = None, thread_serbest: bool = False) -> sqlit
             c.execute(f"ALTER TABLE {tablo} ADD COLUMN {sutun}")
         except sqlite3.OperationalError:
             pass
+    # 2026-10-15: `video` (tasarım başına tek video) → `tiktok_video` (ürün + giyilmiş): eski kayıtlar taşınır, tablo kalkar.
+    if c.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'video'").fetchone():
+        c.execute(
+            """INSERT OR IGNORE INTO tiktok_video (tasarim_id, tur, durum, klasor, hook, aciklama, etiketler, sure, olusturma,
+                 paylasim, plan) SELECT tasarim_id, 'urun', durum, klasor, hook, aciklama, etiketler, sure, olusturma, paylasim, plan
+               FROM video"""
+        )
+        c.execute("DROP TABLE video")
+        c.commit()
     return c
 
 

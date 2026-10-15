@@ -44,7 +44,9 @@ KREM, LACIVERT, MERCAN = "#F4EDE1", "#2B3A55", "#E07A5F"
 KALIN_F, BASLIK_F, ALT_F = "ArchivoBlack-Regular.ttf", "DMSerifDisplay-Regular.ttf", "BebasNeue-Regular.ttf"
 GUNLUK = 2  # günlük koşuda en çok bu kadar yeni video (her biri ~30 sn: Etsy görselleri, Claude, render)
 ABD, TR = ZoneInfo("America/New_York"), ZoneInfo("Europe/Istanbul")
-PAYLASIM_SAATI = time(19, 0)  # ABD doğu yakası akşamı: alıcıların çoğu doğu/orta saat diliminde, iş sonrası kaydırma
+# ABD doğu yakası öğle arası ve akşamı (alıcıların çoğu doğu/orta saat diliminde). Günde iki: her tasarım iki video verir
+# (ürün + giyilmiş, K-35); tek saatle sıra her gün büyürdü.
+PAYLASIM_SAATLERI = (time(12, 0), time(19, 0))
 
 
 # --- kare çizimi ---
@@ -348,30 +350,48 @@ def uret(c, etsy, tasarim_id: int, indir=None, yazar=None) -> dict:
         renk = next((r for r in u["renkler"] if r["ad"] == u.get("vitrin_rengi")), u["renkler"][0])
         yakin = gorsel.yakin_plan(dos[f"{renk['murekkep']}_png"], renk["hex"], tohum=tasarim_id)
     satirlar = json.loads(t["satirlar"])
-    eski = c.execute("SELECT hook, aciklama, etiketler FROM video WHERE tasarim_id = ?", (tasarim_id,)).fetchone()
-    if eski and eski["hook"]:  # yeniden üretim (görsel düzeltmesi): metin aynı kalır, Studio'ya yapıştırılan açıklama tutar
-        m = Metin(eski["hook"], eski["aciklama"], json.loads(eski["etiketler"] or "[]"))
-    else:
-        onceki = [r[0] for r in c.execute("SELECT hook FROM video ORDER BY olusturma DESC LIMIT 8")]
-        m = metin_yaz(satirlar, t["nis"], [urunler()[u]["etsy_turu"] for u in fotolar], yazar, onceki)
+    m = kayitli_metin(c, tasarim_id, "urun") or metin_yaz(
+        satirlar, t["nis"], [urunler()[u]["etsy_turu"] for u in fotolar], yazar, son_kancalar(c)
+    )
     sh = sahneler(fotolar, yakin, dos.get("koyu_png"), m)
     klasor = CIKTI / f"{tasarim_id:05d}"
     video_yaz(sh, klasor / "video.mp4")
     kapak = sh[0].kare(0.0)
     kapak.thumbnail((360, 640))
     kapak.save(klasor / "kapak.jpg", "JPEG", quality=85)
+    kaydet(c, tasarim_id, "urun", klasor, m, round(sum(s.sure for s in sh), 1))
+    return {"tasarim": tasarim_id, "hook": m.hook, "sahne": len(sh)}
+
+
+def kayitli_metin(c, tasarim_id: int, tur: str) -> Metin | None:
+    """Yeniden üretimde (görsel düzeltmesi) metin aynı kalır: Studio'ya yapıştırılmış açıklama videoyla tutar."""
+    r = c.execute(
+        "SELECT hook, aciklama, etiketler FROM tiktok_video WHERE tasarim_id = ? AND tur = ? AND hook IS NOT NULL",
+        (tasarim_id, tur),
+    ).fetchone()
+    return Metin(r["hook"], r["aciklama"], json.loads(r["etiketler"] or "[]")) if r else None
+
+
+def son_kancalar(c, n: int = 8) -> list[str]:
+    return [r[0] for r in c.execute("SELECT hook FROM tiktok_video WHERE hook IS NOT NULL ORDER BY olusturma DESC LIMIT ?", (n,))]
+
+
+def kaydet(c, tasarim_id: int, tur: str, klasor: Path, m: Metin, sure: float, ai: bool = False) -> None:
+    """Video klasörü (`video.mp4`, `kapak.jpg`, `aciklama.txt`) hazır: `tiktok_video`a `hazir` (aynı tür varsa yerine)."""
     (klasor / "aciklama.txt").write_text(m.gonderi() + "\n", encoding="utf-8")
     c.execute(
-        """INSERT OR REPLACE INTO video (tasarim_id, durum, klasor, hook, aciklama, etiketler, sure, olusturma)
-           VALUES (?, 'hazir', ?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO tiktok_video (tasarim_id, tur, durum, klasor, hook, aciklama, etiketler, sure, ai, olusturma)
+           VALUES (?, ?, 'hazir', ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (tasarim_id, tur) DO UPDATE SET durum = 'hazir', klasor = excluded.klasor, hook = excluded.hook,
+             aciklama = excluded.aciklama, etiketler = excluded.etiketler, sure = excluded.sure, ai = excluded.ai, hata = NULL,
+             olusturma = excluded.olusturma""",
         (
-            tasarim_id, str(klasor.relative_to(KOK)) if klasor.is_relative_to(KOK) else str(klasor), m.hook, m.aciklama,
-            json.dumps(m.etiketler), round(sum(s.sure for s in sh), 1), datetime.now(UTC).isoformat(timespec="seconds"),
+            tasarim_id, tur, str(klasor.relative_to(KOK)) if klasor.is_relative_to(KOK) else str(klasor), m.hook, m.aciklama,
+            json.dumps(m.etiketler), sure, int(ai), datetime.now(UTC).isoformat(timespec="seconds"),
         ),
     )  # fmt: skip
-    db.olay(c, "video", tasarim_id, None, "hazir", m.hook[:200])
+    db.olay(c, "video", tasarim_id, None, f"{tur}:hazir", m.hook[:200])
     c.commit()
-    return {"tasarim": tasarim_id, "hook": m.hook, "sahne": len(sh)}
 
 
 def hazirla(c, etsy, sinir: int = GUNLUK, yazdir=print, indir=None, yazar=None) -> dict:
@@ -380,7 +400,7 @@ def hazirla(c, etsy, sinir: int = GUNLUK, yazdir=print, indir=None, yazar=None) 
     adaylar = c.execute(
         """SELECT u.tasarim_id, min(u.guncelleme) AS ilk FROM urun u WHERE u.durum = 'aktif' AND u.etsy_listing_id IS NOT NULL
              AND u.urun IN ('tisort', 'sweatshirt', 'hoodie')
-             AND NOT EXISTS (SELECT 1 FROM video v WHERE v.tasarim_id = u.tasarim_id)
+             AND NOT EXISTS (SELECT 1 FROM tiktok_video v WHERE v.tasarim_id = u.tasarim_id AND v.tur = 'urun')
            GROUP BY u.tasarim_id ORDER BY ilk LIMIT ?""",
         (sinir,),
     ).fetchall()
@@ -397,24 +417,27 @@ def hazirla(c, etsy, sinir: int = GUNLUK, yazdir=print, indir=None, yazar=None) 
 
 
 def plan(c, n: int, simdi: datetime | None = None) -> list[datetime]:
-    """Sıradaki `n` paylaşım saati (UTC): günde bir, ABD doğu 19:00; en son zamanlanan videonun ertesi gününden ya da bugünden."""
+    """Sıradaki `n` paylaşım saati (UTC): `PAYLASIM_SAATLERI` (ABD doğu), en son zamanlanan videodan ve şimdiden sonra."""
     simdi = simdi or datetime.now(UTC)
-    son = c.execute("SELECT max(plan) FROM video WHERE durum = 'paylasildi'").fetchone()[0]
-    gun = simdi.astimezone(ABD).date()
-    if datetime.combine(gun, PAYLASIM_SAATI, ABD) <= simdi + timedelta(minutes=20):  # Studio en az ~15 dk ileri zamanlar
+    son = c.execute("SELECT max(plan) FROM tiktok_video WHERE durum = 'paylasildi'").fetchone()[0]
+    esik = max(simdi + timedelta(minutes=20), datetime.fromisoformat(son) if son else simdi)  # Studio en az ~15 dk ileri zamanlar
+    sonuc, gun = [], esik.astimezone(ABD).date()
+    while len(sonuc) < n:
+        for saat in PAYLASIM_SAATLERI:
+            z = datetime.combine(gun, saat, ABD).astimezone(UTC)
+            if z > esik and len(sonuc) < n:
+                sonuc.append(z)
         gun += timedelta(days=1)
-    if son:
-        gun = max(gun, datetime.fromisoformat(son).astimezone(ABD).date() + timedelta(days=1))
-    return [datetime.combine(gun + timedelta(days=i), PAYLASIM_SAATI, ABD).astimezone(UTC) for i in range(n)]
+    return sonuc
 
 
 def ozet(c, simdi: datetime | None = None) -> dict:
     hazir = [
         dict(r)
         for r in c.execute(
-            """SELECT v.tasarim_id, v.hook, v.aciklama, v.etiketler, v.sure, v.olusturma,
+            """SELECT v.id, v.tasarim_id, v.tur, v.ai, v.hook, v.aciklama, v.etiketler, v.sure, v.olusturma,
                       (SELECT group_concat(x, ' ') FROM (SELECT value AS x FROM json_each(i.satirlar))) AS slogan
-               FROM video v JOIN tasarim t ON t.id = v.tasarim_id JOIN ifade i ON i.id = t.ifade_id
+               FROM tiktok_video v JOIN tasarim t ON t.id = v.tasarim_id JOIN ifade i ON i.id = t.ifade_id
                WHERE v.durum = 'hazir' ORDER BY v.olusturma"""
         )
     ]
@@ -424,21 +447,20 @@ def ozet(c, simdi: datetime | None = None) -> dict:
         h["plan_tr"] = z.astimezone(TR).strftime("%Y-%m-%dT%H:%M")  # Studio tarayıcının saat dilimiyle (Türkiye) zamanlar
     return {
         "hazir": hazir,
-        "paylasilan": c.execute("SELECT count(*) FROM video WHERE durum = 'paylasildi'").fetchone()[0],
+        "paylasilan": c.execute("SELECT count(*) FROM tiktok_video WHERE durum = 'paylasildi'").fetchone()[0],
     }
 
 
-def paylasildi(c, tasarim_id: int, simdi: datetime | None = None) -> None:
-    """Paylaşıldı/zamanlandı: video sıradaki boş saati alır (`plan`), sonraki videolar onun ertesi gününe kayar."""
+def paylasildi(c, video_id: int, simdi: datetime | None = None) -> None:
+    """Paylaşıldı/zamanlandı: video sıradaki boş saati alır (`plan`), sonraki videolar bir sonraki saate kayar."""
     simdi = simdi or datetime.now(UTC)
     saat = plan(c, 1, simdi)[0].isoformat(timespec="minutes")
-    if (
-        c.execute(
-            "UPDATE video SET durum = 'paylasildi', paylasim = ?, plan = ? WHERE tasarim_id = ? AND durum = 'hazir'",
-            (simdi.isoformat(timespec="seconds"), saat, tasarim_id),
-        ).rowcount
-        != 1
-    ):
-        raise KeyError(tasarim_id)
-    db.olay(c, "video", tasarim_id, "hazir", "paylasildi", "TikTok")
+    r = c.execute("SELECT tasarim_id, tur FROM tiktok_video WHERE id = ? AND durum = 'hazir'", (video_id,)).fetchone()
+    if r is None:
+        raise KeyError(video_id)
+    c.execute(
+        "UPDATE tiktok_video SET durum = 'paylasildi', paylasim = ?, plan = ? WHERE id = ?",
+        (simdi.isoformat(timespec="seconds"), saat, video_id),
+    )
+    db.olay(c, "video", r["tasarim_id"], "hazir", f"{r['tur']}:paylasildi", "TikTok")
     c.commit()

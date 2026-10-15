@@ -89,6 +89,7 @@
   .video-kart > a { display: block; border-radius: 6px; overflow: hidden; aspect-ratio: 9 / 16; background: var(--zemin-2); align-self: start; }
   .video-kart img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .video-kart .zaman { font: 12px/1.4 var(--mono); color: var(--kirmizi); }
+  .video-kart .ai { display: inline-block; margin-left: 8px; vertical-align: 1px; }
   .video-kart b { display: block; font-size: 14px; line-height: 1.35; margin: 4px 0 6px; }
   .video-kart p { margin: 0 0 10px; font-size: 12px; line-height: 1.45; color: var(--metin-2); overflow-wrap: anywhere; }
   .video-kart .eylemler { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -552,21 +553,21 @@ function tiktokKart(d) {
   const t = d.tiktok, bolum = $("tiktok-bolum");
   bolum.hidden = !t.hazir.length && !t.paylasilan;
   if (bolum.hidden) return;
-  $("tiktok-not").textContent = `${t.paylasilan} paylaşıldı · günde 1, ABD akşamı 19:00`;
+  $("tiktok-not").textContent = `${t.paylasilan} paylaşıldı · günde 2, ABD 12:00 ve 19:00`;
   if ($("tiktok").contains(document.activeElement) && document.activeElement.matches("button")) return;
   $("tiktok").innerHTML = (t.hazir.length ? `<div class="videolar">${t.hazir.map(v => `<div class="video-kart">
-      <a href="/tiktok/${v.tasarim_id}/video.mp4" target="_blank" rel="noopener" aria-label="Videoyu izle: ${esc(v.slogan)}"><img src="/tiktok/${v.tasarim_id}/kapak.jpg" alt="" loading="lazy"></a>
-      <div><span class="zaman">${esc(ttZaman(v.plan_tr))}</span><b>${esc(v.hook)}</b><p>${esc(v.gonderi)}</p>
-        <div class="eylemler"><a class="btn ana" href="/tiktok/${v.tasarim_id}/video.mp4" download>${ik("indir")}Video</a>
-          <button class="btn" type="button" onclick="ttKopyala(this, ${v.tasarim_id})">${ik("kopya")}Açıklama</button>
-          <button class="btn sade" type="button" onclick="ttPaylasildi(${v.tasarim_id}, this)">Zamanladım</button></div>
+      <a href="/tiktok/${v.id}/video.mp4" target="_blank" rel="noopener" aria-label="Videoyu izle: ${esc(v.slogan)}"><img src="/tiktok/${v.id}/kapak.jpg" alt="" loading="lazy"></a>
+      <div><span class="zaman">${esc(ttZaman(v.plan_tr))}</span>${v.ai ? `<span class="cip uyari ai" title="Gerçekçi yapay zekâ insanı içeriyor: TikTok'ta Yapay zekâ ile oluşturulmuş içerik anahtarını aç">Giyilmiş · AI etiketini aç</span>` : ""}<b>${esc(v.hook)}</b><p>${esc(v.gonderi)}</p>
+        <div class="eylemler"><a class="btn ana" href="/tiktok/${v.id}/video.mp4" download>${ik("indir")}Video</a>
+          <button class="btn" type="button" onclick="ttKopyala(this, ${v.id})">${ik("kopya")}Açıklama</button>
+          <button class="btn sade" type="button" onclick="ttPaylasildi(${v.id}, this)">Zamanladım</button></div>
         <output class="isim-sonuc" role="status"></output></div></div>`).join("")}</div>`
     : `<p class="not">Paylaşılmayı bekleyen video yok. Yeni tasarım yayına girdikçe günlük koşu videosunu hazırlar.</p>`)
-    + `<details><summary>Nasıl paylaşılır</summary><p>Bilgisayarda tiktok.com/tiktokstudio/upload: videoyu seç, açıklamayı yapıştır, "Zamanla"da karttaki saati seç (10 güne kadar ileri), sonra burada "Zamanladım". Telefondan paylaşırsan TikTok'un ticari müzik kütüphanesinden popüler bir ses ekle. Ülke dağılımını ilk 10 videodan sonra TikTok Studio, Analiz, İzleyiciler'de kontrol et.</p></details>`;
+    + `<details><summary>Nasıl paylaşılır</summary><p>Bilgisayarda tiktok.com/tiktokstudio/upload: videoyu seç, açıklamayı yapıştır, "Zamanla"da karttaki saati seç (10 güne kadar ileri), sonra burada "Zamanladım". "Giyilmiş" videolarda gerçekçi yapay zekâ insanı var: Daha fazla göster altında "Yapay zekâ ile oluşturulmuş içerik" anahtarını aç (TikTok kuralı). Telefondan paylaşırsan TikTok'un ticari müzik kütüphanesinden popüler bir ses ekle. Ülke dağılımını ilk 10 videodan sonra TikTok Studio, Analiz, İzleyiciler'de kontrol et.</p></details>`;
 }
 
 async function ttKopyala(dugme, id) {
-  const v = son.tiktok.hazir.find(x => x.tasarim_id === id), cikti = dugme.closest(".video-kart").querySelector("output");
+  const v = son.tiktok.hazir.find(x => x.id === id), cikti = dugme.closest(".video-kart").querySelector("output");
   try { await navigator.clipboard.writeText(v.gonderi); cikti.textContent = "Açıklama kopyalandı."; }
   catch { cikti.textContent = "Kopyalanamadı: metni seçip elle kopyala."; }
 }
