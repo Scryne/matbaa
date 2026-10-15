@@ -108,7 +108,9 @@ class SahteEtsy:
 
     def gorsel_yukle(self, listing_id, b, rank, ad="", alt=""):
         gid = 500 + len(self.gorseller)
-        renk = "#%02x%02x%02x" % Image.open(io.BytesIO(b)).convert("RGB").getpixel((5, 5)) if ad.startswith("mockup") else ad
+        renk = ad
+        if ad.startswith("mockup"):  # yüklenen mockup'ın rengi: ilana_ekle kopya denetimi gerçek görsel görsün
+            renk = "#{:02x}{:02x}{:02x}".format(*Image.open(io.BytesIO(b)).convert("RGB").getpixel((5, 5)))
         self.gorseller.append({"listing_image_id": gid, "rank": rank, "url_570xN": renk, "alt_text": alt, "ad": ad})
         return {"listing_image_id": gid}
 
