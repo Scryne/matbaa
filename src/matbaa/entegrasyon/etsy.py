@@ -219,13 +219,15 @@ class Etsy:
             "POST", f"/shops/{self.shop_id}/listings/{listing_id}/images", files={"image": (ad, png, "image/jpeg")}, data=veri
         )
 
-    def gorsel_sirala(self, listing_id: int, listing_image_id: int, rank: int) -> dict:
-        """Var olan görseli yeniden yüklemeden sıraya taşır (uploadListingImage + `listing_image_id`)."""
-        return self._i(
-            "POST",
-            f"/shops/{self.shop_id}/listings/{listing_id}/images",
-            data={"listing_image_id": str(listing_image_id), "rank": str(rank)},
+    def gorsel_sirala(self, listing_id: int, listing_image_id: int, rank: int, alt_metin: str = "") -> dict:
+        """Var olan görseli yeniden yüklemeden sıraya taşır (uploadListingImage + `listing_image_id`).
+
+        Etsy bu istekte gelmeyen `alt_text`'i boşaltır (2026-10-15 canlı ölçüm: sıralanan her görselin alt metni silinmişti):
+        kendi görselimizin alt metni her sıralamada yeniden gönderilir."""
+        veri = {"listing_image_id": str(listing_image_id), "rank": str(rank)} | (
+            {"alt_text": alt_metin[:500]} if alt_metin else {}
         )
+        return self._i("POST", f"/shops/{self.shop_id}/listings/{listing_id}/images", data=veri)
 
     def gorsel_sil(self, listing_id: int, listing_image_id: int) -> dict:
         return self._i("DELETE", f"/shops/{self.shop_id}/listings/{listing_id}/images/{listing_image_id}")

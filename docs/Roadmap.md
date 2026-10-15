@@ -79,6 +79,12 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   öncelik kuralı bilerek bozulunca 2 test düşüyor.
 - **Canlı (2026-10-14):** #2 (fishing) ve #21 (knitting) süsleri Etsy'de aktif (4595395920, 4595396016), ücretsiz kargo, üretim ortağı,
   Holiday = Christmas, niş bölümünde. 20 süs metni kuyrukta; onaylı tasarımlar yayınlandıkça süsleriyle birlikte çıkar.
+- **Galeri düzeltmesi (2026-10-15):** Printify iki varyantın mockup setini ayrı yüklüyordu; ilk iki süste 20 görselin 8-9'u
+  birebir kopyaydı, kartlara yer kalmıyordu. `gorsel.ilana_ekle` artık kopyaları siler, yer yetmezse sondaki mockup'ları kartlar
+  için siler. Ayrıca Etsy sıralama isteğinde gelmeyen `alt_text`'i boşaltıyordu: tüm canlı ilanlarda alt metinler silinmişti.
+  Sıralama alt metni yeniden gönderir, alt metni silinmiş eski kart görüntü imzasından tanınır (kart 0.2-0.6, yabancı ≥ 12.2).
+  12 canlı ilan yeniden kuruldu: #2 ve #21 süsleri 13 görsel (çift yüzlü basıldıkları için "both sides" kartıyla), #2 sweatshirt'te
+  çift yakın plan silindi ve eksik renk kartı eklendi. #31 süsü (2026-10-15 koşusu) tek yüzlü, $4.93 maliyetle canlı.
 - **Kalan:** ilk süs siparişinde baskının tek yüz ve doğru konumda geldiğini (müşteri yorumu/şikâyet) ve netin ekstreyle tuttuğunu görmek.
 
 ### Faz 13: Performansa göre üretim 🔄 (kod 2026-10-13)

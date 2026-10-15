@@ -294,11 +294,32 @@ def ilan_gorselleri(urun: str, dosyalar: dict[str, Path], tohum: int = 0) -> lis
     return sonuc
 
 
-def sira_kur(etsy, listing_id: int, sira: list[int]) -> None:
+def sira_kur(etsy, listing_id: int, sira: list[int], altlar: dict[int, str] | None = None) -> None:
     """Görselleri verilen sırayla 1..n'e yazar. Etsy tek görselin rank'ini değiştirince diğerlerini kaydırmıyor (aynı rank'te iki
-    görsel kalıyordu, 2026-10-13 canlı ilan): sıra her seferinde baştan sona açıkça kurulur."""
+    görsel kalıyordu, 2026-10-13 canlı ilan): sıra her seferinde baştan sona açıkça kurulur. `altlar`: sıralamanın silmemesi için."""
     for rank, gid in enumerate(sira, start=1):
-        etsy.gorsel_sirala(listing_id, gid, rank)
+        etsy.gorsel_sirala(listing_id, gid, rank, (altlar or {}).get(gid, ""))
+
+
+KART_ESIK = 3.0  # kendi kartımızın Etsy'deki hâli ile yerel çizimi arası (ölçüm aşağıda, `kopyalar`)
+
+
+def _imza(img: Image.Image) -> np.ndarray:
+    return np.asarray(img.convert("L").resize((16, 16), Image.Resampling.BOX), dtype=np.float32)
+
+
+def kopyalar(gorseller: list[tuple[dict, Image.Image]], esik: float = 1.0) -> list[dict]:
+    """Daha önce görülmüş bir görselin kopyası olanlar (ilk geçen kalır). Printify her varyantın mockup setini ayrı yükler: iki
+    varyantlı süs ilanında 20 görselin 9'u birebir kopyaydı (16×16 gri ortalama fark 0.0; en yakın farklı çift 4.2, 2026-10-15)."""
+    tutulan: list[np.ndarray] = []
+    sonuc = []
+    for g, img in gorseller:
+        im = _imza(img)
+        if any(float(np.abs(im - t).mean()) < esik for t in tutulan):
+            sonuc.append(g)
+        else:
+            tutulan.append(im)
+    return sonuc
 
 
 def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohum: int = 0, maks: int = 20, indir=None) -> dict:
@@ -306,6 +327,8 @@ def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohu
 
     Etsy 11. görseli kabul etti (2026-10-13): sınır 10 değil (araştırma: 20). Görseller önce sona yüklenir, sonra sıra tek seferde kurulur.
     Yarıda kalan bir koşunun yüklediği görsel alt metninden tanınır ve ikinci kez yüklenmez (ertesi gün yeniden denemede mükerrer olmaz).
+    Kartlar mockup'lardan önceliklidir: kopya mockup'lar silinir, yer yine yetmezse sondaki mockup'lar silinir (2026-10-14 canlı süs
+    ilanında 20 Printify mockup'ı sınırı doldurmuş, hiçbir kart eklenememişti).
     """
     import httpx
 
@@ -315,15 +338,37 @@ def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohu
     plan = ilan_gorselleri(urun, dosyalar, tohum)
     alt_ad = {alt: ad for ad, _, alt in plan}
     kendi: dict[str, int] = {alt_ad[g["alt_text"]]: g["listing_image_id"] for g in mevcut if g.get("alt_text") in alt_ad}
-    mockup_g = [g for g in mevcut if g.get("alt_text") not in alt_ad]
-    sonuc: dict = {"vitrin": None, "eklenen": [], "onceden": sorted(kendi)}
+    goruntu = [(g, indir(g["url_570xN"])) for g in mevcut if g.get("alt_text") not in alt_ad]
+    # Alt metni silinmiş eski kartımız (bkz. Etsy.gorsel_sirala) görüntüsünden tanınır: yeniden yüklenmez. Aynı kartın ikinci
+    # kopyası (alt metin tanınmadığı için yeniden denemede yüklenmiş, 2026-10-15 canlı sweatshirt ilanı) silinir.
+    sil: set[int] = set()
+    for ad, img, _ in plan:
+        im = _imza(img)
+        esler = [g for g, gi in goruntu if float(np.abs(im - _imza(gi)).mean()) < KART_ESIK]
+        if ad not in kendi and esler:
+            kendi[ad] = esler.pop(0)["listing_image_id"]
+        sil |= {g["listing_image_id"] for g in esler}
+        goruntu = [x for x in goruntu if x[0]["listing_image_id"] not in set(kendi.values()) | sil]
+    mockup_g = [g for g, _ in goruntu] + [g for g in mevcut if g["listing_image_id"] in sil]
+    sonuc: dict = {"vitrin": None, "eklenen": [], "onceden": sorted(kendi), "silinen": []}
+    eksik = [x for x in plan if x[0] not in kendi]
+    sil |= {g["listing_image_id"] for g in kopyalar(goruntu)}
+    goruntu = [(g, img) for g, img in goruntu if g["listing_image_id"] not in sil]
     vitrin = None
-    if (renk := u.get("vitrin_rengi")) and len(mockup_g) > 1:
+    if (renk := u.get("vitrin_rengi")) and len(goruntu) > 1:
         hedef = next((r["hex"] for r in u["renkler"] if r["ad"] == renk), None)
         if hedef:
-            vitrin = vitrin_sec([(g, indir(g["url_570xN"])) for g in mockup_g], hedef)
+            vitrin = vitrin_sec(goruntu, hedef)
+    if (fazla := len(goruntu) + len(kendi) + len(eksik) - maks) > 0:  # ilk mockup (ya da vitrin) her zaman kalır
+        aday = [g for g, _ in goruntu[1:] if not vitrin or g["listing_image_id"] != vitrin["listing_image_id"]]
+        sil |= {g["listing_image_id"] for g in aday[-fazla:]}
+    for gid in [g["listing_image_id"] for g in mockup_g if g["listing_image_id"] in sil]:
+        etsy.gorsel_sil(listing_id, gid)
+        sonuc["silinen"].append(gid)
+    mockup_g = [g for g in mockup_g if g["listing_image_id"] not in sil]
+    mevcut = [g for g in mevcut if g["listing_image_id"] not in sil]
     yer = max(maks - len(mevcut), 0)
-    for ad, img, alt in [x for x in plan if x[0] not in kendi][:yer]:
+    for ad, img, alt in eksik[:yer]:
         y = etsy.gorsel_yukle(listing_id, _jpeg(img), len(mevcut) + len(sonuc["eklenen"]) + 1, f"{ad}.jpg", alt)
         kendi[ad] = (y or {}).get("listing_image_id")
         sonuc["eklenen"].append(ad)
@@ -332,6 +377,6 @@ def ilana_ekle(etsy, listing_id: int, urun: str, dosyalar: dict[str, Path], tohu
     bas = ([vitrin["listing_image_id"]] if vitrin else mockuplar[:1]) + ([kendi[ikinci]] if ikinci else [])
     kartlar = [kendi[ad] for ad, _, _ in plan if ad != ikinci and kendi.get(ad)]
     sira = bas + [g for g in mockuplar if g not in bas] + kartlar
-    sira_kur(etsy, listing_id, sira)
+    sira_kur(etsy, listing_id, sira, {kendi[ad]: alt for ad, _, alt in plan if kendi.get(ad)})
     sonuc["vitrin"] = vitrin["listing_image_id"] if vitrin else None
     return sonuc
