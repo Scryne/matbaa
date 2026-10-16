@@ -32,6 +32,13 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 
 ## Faz Detayları
 
+### ⏸ Duraklatıldı (2026-10-16)
+Scryne projeyi durdurdu: mağazada 20 ilan canlı, toplam görüntülenme yok denecek kadar az ("hiçbiri görünmedi"). Yeni ilan
+üretmek trafik getirmiyor. Yapılan: `Matbaa-Gunluk` Windows görevi devre dışı (`Enable-ScheduledTask Matbaa-Gunluk` ile açılır),
+o günkü koşu video adımında kesildi (ilanlar açılmıştı), ComfyUI ve panel kapatıldı. Canlı 20 ilan yerinde bırakıldı
+(otomatik yenileme açık, ilk yenileme ~2027-02, ilan başı $0.20). Yeniden başlamadan önce soru şu: yeni ilan değil, mevcut
+ilanlara trafik nasıl gelir.
+
 ### Durum notu (2026-10-13, ikinci tur)
 - Faz 3 ✅: 7 niş, mevsim takvimi, talebe bağlı üretim; ilk iki günlük koşuda 72 slogan → 44 tasarım (6 USPTO reddi).
 - Faz 4 ✅: 132 ilan (44 tasarım × 3 ürün) doğrulayıcıdan geçti; etiketler marka süzgecinden, eksik etiket niş yedekleriyle.
