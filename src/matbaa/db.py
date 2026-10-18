@@ -98,13 +98,15 @@ CREATE TABLE IF NOT EXISTS isimli_siparis (   -- Faz 11: isimli süs makbuzu →
     takip TEXT, hata TEXT,
     olusturma TEXT, guncelleme TEXT
 );
-CREATE TABLE IF NOT EXISTS pin (               -- Pinterest toplu pin kuyruğu (pinterest.py): ilan başına bir pin
+CREATE TABLE IF NOT EXISTS pin (               -- Pinterest toplu pin kuyruğu (pinterest.py): ilan başına birkaç görsel
     id INTEGER PRIMARY KEY,
-    etsy_listing_id TEXT NOT NULL UNIQUE,
+    etsy_listing_id TEXT NOT NULL,
+    gorsel_sira INTEGER NOT NULL DEFAULT 0,  -- ilan galerisindeki sıra (0 vitrin mockup'ı, 1 baskı yakın planı, 2 başka renk)
     tasarim_id INTEGER, urun TEXT,
     gorsel_url TEXT NOT NULL, baslik TEXT NOT NULL, aciklama TEXT, pano TEXT NOT NULL, anahtar TEXT,
     durum TEXT NOT NULL,              -- bekliyor | verildi (CSV'ye girdi, yayın saati atandı) | atlandi (ilan yayından kalktı)
-    yayin TEXT, dosya TEXT, olusturma TEXT
+    yayin TEXT, dosya TEXT, olusturma TEXT,
+    UNIQUE (etsy_listing_id, gorsel_sira)
 );
 CREATE TABLE IF NOT EXISTS tiktok_video (     -- TikTok videoları (tiktok.py K-34, giyim.py K-35): tasarım başına tür başına bir
     id INTEGER PRIMARY KEY,
@@ -167,6 +169,17 @@ def baglan(yol: Path | str | None = None, thread_serbest: bool = False) -> sqlit
                FROM video"""
         )
         c.execute("DROP TABLE video")
+        c.commit()
+    # 2026-10-18 (K-36): `pin` ilan başına tek pinden ilan başına birkaç görsele: UNIQUE(etsy_listing_id) kalkar, tablo yeniden kurulur.
+    if "gorsel_sira" not in {r[1] for r in c.execute("PRAGMA table_info(pin)")}:
+        c.execute("ALTER TABLE pin RENAME TO pin_eski")
+        c.executescript(SEMA)
+        c.execute(
+            """INSERT INTO pin (id, etsy_listing_id, gorsel_sira, tasarim_id, urun, gorsel_url, baslik, aciklama, pano, anahtar, durum,
+                 yayin, dosya, olusturma) SELECT id, etsy_listing_id, 0, tasarim_id, urun, gorsel_url, baslik, aciklama, pano, anahtar,
+                 durum, yayin, dosya, olusturma FROM pin_eski"""
+        )
+        c.execute("DROP TABLE pin_eski")
         c.commit()
     return c
 

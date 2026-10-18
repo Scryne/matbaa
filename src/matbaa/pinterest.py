@@ -4,10 +4,13 @@ Neden CSV: Pinterest API'sinin deneme erişiminde açılan pinler yalnız sahibi
 inceleme ister; Pinterest'in kendi "bulk create Pins" aracı ise işletme hesabında CSV ile 200 pine kadar yükler (help.pinterest.com
 "Bulk upload Pins", 2026-10-15 okundu). Görsel, Etsy'nin herkese açık ilan görselidir (`url_fullxfull`): ayrı barındırma yok.
 
-Akış: günlük koşu yeni aktif ilanları `pin` kuyruğuna ekler (`kuyruga_ekle`, ilan başına bir pin). Panodaki "CSV indir" o an
-bekleyen pinlere yarından başlayarak yayın saati verir (`csv_uret`) ve onları `verildi` sayar; Scryne dosyayı Pinterest'e yükler.
-Tempo günde `GUNLUK` pin, en çok `GUN` gün ileri: yeni hesaba önerilen 1-5 pin/gün aralığı (resmî sınır yok; aynı siteden hızlı
-çok pin geçici engel sebebi) ve Pinterest'in "iki hafta önceden zamanla" sınırı.
+Akış: günlük koşu yeni aktif ilanları `pin` kuyruğuna ekler (`kuyruga_ekle`, ilan başına `PIN_GORSELLERI` kadar pin). Panodaki
+"CSV indir" o an bekleyen pinlere yarından başlayarak yayın saati verir (`csv_uret`) ve onları `verildi` sayar; Scryne dosyayı
+Pinterest'e yükler. Tempo günde `GUNLUK` pin, en çok `GUN` gün ileri (Pinterest'in "iki hafta önceden zamanla" sınırı).
+
+K-36 (2026-10-18): 5 günde 20 ilana 6 görüntülenme. Pinterest'in önerisi ilan başına birkaç "taze" pin (farklı görsel): her ilan
+vitrin mockup'ı, baskı yakın planı ve başka renkle üç pin verir, başlıklar ilan başlığının bölümleri döndürülerek farklılaşır.
+Tempo 3 → 6 pin/gün (resmî sınır yok; ardışık iki pin aynı tasarımdan değil, önce her ilanın ilk pini gider).
 """
 
 from __future__ import annotations
@@ -20,9 +23,11 @@ from datetime import UTC, date, datetime, time, timedelta
 
 from matbaa import db
 
-GUNLUK = 3
+GUNLUK = 6
 GUN = 14
-SAATLER = (time(13, 0), time(18, 0), time(23, 30))  # UTC: ABD doğu yakası sabah 9, öğleden sonra 2, akşam 7:30
+# UTC: ABD doğu yakası sabah 8'den akşam 7:30'a
+SAATLER = (time(12, 0), time(14, 0), time(16, 0), time(18, 0), time(20, 0), time(23, 30))
+PIN_GORSELLERI = (0, 1, 2)  # ilan galerisindeki sıralar: vitrin mockup'ı, baskı yakın planı, başka renk
 BASLIK_MAKS, ACIKLAMA_MAKS = 100, 500
 SUTUNLAR = ["Title", "Media URL", "Pinterest board", "Thumbnail", "Description", "Link", "Publish date", "Keywords"]
 ILAN_URL = "https://www.etsy.com/listing/{}"
@@ -48,6 +53,13 @@ def pano_adi(nis: str, urun: str) -> str:
     return f"{bolum} Gifts"
 
 
+def baslik(ilan_baslik: str, gorsel_sira: int) -> str:
+    """Aynı ilanın pinleri aynı başlığı taşımaz: ilan başlığının virgüllü bölümleri sıra kadar döndürülür."""
+    parcalar = [p.strip() for p in ilan_baslik.split(",") if p.strip()]
+    k = gorsel_sira % len(parcalar) if parcalar else 0
+    return _kisalt(", ".join(parcalar[k:] + parcalar[:k]) or ilan_baslik, BASLIK_MAKS)
+
+
 def aciklama(ilan_aciklama: str) -> str:
     """İlanın ilk paragrafı (satış cümlesi), sonuna çağrı; teknik bölümler (bakım, AI beyanı) pine girmez."""
     ilk = re.split(r"\n\s*\n", ilan_aciklama.strip(), maxsplit=1)[0]
@@ -56,39 +68,43 @@ def aciklama(ilan_aciklama: str) -> str:
 
 
 def kuyruga_ekle(c, etsy, sinir: int = 40, yazdir=print) -> dict:
-    """Pini olmayan aktif ilanlar → `pin` kuyruğu (ilk görsel: vitrin mockup'ı). Görsel adresi Etsy'den (ilan başına 1 istek)."""
+    """Pinleri eksik aktif ilanlar → `pin` kuyruğu, ilan başına `PIN_GORSELLERI` sıralarındaki görseller (galeri kısaysa olan kadar).
+    Görsel adresleri Etsy'den (ilan başına 1 istek)."""
     sayac = {"eklenen": 0, "hata": 0}
     for r in c.execute(
         """SELECT u.tasarim_id, u.urun, u.etsy_listing_id, i.nis, il.baslik, il.aciklama, il.etiketler FROM urun u
            JOIN tasarim t ON t.id = u.tasarim_id JOIN ifade i ON i.id = t.ifade_id
            JOIN ilan il ON il.tasarim_id = u.tasarim_id AND il.urun = u.urun
            WHERE u.durum = 'aktif' AND u.etsy_listing_id IS NOT NULL
-             AND NOT EXISTS (SELECT 1 FROM pin p WHERE p.etsy_listing_id = u.etsy_listing_id)
+             AND (SELECT count(*) FROM pin p WHERE p.etsy_listing_id = u.etsy_listing_id) < ?
            ORDER BY u.guncelleme LIMIT ?""",
-        (sinir,),
+        (len(PIN_GORSELLERI), sinir),
     ).fetchall():
         try:
+            var = {s for (s,) in c.execute("SELECT gorsel_sira FROM pin WHERE etsy_listing_id = ?", (str(r["etsy_listing_id"]),))}
             gorseller = etsy.ilan_gorselleri(int(r["etsy_listing_id"]))
-            if not gorseller:
-                continue
-            g = gorseller[0]
-            c.execute(
-                """INSERT INTO pin (etsy_listing_id, tasarim_id, urun, gorsel_url, baslik, aciklama, pano, anahtar, durum, olusturma)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'bekliyor', ?)""",
-                (
-                    str(r["etsy_listing_id"]),
-                    r["tasarim_id"],
-                    r["urun"],
-                    g.get("url_fullxfull") or g["url_570xN"],
-                    _kisalt(r["baslik"], BASLIK_MAKS),
-                    aciklama(r["aciklama"]),
-                    pano_adi(r["nis"], r["urun"]),
-                    ",".join(json.loads(r["etiketler"] or "[]")[:8]),
-                    datetime.now(UTC).isoformat(timespec="seconds"),
-                ),
-            )
+            for sira in PIN_GORSELLERI:
+                if sira in var or sira >= len(gorseller):
+                    continue
+                g = gorseller[sira]
+                c.execute(
+                    """INSERT INTO pin (etsy_listing_id, gorsel_sira, tasarim_id, urun, gorsel_url, baslik, aciklama, pano, anahtar,
+                         durum, olusturma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'bekliyor', ?)""",
+                    (
+                        str(r["etsy_listing_id"]),
+                        sira,
+                        r["tasarim_id"],
+                        r["urun"],
+                        g.get("url_fullxfull") or g["url_570xN"],
+                        baslik(r["baslik"], sira),
+                        aciklama(r["aciklama"]),
+                        pano_adi(r["nis"], r["urun"]),
+                        ",".join(json.loads(r["etiketler"] or "[]")[:8]),
+                        datetime.now(UTC).isoformat(timespec="seconds"),
+                    ),
+                )
+                sayac["eklenen"] += 1
             c.commit()
-            sayac["eklenen"] += 1
         except Exception as e:  # görsel okunamadıysa ertesi gün yeniden denenir
             sayac["hata"] += 1
             yazdir(f"  pin hata {r['tasarim_id']}/{r['urun']}: {type(e).__name__}: {str(e)[:120]}")
@@ -96,7 +112,8 @@ def kuyruga_ekle(c, etsy, sinir: int = 40, yazdir=print) -> dict:
 
 
 def _sirala(pinler: list) -> list:
-    """Ardışık iki pin aynı tasarımdan olmasın (aynı ürünün varyantlarını art arda atmak spam sayılabilir)."""
+    """Ardışık iki pin aynı tasarımdan olmasın (aynı ürünün varyantlarını art arda atmak spam sayılabilir). Tasarım içinde önce
+    ilanların ilk pinleri: yeni ilan Pinterest'te görünmek için ek görsellerin sırasını beklemez."""
     gruplar: dict[int, list] = {}
     for p in pinler:
         gruplar.setdefault(p["tasarim_id"], []).append(p)
@@ -151,7 +168,7 @@ def csv_uret(c, simdi: datetime | None = None) -> tuple[str, bytes, int]:
     dolu = datetime.fromisoformat(son).date() + timedelta(days=1) if son else yarin
     bas = max(yarin, dolu)
     yer = GUNLUK * max((simdi.date() + timedelta(days=GUN) - bas).days + 1, 0)
-    pinler = _sirala([dict(r) for r in c.execute("SELECT * FROM pin WHERE durum = 'bekliyor' ORDER BY id")])[:yer]
+    pinler = _sirala([dict(r) for r in c.execute("SELECT * FROM pin WHERE durum = 'bekliyor' ORDER BY gorsel_sira, id")])[:yer]
     dosya = f"pinterest-{simdi:%Y%m%d-%H%M}.csv"
     for p, s in zip(pinler, slotlar(bas, len(pinler)), strict=False):
         p["yayin"] = s.strftime("%Y-%m-%dT%H:%M:%S")

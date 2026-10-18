@@ -188,7 +188,7 @@ def test_metin_llm_hatasi_kuyrugu_durdurmaz(tmp_path, monkeypatch):
         db.gecis(c, db.tasarim_ekle(c, i, "yigin", []), "kalite_ok")
     c.commit()
 
-    def yaz(satirlar, nis, urun):
+    def yaz(satirlar, nis, urun, cizim=None):
         if satirlar == ["S0"]:
             raise TimeoutError("claude 240 sn'de bitmedi")
         return _ilan("Funny Fishing Shirt")

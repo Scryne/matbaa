@@ -430,13 +430,14 @@ def yayinla(c, p: pf.Printify, yazdir=print, etsy=None) -> dict:
     if kalan <= 0:  # yeni tasarım yok; yayındaki tasarımlara sonradan eklenen ürün (süs) yine açılır
         yazdir(f"  günlük sınır doldu ({sayac['sinir']} tasarım, mağaza yaşı {magaza_yasi(c)} gün)")
     katalog, ycfg = urunler(), ayar()["printify"]
-    # Koşullu ürün (kupa, süs) yalnız bekleyen satırı varsa eşleme ister: eşlenmemiş kupa tişört yayınını durdurmasın.
+    # Koşullu ürün (kupa, süs) ve ayrı türden ürün (çizimli, K-37) yalnız bekleyen satırı varsa eşleme ister: eşlenmemiş
+    # kupa tişört yayınını durdurmasın.
     bekleyen = {r[0] for r in c.execute("SELECT DISTINCT urun FROM urun WHERE durum IN ('bekliyor', 'olusturuldu', 'hata')")}
     eksik = [
         u
         for u in katalog
         if not ycfg.get(u, {}).get("blueprint_id")
-        and (not (katalog[u].get("yalniz_satan") or katalog[u].get("kosul")) or u in bekleyen)
+        and (not (katalog[u].get("yalniz_satan") or katalog[u].get("kosul") or katalog[u].get("tur")) or u in bekleyen)
     ]
     if eksik:
         raise RuntimeError(f"Printify kataloğu eşlenmemiş: {eksik} → `uv run matbaa printify-kesif`, sonra config/yayin.toml")
@@ -447,6 +448,7 @@ def yayinla(c, p: pf.Printify, yazdir=print, etsy=None) -> dict:
     # talebi tişörtün 2-4 katı). Zaten yayında olan tasarıma sonradan eklenen ürün (süs) tasarım sınırından değil, ayrı
     # `EK_URUN_GUNLUK` sınırından pay alır: yeni tasarım akışını durdurmaz.
     mevsimlik = json.dumps([u for u, p_ in katalog.items() if p_.get("kosul")])
+    izinli = set(ayar().get("yayin_nisleri") or [])  # K-37: boş değilse yalnız bu nişlerin tasarımları (ve ek ürünleri)
     adaylar = [
         (t, b)
         for t in c.execute(
@@ -456,7 +458,7 @@ def yayinla(c, p: pf.Printify, yazdir=print, etsy=None) -> dict:
                  AND u.urun IN (SELECT value FROM json_each(?))) DESC, t.durum_zamani""",
             (mevsimlik,),
         ).fetchall()
-        if (b := [(u, a) for u, a in _yayin_bekleyen(c, t["id"]) if mevsimde(u)])
+        if (not izinli or t["nis"] in izinli) and (b := [(u, a) for u, a in _yayin_bekleyen(c, t["id"]) if mevsimde(u)])
     ]
     yeni = [x for x in adaylar if x[0]["durum"] == "onaylandi"][: max(kalan, 0)]
     ek = [x for x in adaylar if x[0]["durum"] == "yayinda"][:EK_URUN_GUNLUK]

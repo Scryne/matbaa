@@ -1,6 +1,16 @@
 # Yayın ısınma eğrisi: yeni Etsy mağazasında ani toplu ilan ödeme bekletmesi ve askı riskini artırır (araştırma 01, S7).
 # Satırlar: [başlangıç günü, bitiş günü, günlük en çok TASARIM]. Her tasarım urunler.toml'daki her ürüne dönüşür (şu an 3 ilan).
-isinma = [[0, 7, 1], [7, 21, 2], [21, 45, 4], [45, 90, 6], [90, 100000, 8]]
+# K-37 (2026-10-18): yeni tasarım yayını durdu. Scryne eski tasarım dilini satmaz buldu ("kimse almaz"); onaylı kuyruk yayına girmez,
+# yeni dil (trend verisiyle) gelince eğri geri açılır. Önceki (K-36): [[0, 21, 3], [21, 45, 4], [45, 90, 6], [90, 100000, 8]]
+# İlk çizimli parti tek seferde (12 tasarım): para sınırı tavanlar.toml'da.
+# İlk çizimli parti (12 tasarım, 24 ilan) 2026-10-18'de açıldı; 2 haftalık ölçüme kadar yeni yayın yok (K-37).
+isinma = [[0, 100000, 0]]
+# K-37: yazılı (tipografik) motorla yeni ifade/tasarım üretilmez; yayına yalnız bu nişlerin tasarımları girer (boş = hepsi).
+# Çizimli hat (cizim.py) kendi kavram listesinden üretir. Eski onaylı kuyruk yerinde durur, yayınlanmaz.
+tipografik_uretim = false
+# K-37: giyilmiş ürün videosu (K-35) günlük hatta kapalı: her gün ~20 dk GPU ve ~11 GB RAM; bellek darlığında koşu düşüyordu.
+giyim_videosu = false
+yayin_nisleri = ["cozy_christmas"]
 # Star Seller olduktan sonra elle yükseltilebilir; mağaza yaşı ilk yayın gününden sayılır.
 
 [printify]
@@ -12,6 +22,8 @@ kupa = { blueprint_id = 478, saglayici_id = 39 }   # Ceramic Mug 11/15oz, SwiftP
 susleme = { blueprint_id = 1632, saglayici_id = 39 }   # K-30: Ceramic Decoration Ornament (1pc), SwiftPOD; yuvarlak, iki yüz
 isimli_susleme = { blueprint_id = 1632, saglayici_id = 39 }   # Faz 11: aynı süs; ilan doğrudan Etsy API, sipariş Printify API (isimli.py)
 hoodie = { blueprint_ara = "Gildan 18500", blueprint_id = 77, saglayici_id = 410 }           # Printful, NC
+tisort_cizim = { blueprint_ara = "Comfort Colors 1717", blueprint_id = 706, saglayici_id = 29 }   # K-37: tisort ile aynı
+sweatshirt_cizim = { blueprint_ara = "Gildan 18000", blueprint_id = 49, saglayici_id = 39 }       # K-37: sweatshirt ile aynı
 
 [etsy]
 # K-27: "api" = kendi Etsy uygulamamızla eşleme (aşağıdaki iki kimlik); "elle" = API onayı gelmeden yedek yol: Printify yayınlar,

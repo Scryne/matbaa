@@ -1,0 +1,113 @@
+# K-37 (2026-10-18): çizimli hattın kavram listesi. Kaynak: Etsy API trend ölçümü (son 90 günde en hızlı görüntülenen yeni
+# giyim ilanları + Noel giyiminde en çok favorilenen ilanlar): sevimli karakter, kış/Noel, kahve/kitap/köpek/kedi/meslek esprisi.
+# Kurallar: karakter özgün (çizgi film/film/marka karakteri yok), yazı IP kapısından geçer (USPTO + Jev), çizime yazı girmez
+# (yazıyı motor fonttan dizer). `ust` kavisli üst satır, `alt` düz alt satır; `dolgu` yazının iç rengi (dış çizgi çizimden).
+# Fontlar varliklar/fontlar (OFL). Yeni kavram eklemek: blok ekle, `uv run matbaa cizim --kavram <ad>`.
+
+[[kavram]]
+ad = "snowman_coffee"
+konu = "A chubby happy snowman in a chunky knitted rust-orange scarf holding a big iced coffee cup with a straw"
+ust = "COLD OUTSIDE"
+alt = "ICED COFFEE INSIDE"
+dolgu = "#c4772f"
+font_ust = "LilitaOne-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "raccoon_cocoa"
+konu = "A cute chubby raccoon wearing a red Santa hat hugging a mug of hot cocoa with marshmallows"
+ust = "HOT COCOA"
+alt = "BANDIT"   # "TRASH PANDA" canlı USPTO markası (99821300), IP kapısı reddetti
+dolgu = "#c0392b"
+font_ust = "Shrikhand-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "books_tree"
+konu = "A tall stack of colorful vintage books with a tiny decorated Christmas tree on top and warm string lights wrapped around the stack"
+ust = "BOOKED FOR"
+alt = "THE HOLIDAYS"
+dolgu = "#c8553d"
+font_ust = "Shrikhand-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "dachshund_lights"
+konu = "A cute smiling dachshund dog tangled in colorful Christmas string lights"
+ust = "MERRY"
+alt = "DOXMAS"   # "DECK THE PAWS" şarkı göndermesi (Jev 0.86), reddedildi
+dolgu = "#e8823a"
+font_ust = "TitanOne-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "penguin_blanket"
+konu = "A tiny round penguin wrapped in a chunky knit blanket holding a steaming mug of coffee"
+ust = "ALWAYS"
+alt = "COLD"
+dolgu = "#7fb3d5"
+font_ust = "TitanOne-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "cat_tree"
+konu = "A mischievous fluffy orange tabby cat sitting proudly inside a small decorated Christmas tree, holding a red ornament in its mouth"
+ust = "NOT SORRY"
+alt = "ABOUT THE TREE"   # "OH CHRISTMAS TREE" şarkı adı, Jev riskli buldu
+dolgu = "#2e7d4f"
+font_ust = "Shrikhand-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "nurse_gingerbread"
+konu = "A cute smiling gingerbread cookie wearing light blue medical scrubs and a stethoscope, holding a small coffee cup"
+ust = "JINGLE ALL"
+alt = "THE SHIFT"
+dolgu = "#4f9fb8"
+font_ust = "TitanOne-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "teacher_cookies"
+konu = "A baking tray of cute smiling gingerbread cookies wearing tiny round glasses, with a red apple and a yellow pencil next to the tray"
+ust = "TEACHING MY"
+alt = "SMART COOKIES"
+dolgu = "#c0392b"
+font_ust = "Shrikhand-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "golden_santa"
+konu = "A happy fluffy golden retriever puppy wearing a red Santa hat, sitting next to a small wrapped present with a green bow"
+ust = "MERRY"
+alt = "WOOFMAS"
+dolgu = "#c0392b"
+font_ust = "TitanOne-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "cozy_cocoa"
+konu = "A cozy still life: a steaming mug of hot cocoa with marshmallows, a stack of two books, a lit candle and a chunky knit blanket"
+ust = "COZY"
+alt = "SEASON"
+dolgu = "#b5523b"
+font_ust = "Shrikhand-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "highland_holly"
+konu = "A cute fluffy highland cow calf with a long ginger fringe wearing a holly wreath with red berries on its head"
+ust = "MERRY"
+alt = "MOOMAS"   # "HOLLY JOLLY" canlı USPTO markası (76396142), reddedildi
+dolgu = "#b5651d"
+font_ust = "Shrikhand-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"
+
+[[kavram]]
+ad = "frog_mushroom"
+konu = "A cute little green frog wearing a red knitted scarf and a tiny Santa hat sitting on a red spotted mushroom"
+ust = "TOAD-ALLY"
+alt = "FESTIVE"
+dolgu = "#5a8f3d"
+font_ust = "TitanOne-Regular.ttf"
+font_alt = "TitanOne-Regular.ttf"

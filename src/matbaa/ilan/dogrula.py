@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from matbaa.ilan.metin import AI_BEYANI, URETIM_ORTAGI, Ilan
+from matbaa.ilan.metin import AI_BEYANI, AI_BEYANI_CIZIM, URETIM_ORTAGI, Ilan
 
 BASLIK_MAKS = 140
 BASLIK_KELIME = 15
@@ -100,7 +100,7 @@ def dogrula(ilan: Ilan) -> Ilan:
     if len(etiketler) < ETIKET_SAYI:
         sorunlar.append(f"{len(etiketler)} geçerli etiket (13 gerekli)")
 
-    if AI_BEYANI not in ilan.aciklama:
+    if AI_BEYANI not in ilan.aciklama and AI_BEYANI_CIZIM not in ilan.aciklama:  # yazılı ya da çizimli (K-37) tasarım
         sorunlar.append("AI beyanı yok")
     if URETIM_ORTAGI not in ilan.aciklama:
         sorunlar.append("üretim ortağı cümlesi yok")

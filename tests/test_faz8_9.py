@@ -140,6 +140,8 @@ def gunluk_ortam(tmp_path, monkeypatch):
     monkeypatch.setattr(bildirim, "goster", lambda b, m, yazdir=None: gosterilen.append((b, m)))
     uretilen = []
     monkeypatch.setattr(hat, "uret", lambda n, adet, c, yazdir: uretilen.append(n) or {"tasarim": 0})
+    gercek = yayin.ayar()  # canlı ayarda yazılı üretim kapalı olabilir (K-37); bu testler yazılı üretim hattını sınar
+    monkeypatch.setattr(yayin, "ayar", lambda: {**gercek, "tipografik_uretim": True})
     return hat, gosterilen, uretilen, tmp_path
 
 

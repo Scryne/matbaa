@@ -1,8 +1,7 @@
 {
   "proje_adi": "Matbaa",
   "asama": "uygulama",
-  "guncellendi": "2026-10-16",
+  "guncellendi": "2026-10-18",
   "roadmap": "docs/Roadmap.md",
-  "duraklatildi": "2026-10-16",
-  "duraklatma_nedeni": "Scryne: 20 ilan canlı, hiçbiri görünmedi; yeni ilan üretimi durdu, Matbaa-Gunluk görevi devre dışı"
+  "yeniden_basladi": "2026-10-18"
 }

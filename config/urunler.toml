@@ -164,3 +164,53 @@ istem_notu = "This is a PERSONALIZED dated Christmas keepsake ornament: the buye
 kisisel = { soru = "Name", aciklama = "Name to print under the design, up to 14 characters. We print it exactly as you type it.", maks = 14 }
 ornek_isimler = ["Grandpa Joe", "Emma", "Dad"]
 kosul = { nisler = ["fishing", "running", "knitting"], mevsim_kelimesi = true, bas = "09-15", son = "12-07", kapanis = "12-26" }
+
+[tisort_cizim]
+# K-37 (2026-10-18): çizimli tasarım (FLUX.2 klein çizimi + vektör yazı, cizim.py) için tişört. Çizimin koyu dış çizgisi koyu
+# kumaşta kaybolur: yalnız açık renkler. Fiyat $29.99 (net $5.54, Offsite ~$0.1): ücretsiz kargolu Comfort Colors rakipleri
+# $25-31 (trend ölçümü 2026-10-18); $33.99 bandın üstündeydi.
+ad = "Comfort Colors 1717 Garment-Dyed Tee"
+blank = "Comfort Colors 1717"
+etsy_turu = "T-shirt"
+# Etsy öznitelikleri (ilan/oznitelik.py; ad ve değerler Etsy'nin adlarıyla). Primary color = vitrin rengi (ilk fotoğraf).
+oznitelik = { "Primary color" = ["Yellow"], "Sleeve length" = ["Short sleeve"], "Neckline" = ["Crew"], "Materials" = ["Cotton"] }
+vitrin_rengi = "Butter"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
+fiyat = 29.99
+kargo = 0.0
+buyuk_beden_ek = { "2XL" = 2.00, "3XL" = 4.50 }   # Monster Digital: 2XL +$1.24, 3XL +$3.40
+bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
+tahmini_maliyet = 13.04    # Monster Digital (29)
+tahmini_abd_kargo = 4.49
+renkler = [   # Monster Digital'de "Sage" ve "True Navy" yok (K-24): Navy onun yerine
+  { ad = "White", murekkep = "koyu", hex = "#ffffff" },
+  { ad = "Ivory", murekkep = "koyu", hex = "#f0e8d6" },
+  { ad = "Butter", murekkep = "koyu", hex = "#f3dfa2" },
+]
+# Ölçüler (Comfort Colors 1717 teknik föyü, ikincil iki kaynakla aynı, araştırma 2026-10-13): beden tablosu görseli (ilan/gorsel.py)
+olculer = { kesim = "relaxed unisex fit", sutunlar = ["SIZE", "WIDTH (IN)", "LENGTH (IN)"], satirlar = [["S", "18.25", "26.6"], ["M", "20.25", "28"], ["L", "22", "29.4"], ["XL", "24", "30.75"], ["2XL", "26", "31.6"], ["3XL", "27.75", "32.5"]], notlar = ["MEASURED FLAT: WIDTH 1 INCH BELOW THE ARMPITS, LENGTH FROM SHOULDER TO HEM", "MEASUREMENTS CAN VARY BY UP TO 1 INCH"] }
+detay = "Garment-dyed, heavyweight 100% ring-spun cotton (6.1 oz) with a soft, lived-in feel and relaxed fit."
+tur = "cizim"   # yalnız `cizimli` nişlerin tasarımlarına açılır (fiyat.urun_uygun)
+
+[sweatshirt_cizim]
+# K-37: çizimli tasarım sweatshirt'ü, yalnız açık renkler. Fiyat $42.99 (net $6.63, Offsite −$1.11): Noel sweatshirt'lerinde
+# alıcı toplamı çoğunlukla $30-45; $48.99 bandın üstündeydi. Offsite atfı zarar ama yeni mağazaya dış trafik getiriyor.
+ad = "Gildan 18000 Crewneck Sweatshirt"
+blank = "Gildan 18000"
+etsy_turu = "Sweatshirt"
+oznitelik = { "Primary color" = ["Beige"], "Sleeve length" = ["Long sleeve"], "Clothing closure" = ["Pullover"], "Materials" = ["Cotton", "Polyester"] }
+vitrin_rengi = "Sand"   # ilk ilan görseli: beyaz Etsy sayfasında beyaz tişört silik kalıyordu (2026-10-13)
+fiyat = 42.99
+kargo = 0.0
+buyuk_beden_ek = { "2XL" = 4.00, "3XL" = 5.50 }   # SwiftPOD: 2XL +$2.80, 3XL +$4.18
+bedenler = ["S", "M", "L", "XL", "2XL", "3XL"]
+tahmini_maliyet = 18.70    # SwiftPOD (39)
+tahmini_abd_kargo = 7.99
+renkler = [
+  { ad = "White", murekkep = "koyu", hex = "#ffffff" },
+  { ad = "Sand", murekkep = "koyu", hex = "#d9c7a6" },
+  { ad = "Light Pink", murekkep = "koyu", hex = "#f2c9cf" },
+]
+# Ölçüler (Gildan 18000, birden çok satıcı tablosu aynı, araştırma 2026-10-13): beden tablosu görseli (ilan/gorsel.py)
+olculer = { kesim = "classic unisex fit", sutunlar = ["SIZE", "WIDTH (IN)", "LENGTH (IN)"], satirlar = [["S", "20", "27"], ["M", "22", "28"], ["L", "24", "29"], ["XL", "26", "30"], ["2XL", "28", "31"], ["3XL", "30", "32"]], notlar = ["MEASURED FLAT: WIDTH 1 INCH BELOW THE ARMPITS, LENGTH FROM SHOULDER TO HEM", "MEASUREMENTS CAN VARY BY UP TO 1 INCH"] }
+detay = "Classic crewneck in a 50/50 cotton-poly blend, soft fleece inside, ribbed cuffs and waistband."
+tur = "cizim"   # yalnız `cizimli` nişlerin tasarımlarına açılır (fiyat.urun_uygun)

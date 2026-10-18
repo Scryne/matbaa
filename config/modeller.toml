@@ -8,3 +8,12 @@ zaman_asimi_sn = 30
 [claude]
 # Başsız `claude -p` (K-14): ifade ve ilan metni. Takma ad; Claude Code çözümler.
 model = "sonnet"
+
+[cizim]
+# K-37: çizimli tasarım (cizim.py), yerel ComfyUI. FLUX.2 [klein] 4B distilled, Apache-2.0 (9B ve dev ağırlıkları ticari değil:
+# kullanılmaz). 4 adım, cfg 1; RTX 4060 8 GB'ta 1536 px aday ~13 sn.
+unet = "flux-2-klein-4b-fp8.safetensors"
+metin_kodlayici = "qwen_3_4b.safetensors"
+vae = "flux2-vae.safetensors"
+adim = 4
+boyut = 1536

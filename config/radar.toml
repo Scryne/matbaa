@@ -11,7 +11,7 @@ adaylar = [
   "drummer", "guitar", "choir", "dance mom", "cheer mom", "baseball mom", "soccer mom", "softball mom", "volleyball mom",
   "hockey mom", "wrestling mom", "uncle", "godfather", "new dad", "retirement", "pharmacist", "dental hygienist",
 ]
-mevcut = ["fishing", "pickleball", "knitting", "running", "aunt", "milestone birthday", "senior mom", "band mom", "bowling"]   # config/nisler.toml'un her nişi (test_radar denetler); 2026-10-13: band mom ve bowling radardan nişe geçti; crochet knitting kartında
+mevcut = ["fishing", "pickleball", "knitting", "running", "aunt", "milestone birthday", "senior mom", "band mom", "bowling", "cozy christmas"]   # 2026-10-18: cozy_christmas (K-37, çizimli); config/nisler.toml'un her nişi (test_radar denetler); 2026-10-13: band mom ve bowling radardan nişe geçti; crochet knitting kartında
 ek = "shirt"
 ust_ilan = 100        # talep ölçülen üst ilan sayısı (score sıralı, alıcının gördüğü)
 min_yas_gun = 14      # bundan genç ilanın görüntülenme hızı gürültülü: hesaba girmez

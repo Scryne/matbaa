@@ -155,10 +155,10 @@ def _etiket_suz(etiketler: list[str]) -> tuple[list[str], list[str]]:
     return temiz, atilan
 
 
-def _ilan_yaz(satirlar: list[str], nis: str, urun: str) -> ilan_metin.Ilan:
+def _ilan_yaz(satirlar: list[str], nis: str, urun: str, cizim: str | None = None) -> ilan_metin.Ilan:
     son = None
     for _ in range(2):
-        i = ilan_metin.olustur(satirlar, nis, urun)
+        i = ilan_metin.olustur(satirlar, nis, urun, cizim)
         i.etiketler, atilan = _etiket_suz(i.etiketler)
         if len(i.etiketler) < 13:  # niş kartının yedek etiketleriyle tamamla (onlar da marka süzgecinden geçer)
             yedek, _ = _etiket_suz([t for t in ifade_uret.nisler()[nis].get("yedek_etiketler", []) if t not in i.etiketler])
@@ -180,17 +180,22 @@ def metin(c=None, sinir: int = 50, yazdir=print) -> dict:
     c = c or db.baglan()
     sayac = {"tasarim": 0, "ilan": 0, "ret": 0}
     satirlar = c.execute(
-        "SELECT t.id, i.satirlar, i.nis FROM tasarim t JOIN ifade i ON i.id = t.ifade_id WHERE t.durum = 'kalite_ok' ORDER BY t.id LIMIT ?",
+        "SELECT t.id, i.satirlar, i.nis, i.yapi FROM tasarim t JOIN ifade i ON i.id = t.ifade_id WHERE t.durum = 'kalite_ok' ORDER BY t.id LIMIT ?",
         (sinir,),
     ).fetchall()
-    for t_id, sat, nis in satirlar:
+    for t_id, sat, nis, yapi in satirlar:
         s = json.loads(sat)
+        cizim = json.loads(yapi or "{}").get("cizim")  # K-37: çizimli tasarımda çizimin konusu ilan metnine girer
         # Kupa yalnız satan tasarıma (Faz 14, yayin.kupa_ac); süs mevsiminde ve uygun nişte (K-30).
         urun_adlari = tasarim_urunleri(nis, s)
         try:
             with ThreadPoolExecutor(len(urun_adlari)) as havuz:
                 ilanlar = dict(
-                    zip(urun_adlari, havuz.map(lambda u, s=s, nis=nis: _ilan_yaz(s, nis, u), urun_adlari), strict=True)
+                    zip(
+                        urun_adlari,
+                        havuz.map(lambda u, s=s, nis=nis, cizim=cizim: _ilan_yaz(s, nis, u, cizim), urun_adlari),
+                        strict=True,
+                    )
                 )
         except Exception as e:  # claude -p zaman aşımı/çıkış hatası: bu tasarımın denemesi sayılır, kuyruğun geri kalanı sürer
             ilanlar, sorunlu = {}, {"llm": [f"{type(e).__name__}: {str(e)[:200]}"]}
@@ -384,6 +389,9 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
     elif not uspto_tamam:
         nis_sayisi = 0
         yazdir("marka verisi kullanılamıyor: bugün yeni üretim yok")
+    elif not yayin.ayar().get("tipografik_uretim", True):
+        nis_sayisi = 0
+        yazdir("yazılı (tipografik) üretim kapalı (K-37): bugün yeni ifade üretilmez")
     # Faz 13: niş sırası mağaza verisinden (ilan başına satış/favori/görüntülenme + keşif payı); veri azken kuyrukta en az
     # tasarımı olan niş önce (dengeli büyüme).
     sayim = dict(
@@ -392,7 +400,10 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
                WHERE t.durum IN ('kalite_ok', 'metin_ok', 'onay_bekliyor', 'onaylandi') GROUP BY i.nis"""
         ).fetchall()
     )
-    for n in performans.uretim_sirasi(c, list(ifade_uret.nisler()), sayim)[:nis_sayisi]:
+    yazili = [
+        n for n, k in ifade_uret.nisler().items() if not k.get("cizimli")
+    ]  # çizimli niş kavram listesinden üretir (cizim.py)
+    for n in performans.uretim_sirasi(c, yazili, sayim)[:nis_sayisi]:
         yazdir(f"== {n}")
         _adim(rapor, f"uret_{n}", lambda n=n: uret(n, adet, c, yazdir), yazdir)
     _adim(rapor, "metin", lambda: metin(c, yazdir=yazdir), yazdir)
@@ -423,7 +434,8 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             _adim(rapor, "pinterest", lambda: pinterest.kuyruga_ekle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "tiktok", lambda: tiktok.hazirla(c, e, yazdir=yazdir), yazdir)  # K-34: yeni yayındaki tasarıma video
             # K-35: insan üstünde video (yerel ComfyUI, ~20 dk GPU); kurulu değilse adım kendini atlar
-            _adim(rapor, "giyim", lambda: __import__("matbaa.giyim", fromlist=["giyim"]).hazirla(c, yazdir=yazdir), yazdir)
+            if yayin.ayar().get("giyim_videosu", True):
+                _adim(rapor, "giyim", lambda: __import__("matbaa.giyim", fromlist=["giyim"]).hazirla(c, yazdir=yazdir), yazdir)
             # Görüntülenme her gün: Faz 13 sıralaması ve haftalık rapor farkı bu anlık görüntülerden
             goruntu_tamam = (
                 _adim(rapor, "goruntu", lambda: haftalik_rapor.goruntu_al(c, e, datetime.now(UTC)), yazdir) is not None
@@ -543,6 +555,12 @@ def main(argv: list[str] | None = None) -> None:
     tk.add_argument("--tasarim", type=int, help="yalnız bu tasarım (varsa yeniden üretir)")
     tk.add_argument("--sinir", type=int, default=tiktok.GUNLUK)
     alt.add_parser("isimli", help="isimli süs siparişlerini şimdi işle (panelden isim düzeltmesinden sonra)")
+    cz = alt.add_parser("cizim", help="çizimli tasarım (K-37, yerel ComfyUI): config/cizim.toml kavramları → kalite_ok")
+    cz.add_argument("--kavram", action="append", help="kavram adı (tekrarlanabilir); verilmezse tasarımı olmayan hepsi")
+    cz.add_argument("--adet", type=int, default=4, help="kavram başına çizim adayı")
+    cs = alt.add_parser("cizim-sec", help="çizimli tasarımda başka bir geçen adayı baskı dosyası yap")
+    cs.add_argument("--tasarim", type=int, required=True)
+    cs.add_argument("--aday", type=int, required=True)
     pn = alt.add_parser("panel", help="yerel onay paneli (127.0.0.1)")
     pn.add_argument("--port", type=int, default=8766)
     a = p.parse_args(argv)
@@ -606,6 +624,15 @@ def main(argv: list[str] | None = None) -> None:
 
         sonuc = _tek_kosuda(lambda: isimli.siparisleri_isle(db.baglan(), Etsy(), Printify()))
         print(json.dumps(sonuc, ensure_ascii=False, indent=1))
+    elif a.komut == "cizim":
+        from matbaa import cizim
+
+        print(json.dumps(cizim.hazirla(db.baglan(), a.kavram, a.adet), ensure_ascii=False, indent=1))
+    elif a.komut == "cizim-sec":
+        from matbaa import cizim
+
+        cizim.sec(db.baglan(), a.tasarim, a.aday)
+        print(f"tasarım {a.tasarim}: aday {a.aday} baskı dosyası")
     elif a.komut == "panel":
         from matbaa.panel.app import calistir
 

@@ -102,7 +102,7 @@ def _goruntulenme(c, gun: int = 21) -> dict:
 
 def _ilanlar(c, gor: dict) -> list[dict]:
     adlar = {u: p["etsy_turu"] for u, p in fiyat.urunler().items()}
-    gorsel = {r[0]: r[1] for r in c.execute("SELECT etsy_listing_id, gorsel_url FROM pin")}
+    gorsel = {r[0]: r[1] for r in c.execute("SELECT etsy_listing_id, gorsel_url FROM pin WHERE gorsel_sira = 0")}
     sonuc = []
     for r in c.execute(
         """SELECT u.tasarim_id, u.urun, u.durum, u.etsy_listing_id, u.guncelleme, i.satirlar, i.nis, il.fiyat
@@ -189,6 +189,8 @@ URUN_AD = {
     "susleme": "Süs",
     "isimli_susleme": "İsimli süs",
     "kupa": "Kupa",
+    "tisort_cizim": "Çizimli tişört",
+    "sweatshirt_cizim": "Çizimli sweatshirt",
 }
 URUN_ADIM = {"aktif": ("yayına girdi", "iyi"), "bekliyor": ("ilan metni yazıldı", ""), "kaldirildi": ("yayından kalktı", "")}
 TASARIM_ADIM = {"onay_bekliyor": ("onaya geldi", ""), "onaylandi": ("onaylandı", "iyi"), "ret": ("reddedildi", "kotu")}

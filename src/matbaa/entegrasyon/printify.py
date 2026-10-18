@@ -57,12 +57,14 @@ def yerlesim(kutu: tuple[int, int, int, int], tuval: tuple[int, int], alan: tupl
 
 
 def kirp(png: Path) -> tuple[bytes, tuple[int, int, int, int], tuple[int, int]]:
-    img = Image.open(png).convert("RGBA")
+    kaynak = Image.open(png)
+    img = kaynak.convert("RGBA")
     kutu = img.getchannel("A").getbbox()
     if kutu is None:
         raise ValueError(f"{png}: boş baskı dosyası")
     b = io.BytesIO()
-    img.crop(kutu).save(b, "PNG", optimize=True, dpi=(300, 300))
+    # Paletli dosya (çizimli tasarım, K-37) paletli kırpılır: RGBA'ya açıp kaydetmek boyutu 5 MB sınırının üstüne geri çıkarır.
+    (kaynak if kaynak.mode == "P" else img).crop(kutu).save(b, "PNG", optimize=True, dpi=(300, 300))
     return b.getvalue(), kutu, img.size
 
 

@@ -29,15 +29,30 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 15 | Niş radarı (koşullu) | 🔄 Devam Ediyor | Faz 13 çalışınca: Etsy arama önerileri + mevsim takviminden yükselen hobi/meslek nişleri aday listesi; marka kapısından geçen niş kartı otomatik taslaklanıyor, ilk 2 yeni niş canlı |
 | 16 | Yılbaşı süsü (Q4, K-30) | 🔄 Devam Ediyor | Uygun tasarımlara süs ilanı otomatik açılıyor (pencere 09-15 → 12-10); ilk süs Etsy'de aktif ve kurallara uygun; 10 Aralık'a kadar ≥ 20 süs canlı; 26 Aralık'tan sonra süs ilanları pasif; sezon sonu raporunda süs satışı ve neti |
 | 17 | TikTok (K-34) | 🔄 Devam Ediyor | Her yayındaki tasarıma kodla video hazırlanıyor; TikTok hesabı açık, bio'da "Search HobbyHeartPrints on Etsy" (link 1.000 takipçide); ilk 10 video günde bir paylaşıldı; ülke dağılımı ölçüldü ve karar kayda geçti (ABD payı yeterliyse sürer, değilse ücretli/alternatif yeniden değerlendirilir) |
+| 18 | Çizimli hat (K-37) | 🔄 Devam Ediyor | Trend kavramlarından yerel çizim + vektör yazı, IP kapısı, aday eleme ve seçim; ilk parti ~10 tasarım × 2 ürün canlı, her ilan 3 pinle Pinterest'te; 2 haftalık görüntülenme eski hattın ilan başı görüntülenmesinden yüksek (değilse yön yeniden açılır) |
 
 ## Faz Detayları
 
-### ⏸ Duraklatıldı (2026-10-16)
-Scryne projeyi durdurdu: mağazada 20 ilan canlı, toplam görüntülenme yok denecek kadar az ("hiçbiri görünmedi"). Yeni ilan
-üretmek trafik getirmiyor. Yapılan: `Matbaa-Gunluk` Windows görevi devre dışı (`Enable-ScheduledTask Matbaa-Gunluk` ile açılır),
-o günkü koşu video adımında kesildi (ilanlar açılmıştı), ComfyUI ve panel kapatıldı. Canlı 20 ilan yerinde bırakıldı
-(otomatik yenileme açık, ilk yenileme ~2027-02, ilan başı $0.20). Yeniden başlamadan önce soru şu: yeni ilan değil, mevcut
-ilanlara trafik nasıl gelir.
+### Faz 18: Çizimli hat (K-37) 🔄 (2026-10-18)
+- **Neden:** Scryne eski yazılı tasarımları satmaz buldu, bakiye −602,95 TL (ilan ücretleri). Harcama sıfırlandı (görev kapalı, tavan 0),
+  yazılı üretim durdu. Etsy API trend ölçümü: hızlı büyüyen giyim sevimli çizimli + kış/Noel + kahve/kitap/evcil hayvan/meslek.
+- **Yapılan:** `cizim.py` (FLUX.2 klein yerel çizim → dekupe → vektör yazı → eleme/OCR → `kalite_ok`), `config/cizim.toml` (12 kavram),
+  `tisort_cizim` $29.99 / `sweatshirt_cizim` $42.99 yalnız açık renk, `cozy_christmas` nişi, `matbaa cizim` / `cizim-sec`, 7 test.
+  İlk koşu: 8 tasarım, 4 IP reddi (yazıları değişti, yeniden üretiliyor).
+- **Canlı (2026-10-18):** 12 tasarım × 2 = 24 ilan aktif (API'den doğrulandı: $29.99/$42.99, ücretsiz ABD kargo, üretim ortağı,
+  7 görsel, "Cozy Christmas" bölümü, otomatik yenileme). İlk yayın denemesi iki engele takıldı, ikisi de testle bağlandı: tam renkli
+  baskı PNG'si ~5-6 MB, base64'te Printify'ın 5 MB sınırını aşıyordu (256 renk palet, ~1 MB; Printify kırpması paleti koruyor) ve
+  ilan doğrulayıcı çizimli AI beyanını tanımıyordu. ComfyUI açık kalınca ~11 GB RAM tuttu, koşu bellek darlığında düştü: giyim videosu
+  günlük hatta kapalı (`giyim_videosu = false`). Pinterest: 72 pin (ilan başına 3), 10-21 → 11-01, eski tasarımların bekleyen 92 pini atlandı.
+  Günlük görev açık (sipariş, isimli süs, görüntülenme), yayın sınırı 0, ilan tavanı $12/ay (bu ay $11.8 harcandı).
+- **Ölçüm (2026-11-01):** çizimli 24 ilanın görüntülenme/favori/satışı, eski 35 ilanla ilan başına kıyas; karar Faz 18 bitti kriterine göre.
+
+### ▶ Yeniden başladı (2026-10-18, K-36)
+2026-10-16'da Scryne durdurmuştu (20 ilan, görüntülenme yok denecek kadar az). 2026-10-18 ölçümü: 5 günlük mağaza, 20 ilan (4 tasarım),
+6 görüntülenme; ilanlar indekste ve orta-kuyruk aramalarda üst sıralarda, sorun hacim ve mağazanın yeniliği. Yapılan: `Matbaa-Gunluk`
+yeniden açık, ısınma ilk 21 gün 3 tasarım/gün (onaylı 39 tasarım Ekim sonuna yayında), Pinterest ilan başına 3 pin ve günde 6 pin.
+**Scryne'ın işleri:** Pinterest CSV'sini panodan indirip yüklemek (14 günde bir); hedefli teklifler (%10 terk edilen sepet + yeni
+favori); 10-28'de Etsy Ads $2/gün. **Ölçüm:** haftalık raporda görüntülenme; 11-15'te Ads kararı ($30 / 0 sipariş → kapat).
 
 ### Durum notu (2026-10-13, ikinci tur)
 - Faz 3 ✅: 7 niş, mevsim takvimi, talebe bağlı üretim; ilk iki günlük koşuda 72 slogan → 44 tasarım (6 USPTO reddi).

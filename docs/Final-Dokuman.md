@@ -249,6 +249,43 @@ iade kararı.
   20 dk boşa denenmez). Videolar `tiktok_video` tablosunda ürün videolarıyla tek sırada; her tasarım iki video verdiği için
   paylaşım takvimi günde iki saat (ABD doğu 12:00 ve 19:00). Giyilmiş videonun kendi kancası olur (aynı cümle iki kez gitmez).
 
+- **K-36 Görünürlük: duraklatma kalktı, hız ve trafik kanalları (2026-10-18):** Scryne "beni kazanca çıkaracak her şeyi yap, tüm
+  yetki sende" dedi. **Ölçüm (Etsy API):** mağaza 5 günlük, 20 aktif ilan ama yalnız 4 tasarım; toplam 6 görüntülenme, 0 favori,
+  0 satış. İlanlar indekste (dört ifadenin her biriyle arama ilanlarımızı getiriyor) ve API `score` sıralamasında orta-kuyruk
+  etiketlerin çoğunda ilk 30'da (ör. "funny runner hoodie" 736 ilanda 1., "fishing crew sweater" 440'ta 2.). Sorun indeks ya da
+  etiket değil: bu aramaların hacmi düşük, yüksek hacimli aramalarda yorumsuz yeni mağaza görünmüyor, 4 tasarım dar bir anahtar
+  kelime ağı. **Araştırma** (arastirmaci, 2026-10-18): doğrulanmış "yeni mağaza sandbox" kuralı yok; 5 günde birkaç görüntülenme
+  yeni mağaza için olağan; Etsy Ads mağaza açılışından 15 gün sonra (~10-28), en az $1/gün; Pinterest yeni POD mağazasına en çok
+  önerilen dış kanal, ilan başına birkaç farklı görselli pin; başlık/indirim etkisine ölçülmüş veri yok.
+  **Kararlar:** (1) Günlük görev yeniden açık. (2) Isınma ilk 21 gün 3 tasarım/gün (önce 1→2): onaylı 39 tasarım (~190 ilan)
+  Ekim sonuna yayında, Kasım'ın hediye aramalarına girer; ilan ücreti tavanı ($60/ay) aynı. (3) Pinterest ilan başına 3 pin
+  (vitrin mockup'ı, baskı yakın planı, başka renk; başlıklar döndürülür), günde 6 pin; önce her ilanın ilk pini. (4) Etsy Ads
+  10-28'de açılır: $2/gün, tüm ilanlar; $30 harcayıp sipariş yoksa kapanır, sipariş gelirse ROAS < 2'de kısılır (Etsy Ads'in API'si
+  yok, Scryne Shop Manager'dan açar; tavan `tavanlar.toml`'da kayıt). (5) Hedefli teklifler: terk edilen sepet ve yeni favori %10
+  (yalnız dönüşen alıcıya maliyet; tişört neti ~$8.8 → ~$6.3, pozitif). (6) Başlık, etiket ve fiyat değişmez: ilanlar zaten
+  sıralanıyor, değişikliğin etkisine kanıt yok; 30 günlük veriyle (Faz 13) karar verilir. Öldürme kriteri aynı (90. gün).
+
+- **K-37 Çizimli hat, yazılı motor durdu, harcama sıfırlandı (2026-10-18):** Scryne: "bu ürettiğin tasarımları kimse almaz, globalde
+  trend olan şeyler üretmemiz lazım"; ardından bakiye −602,95 TL ("batıyoruz"). **Bakiye:** ilan başı $0.20 + %20 KDV ≈ 11,9 TL;
+  35 ilan + bugünkü açılışlar. Ücret ilan başına bir kez, 4 ay geçerli; satıştan düşülür. **Durdurulan:** `Matbaa-Gunluk` kapalı,
+  ilan ücreti tavanı 0 (süs/isimli ek ürünler dahil her açılış durur, kodla doğrulandı), ısınma 0, yazılı (tipografik) üretim
+  kapalı (`tipografik_uretim = false`), yayına yalnız `yayin_nisleri` (`cozy_christmas`). Eski 36 onaylı tasarım yerinde, yayınlanmaz.
+  **Trend ölçümü (Etsy API, `findAllListingsActive`, 49 + 29 sorgu):** son 90 günde en hızlı görüntülenen yeni giyim ilanları ve en
+  çok favorilenen Noel giyimi: sevimli çizimli karakter (hayalet rakun kahve 301 görüntülenme/gün, hayalet kahve bardağı 175,
+  nakışlı balkabağı-kahve-kitap 170, "Code Boo" hemşire 139, kardan adam sweatshirt 1.237/gün, "Always Cold" 170), kış/Noel +
+  kahve/kitap/köpek/kedi/meslek esprisi, alıcı çoğunlukla kadın. Üst sıralardaki Disney/Snoopy/Dolly Parton/Star Wars ilanları telifli:
+  alınmaz (mağaza kapanır). **Yöntem (`cizim.py`, `config/cizim.toml`):** çizim yerel FLUX.2 [klein] 4B distilled (Apache-2.0,
+  makinede kurulu; 9B/dev ticari değil) ile yazısız üretilir; model yazıyı bozuyordu ("MERY BRIGCUT"), yazıyı motor fonttan yol
+  olarak dizer (üst kavisli, alt düz, dolgu + çizimin çizgi rengiyle kontur). Kenara bağlı beyaz zemin silinir (kalın dış çizgi iç
+  beyazı korur). Eleme: kırpık konu, konu alanı %8-60 dışı, parçalı konu, çizimde OCR'la okunan yazı; baskı kapısı: 4500x5400,
+  kenar payı ≥ 60 px, düz alt satır OCR ≥ 0,8 (kavisli satır `kavis` şablonundaki gibi OCR'a girmez). Aday başına ~13 sn çizim
+  + ~10 sn kompozisyon/OCR; 12 kavram × 4 aday 13 dk. IP kapısı aynı (USPTO + Jev): ilk partide 4 ret (TRASH PANDA ve HOLLY JOLLY
+  canlı marka, DECK THE PAWS ve OH CHRISTMAS TREE şarkı göndermesi); yazıları değiştirildi. Adayı Aria seçer (`matbaa cizim-sec`).
+  **Ürün ve fiyat:** `tisort_cizim` $29.99 (net $5.54) ve `sweatshirt_cizim` $42.99 (net $6.63, Offsite −$1.11), yalnız açık
+  renkler (çizimin koyu çizgisi koyu kumaşta kaybolur); eski $33.99/$48.99 rakip bandının üstündeydi. Tasarım başına 2 ilan (önce
+  5): ilan ücreti tasarım başına ~24 TL. **İlk parti kuralı:** ~10 tasarım × 2 = ~20 ilan (~240 TL); her ilan Pinterest'e 3 pin;
+  2 hafta görüntülenme ölçülür, tutmazsa parti büyümez. Etsy ilan açıklamasında çizim için ayrı AI beyanı.
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.

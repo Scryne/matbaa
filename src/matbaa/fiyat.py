@@ -49,8 +49,13 @@ def mevsim_bitti(urun: str, gun=None) -> bool:
 
 def urun_uygun(urun: str, nis: str, satirlar: list[str], gun=None) -> bool:
     """Bu tasarıma bu ürün açılır mı. `yalniz_satan` (kupa) satışa bağlıdır, burada hep hayır (yayin.kosullu_ac açar).
-    `kosul` (süs, K-30): pencere içinde ve niş listede ya da basılı metinde Noel kelimesi varsa."""
+    `kosul` (süs, K-30): pencere içinde ve niş listede ya da basılı metinde Noel kelimesi varsa.
+    K-37: `cizimli` nişin tasarımına yalnız `tur = "cizim"` ürünler açılır, o ürünler de yalnız ona (baskı dosyası raster çizim)."""
+    from matbaa.ifade.uret import nisler
+
     p = urunler()[urun]
+    if (p.get("tur") == "cizim") != bool(nisler().get(nis, {}).get("cizimli")):
+        return False
     if p.get("yalniz_satan"):
         return False
     k = p.get("kosul")

@@ -103,3 +103,19 @@ roller = ["Dad", "Grandpa", "Papa", "Mom", "Team Captain", "League Champ"]
 kacin = ["brand names (Brunswick, Storm, Ebonite, AMF)", "'The Big Lebowski' or any movie references and quotes", "bowling alley or league names", "alcohol-centered jokes", "crude innuendo (ball jokes)"]
 yedek_etiketler = ["bowling shirt", "bowling gift", "bowling team shirt", "bowler gift", "league night shirt", "funny bowling tee", "bowling dad shirt", "bowling grandpa", "retro bowling shirt", "bowling lover gift", "gift for bowler", "strike shirt", "bowling league gift"]
 ornek_ton = ["I'm Here For The Strikes", "Spare Me The Advice", "League Night Is My Therapy"]
+
+[cozy_christmas]
+# K-37 (2026-10-18): çizimli hat (cizim.py). Etsy trend ölçümü: hızlı büyüyen giyim ilanları sevimli çizimli karakter + kış/Noel
+# + kahve, kitap, köpek, kedi, meslek esprisi; alıcı çoğunlukla kadın. İfadeler kavram listesinden (config/cizim.toml), Claude
+# ifade üretimi bu nişte çalışmaz.
+cizimli = true
+ad = "Cozy Christmas & winter (cute illustrated designs)"
+vitrin_bolumu = "Cozy Christmas"
+alici = "American women 25-60 who love cozy, cute holiday style; buying Christmas sweatshirts and tees for themselves, friends, coworkers, nurses, teachers, dog and cat lovers, book lovers and coffee lovers."
+ton = "cute, cozy, gently funny, warm winter and Christmas mood, puns about coffee, books, pets and jobs"
+jargon = ["christmas sweatshirt", "cute christmas shirt", "cozy season", "winter sweatshirt", "holiday crewneck", "christmas gift for her", "funny christmas shirt", "xmas sweater", "christmas tee", "holiday shirt", "winter shirt", "gift for coworker"]
+roller = ["Her", "Mom", "Best Friend", "Coworker", "Nurse", "Teacher", "Dog Mom", "Cat Mom", "Book Lover", "Coffee Lover"]
+kacin = ["movie, TV or cartoon characters (Grinch, Snoopy, Peanuts, Disney, Elf, Charlie Brown)", "celebrity names", "brand names (Starbucks, Stanley)", "song lyrics", "religious claims", "crude innuendo"]
+yedek_etiketler = ["christmas sweatshirt", "cute christmas shirt", "holiday sweatshirt", "winter sweatshirt", "christmas gift her", "cozy christmas", "xmas sweatshirt", "christmas crewneck", "funny xmas shirt", "holiday crewneck", "gift for coworker", "christmas tee", "winter crewneck"]
+ornek_ton = ["Booked For The Holidays", "Merry Little Trash Panda", "Always Cold"]
+
