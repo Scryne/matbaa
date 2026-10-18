@@ -53,11 +53,18 @@ def pano_adi(nis: str, urun: str) -> str:
     return f"{bolum} Gifts"
 
 
-def baslik(ilan_baslik: str, gorsel_sira: int) -> str:
-    """Aynı ilanın pinleri aynı başlığı taşımaz: ilan başlığının virgüllü bölümleri sıra kadar döndürülür."""
-    parcalar = [p.strip() for p in ilan_baslik.split(",") if p.strip()]
-    k = gorsel_sira % len(parcalar) if parcalar else 0
-    return _kisalt(", ".join(parcalar[k:] + parcalar[:k]) or ilan_baslik, BASLIK_MAKS)
+def baslik(ilan_baslik: str, gorsel_sira: int, etiketler: list[str] | tuple = ()) -> str:
+    """Aynı ilanın pinleri aynı başlığı taşımaz: Pinterest toplu yüklemede aynı başlıklı satırı reddediyor (2026-10-18: iki
+    parçalı başlıkta 3. pinin döndürmesi 1. pine eşitti, 72 pinin 2'si düştü). Önce virgüllü bölümler döndürülür; yetmezse ilk
+    bölüm + ilan etiketi. Kısaltmadan sonra eşitlenen aday atlanır."""
+    parcalar = [p.strip() for p in ilan_baslik.split(",") if p.strip()] or [ilan_baslik]
+    adaylar = [", ".join(parcalar[k:] + parcalar[:k]) for k in range(len(parcalar))]
+    adaylar += [f"{parcalar[0]}, {t.title()}" for t in etiketler]
+    farkli: list[str] = []
+    for a in adaylar:
+        if (a := _kisalt(a, BASLIK_MAKS)) not in farkli:
+            farkli.append(a)
+    return farkli[min(gorsel_sira, len(farkli) - 1)]
 
 
 def aciklama(ilan_aciklama: str) -> str:
@@ -96,7 +103,7 @@ def kuyruga_ekle(c, etsy, sinir: int = 40, yazdir=print) -> dict:
                         r["tasarim_id"],
                         r["urun"],
                         g.get("url_fullxfull") or g["url_570xN"],
-                        baslik(r["baslik"], sira),
+                        baslik(r["baslik"], sira, json.loads(r["etiketler"] or "[]")),
                         aciklama(r["aciklama"]),
                         pano_adi(r["nis"], r["urun"]),
                         ",".join(json.loads(r["etiketler"] or "[]")[:8]),

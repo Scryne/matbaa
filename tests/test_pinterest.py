@@ -124,6 +124,10 @@ def test_ayni_ilanin_pinleri_farkli_baslik():
     assert pinterest.baslik(b, 1) == "Grandpa's Fishing Crew Tee, Fishing Gift for Dad, Funny Fishing Grandpa T-Shirt"
     assert len({pinterest.baslik(b, k) for k in pinterest.PIN_GORSELLERI}) == 3
     assert pinterest.baslik("Tek parça", 2) == "Tek parça"
+    iki = "Cute Snowman Sweatshirt, Cold Outside Iced Coffee Inside Crewneck"  # 2026-10-18: 3. pin 1. pinle aynı başlığı aldı
+    etiket = ["snowman christmas", "iced coffee shirt"]
+    assert len({pinterest.baslik(iki, k, etiket) for k in pinterest.PIN_GORSELLERI}) == 3
+    assert pinterest.baslik(iki, 2, etiket) == "Cute Snowman Sweatshirt, Snowman Christmas"
 
 
 def test_eski_pin_tablosu_tasinir(tmp_path):
