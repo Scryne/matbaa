@@ -43,7 +43,8 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   7 görsel, "Cozy Christmas" bölümü, otomatik yenileme). İlk yayın denemesi iki engele takıldı, ikisi de testle bağlandı: tam renkli
   baskı PNG'si ~5-6 MB, base64'te Printify'ın 5 MB sınırını aşıyordu (256 renk palet, ~1 MB; Printify kırpması paleti koruyor) ve
   ilan doğrulayıcı çizimli AI beyanını tanımıyordu. ComfyUI açık kalınca ~11 GB RAM tuttu, koşu bellek darlığında düştü: giyim videosu
-  günlük hatta kapalı (`giyim_videosu = false`). Pinterest: 72 pin (ilan başına 3), 10-21 → 11-01, eski tasarımların bekleyen 92 pini atlandı.
+  günlük hatta kapalı (`giyim_videosu = false`). Pinterest: 72 pin (ilan başına 3), 10-21 → 11-01, eski tasarımların bekleyen 92 pini atlandı. Scryne yükledi: 70 pin
+  ilk dosyada, aynı başlıklı 2 pin telafi dosyasıyla (başlık hatası düzeltildi, `b8c17ab`); 72/72 Pinterest'te zamanlı.
   Günlük görev açık (sipariş, isimli süs, görüntülenme), yayın sınırı 0, ilan tavanı $12/ay (bu ay $11.8 harcandı).
 - **Ölçüm (2026-11-01):** çizimli 24 ilanın görüntülenme/favori/satışı, eski 35 ilanla ilan başına kıyas; karar Faz 18 bitti kriterine göre.
 
