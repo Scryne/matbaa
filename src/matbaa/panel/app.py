@@ -106,7 +106,7 @@ def pinterest_indir(c: Baglanti) -> Response:
 
     dosya, veri, n = pinterest.csv_uret(c)
     if not n:
-        raise HTTPException(409, "bekleyen pin yok ya da 14 günlük takvim dolu")
+        raise HTTPException(409, "bekleyen pin yok ya da 13 günlük takvim dolu")
     return _csv_yanit(dosya, veri)
 
 

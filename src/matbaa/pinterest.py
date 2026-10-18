@@ -24,7 +24,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from matbaa import db
 
 GUNLUK = 6
-GUN = 14
+GUN = 13  # son gün bugün+13: Pinterest 14 günden ileri zamanlamayı reddediyor (2026-10-18: bugün+14 akşamı pinleri düştü)
 # UTC: ABD doğu yakası sabah 8'den akşam 7:30'a
 SAATLER = (time(12, 0), time(14, 0), time(16, 0), time(18, 0), time(20, 0), time(23, 30))
 PIN_GORSELLERI = (0, 1, 2)  # ilan galerisindeki sıralar: vitrin mockup'ı, baskı yakın planı, başka renk

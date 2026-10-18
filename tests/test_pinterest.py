@@ -144,3 +144,14 @@ def test_eski_pin_tablosu_tasinir(tmp_path):
     c.execute(
         "INSERT INTO pin (etsy_listing_id, gorsel_sira, gorsel_url, baslik, pano, durum) VALUES ('7', 1, 'u', 'b', 'p', 'x')"
     )
+
+
+def test_takvim_pinterestin_14_gun_sinirini_asmaz(c, monkeypatch):
+    """Pinterest 14 günden ileri zamanlanan pini reddediyor (2026-10-18 yüklemesinde bugün+14 akşamı düştü)."""
+    from datetime import timedelta
+
+    pinterest.kuyruga_ekle(c, SahteEtsy(), yazdir=lambda *_: None)
+    monkeypatch.setattr(pinterest, "GUNLUK", 1)  # 18 pin, günde 1: takvim sonuna kadar dolar
+    _, veri, n = pinterest.csv_uret(c, SIMDI)
+    son = max(datetime.fromisoformat(s["Publish date"]).replace(tzinfo=UTC) for s in _oku(veri))
+    assert n == pinterest.GUN and son < SIMDI + timedelta(days=14)
