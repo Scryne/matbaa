@@ -46,6 +46,9 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   günlük hatta kapalı (`giyim_videosu = false`). Pinterest: 72 pin (ilan başına 3), 10-21 → 11-01, eski tasarımların bekleyen 92 pini atlandı. Scryne yükledi: 70 pin
   ilk dosyada, aynı başlıklı 2 pin telafi dosyasıyla (başlık hatası düzeltildi, `b8c17ab`); 72/72 Pinterest'te zamanlı.
   Günlük görev açık (sipariş, isimli süs, görüntülenme), yayın sınırı 0, ilan tavanı $12/ay (bu ay $11.8 harcandı).
+- **Ölçüm (2026-10-19):** `matbaa kiyas` (haftalık raporda "Hat kıyası") hatları ilan başı görüntülenmeyle **aynı yaşta** kıyaslar:
+  ilanın doğumu ilk görüntüsü, pencere = min(14, en genç ilanın yaşı); yazılı hat daha uzun açık diye kayırılmaz. Süsleme ayrı
+  gruptur. Çizimlilerin ilk görüntüsü 10-19 olduğundan karar **2026-11-02** koşusunda çıkar (önce "erken" der).
 - **Ölçüm (2026-11-01):** çizimli 24 ilanın görüntülenme/favori/satışı, eski 35 ilanla ilan başına kıyas; karar Faz 18 bitti kriterine göre.
 
 ### ▶ Yeniden başladı (2026-10-18, K-36)

@@ -539,6 +539,7 @@ def main(argv: list[str] | None = None) -> None:
     oz = alt.add_parser("ozet", help="aylık kâr özeti (sipariş neti − ilan ücreti)")
     oz.add_argument("--ay", help="YYYY-MM (varsayılan bu ay)")
     alt.add_parser("rapor", help="haftalık raporu şimdi üret (calisma/rapor/)")
+    alt.add_parser("kiyas", help="Faz 18: çizimli ve yazılı ilanların aynı yaştaki ilan başı görüntülenmesi")
     g = alt.add_parser("gunluk", help="günlük koşu: üretim → metin → yayın (Windows görevi bunu çağırır)")
     g.add_argument("--nis-sayisi", type=int, default=2)
     g.add_argument("--adet", type=int, default=12)
@@ -642,6 +643,10 @@ def main(argv: list[str] | None = None) -> None:
         from matbaa import siparis
 
         print(json.dumps(siparis.aylik(db.baglan(), a.ay), ensure_ascii=False, indent=1))
+    elif a.komut == "kiyas":
+        from matbaa import rapor as haftalik_rapor
+
+        print("\n".join(haftalik_rapor.kiyas_metni(haftalik_rapor.hat_kiyasi(db.baglan()))))
     elif a.komut == "rapor":
         from matbaa import rapor as haftalik_rapor
         from matbaa.ayar import env_yukle

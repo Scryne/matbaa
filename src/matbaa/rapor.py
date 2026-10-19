@@ -8,7 +8,7 @@ Rapor `calisma/rapor/<yıl>-H<hafta>.md` dosyasına yazılır; günlük koşu ha
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from matbaa import db, siparis, tavan
 from matbaa.ayar import KOK
@@ -68,6 +68,76 @@ def _goruntulenme(c, simdi: datetime) -> dict:
     }
 
 
+KIYAS_GUN = 14  # Faz 18 bitti kriteri: çizimli hattın 2 haftalık ilan başı görüntülenmesi, yazılı hattınkiyle
+
+
+def _gun(tarih: str) -> date:
+    return date.fromisoformat(tarih)
+
+
+def _hat(urun: str | None) -> str:
+    if urun and urun.endswith("_cizim"):
+        return "cizimli"
+    return "susleme" if urun and "susleme" in urun else "yazili"
+
+
+def hat_kiyasi(c, gun: int = KIYAS_GUN) -> dict | None:
+    """Faz 18 (K-37): hatların ilan başı görüntülenmesi aynı yaşta. Bir ilanın doğumu ilk anlık görüntüsüdür; her ilan
+    doğumundan `pencere` gün sonraki (ya da öncesindeki en yakın) görüntüsüyle sayılır. `pencere` = min(gun, en genç aktif
+    ilanın yaşı): eski ilanlar daha uzun süredir açık diye toplamda kayırılmaz. Karar yalnız pencere `gun`e ulaşınca verilir.
+    Görüntü olmayan günlerde (10-16/17 duraklama) açılan ilanların doğumu geç yazılır: yaşları olduğundan küçük görünür,
+    bu da yazılı hattın lehinedir (çizimli hat için temkinli yön)."""
+    son = c.execute("SELECT max(tarih) FROM goruntulenme").fetchone()[0]
+    if not son:
+        return None
+    urunler = dict(c.execute("SELECT etsy_listing_id, urun FROM urun WHERE etsy_listing_id IS NOT NULL").fetchall())
+    dogum = dict(
+        c.execute(
+            "SELECT etsy_listing_id, min(tarih) FROM goruntulenme WHERE etsy_listing_id IN "
+            "(SELECT etsy_listing_id FROM goruntulenme WHERE tarih = ?) GROUP BY etsy_listing_id",
+            (son,),
+        ).fetchall()
+    )
+    pencere = min(gun, min((_gun(son) - _gun(d)).days for d in dogum.values()))
+    hatlar: dict[str, dict] = {}
+    for ilan, d in dogum.items():
+        sinir = (_gun(d) + timedelta(days=pencere)).isoformat()
+        views, favori = c.execute(
+            "SELECT views, favori FROM goruntulenme WHERE etsy_listing_id = ? AND tarih <= ? ORDER BY tarih DESC LIMIT 1",
+            (ilan, sinir),
+        ).fetchone()
+        h = hatlar.setdefault(_hat(urunler.get(ilan)), {"ilan": 0, "goruntu": 0, "favori": 0})
+        h["ilan"] += 1
+        h["goruntu"] += views or 0
+        h["favori"] += favori or 0
+    for h in hatlar.values():
+        h["ilan_basi"] = round(h["goruntu"] / h["ilan"], 2)
+    c_, y = hatlar.get("cizimli"), hatlar.get("yazili")
+    if not (c_ and y):
+        karar = "kıyas yok (iki hattan biri aktif değil)"
+    elif pencere < gun:
+        karar = f"erken: pencere {pencere}/{gun} gün, en genç ilan {gun} günlük olunca karar"
+    elif c_["ilan_basi"] > y["ilan_basi"]:
+        karar = "çizimli yüksek: parti büyür (yeni kavramlar config/cizim.toml, trend ölçümüyle)"
+    else:
+        karar = "çizimli yüksek değil: yön yeniden açılır"
+    return {"pencere_gun": pencere, "hedef_gun": gun, "tarih": son, "hatlar": hatlar, "karar": karar}
+
+
+def kiyas_metni(k: dict | None) -> list[str]:
+    if not k:
+        return ["- Veri yok (görüntülenme kaydı yok)"]
+    adlar = {"cizimli": "Çizimli", "yazili": "Yazılı (eski giyim)", "susleme": "Süsleme"}
+    return [
+        f"- İlk {k['pencere_gun']} günde ilan başı görüntülenme (hedef {k['hedef_gun']} gün, son görüntü {k['tarih']}):",
+        *[
+            f"  - {adlar.get(ad, ad)}: **{h['ilan_basi']}** ({h['ilan']} ilan, {h['goruntu']} görüntülenme, {h['favori']} favori)"
+            for ad, h in sorted(k["hatlar"].items())
+        ],
+        f"- Karar: {k['karar']}",
+    ]
+
+
 def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, str]:
     c = c or db.baglan()
     simdi = simdi or datetime.now(UTC)
@@ -109,6 +179,7 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
         "goruntulenme": _goruntulenme(c, simdi)
         if etsy is not None or c.execute("SELECT 1 FROM goruntulenme LIMIT 1").fetchone()
         else None,
+        "hat_kiyasi": hat_kiyasi(c),
         "satis": {"siparis": s[0], "brut_usd": round(s[1], 2), "net_usd": round(s[2], 2)},
         "satanlar_30g": [{"nis": r[0], "ifade": " / ".join(json.loads(r[1])), "siparis": r[2]} for r in satanlar],
         "ilan_ucreti_usd": tavan.ilan_ucreti(c, bas),
@@ -138,6 +209,8 @@ def _metin(v: dict) -> str:
             f"- Bu hafta: **{g['hafta']}** görüntülenme, {g['favori_hafta']} favori (toplam {g['toplam']}; karşılaştırma: {g['karsilastirma']})",
             *[f"  - {b[:80]} — {n}" for b, n in g["en_cok"]],
         ]
+    if v.get("hat_kiyasi"):
+        satirlar += ["", "## Hat kıyası (Faz 18)", *kiyas_metni(v["hat_kiyasi"])]
     satirlar += [
         "",
         "## Satış",

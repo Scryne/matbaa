@@ -119,6 +119,38 @@ def test_haftalik_rapor_goruntulenme_farki_ve_gecikme(c, tmp_path, monkeypatch):
     assert os.path.basename(yol) == "2026-H47.md" and rapor.bu_hafta_var_mi(SIMDI)
 
 
+def test_hat_kiyasi_ilanlari_ayni_yasta_sayar(c, tmp_path, monkeypatch):
+    c.execute("INSERT INTO ifade (id, nis, satirlar, kaynak, olusturma) VALUES (1, 'n', '[]', 'elle', '')")
+    c.execute("INSERT INTO tasarim (id, ifade_id, sablon, fontlar, durum_zamani) VALUES (1, 1, 's', '[]', '')")
+    c.executemany(
+        "INSERT INTO urun (tasarim_id, urun, etsy_listing_id) VALUES (1, ?, ?)",
+        [("tisort", "y"), ("tisort_cizim", "c1"), ("sweatshirt_cizim", "c2"), ("susleme", "s")],
+    )
+    gun0 = SIMDI - timedelta(days=20)
+
+    def goruntu(gun: int, ilanlar: dict) -> None:
+        etsy = SahteEtsy([{"listing_id": k, "views": v, "num_favorers": 0} for k, v in ilanlar.items()])
+        rapor.goruntu_al(c, etsy, gun0 + timedelta(days=gun))
+
+    # Yazılı ilan 0. gün açılır, 6. gün 9 görüntülenme, 20. günde 40; çizimliler 6. gün açılır.
+    goruntu(0, {"y": 0, "s": 0})
+    goruntu(6, {"y": 9, "s": 1, "c1": 0, "c2": 0})
+    goruntu(10, {"y": 20, "s": 2, "c1": 5, "c2": 3})
+    k = rapor.hat_kiyasi(c)
+    assert k["pencere_gun"] == 4 and k["karar"].startswith("erken")  # en genç ilan 4 günlük
+    assert k["hatlar"]["yazili"]["ilan_basi"] == 0  # 4. günde yazılının görüntüsü yok: en yakın önceki (0. gün)
+    assert k["hatlar"]["cizimli"] == {"ilan": 2, "goruntu": 8, "favori": 0, "ilan_basi": 4.0}
+    goruntu(20, {"y": 40, "s": 3, "c1": 30, "c2": 10})  # çizimliler 14 günlük: yazılının 14. günü 10. gün görüntüsü
+    k = rapor.hat_kiyasi(c)
+    assert k["pencere_gun"] == 14 and k["hatlar"]["yazili"]["ilan_basi"] == 20 and k["hatlar"]["cizimli"]["ilan_basi"] == 20
+    assert k["karar"].startswith("çizimli yüksek değil")  # eşitlik yetmez: kriter "yüksek"
+    goruntu(20, {"y": 40, "s": 3, "c1": 32, "c2": 10})
+    assert rapor.hat_kiyasi(c)["karar"].startswith("çizimli yüksek:")
+    monkeypatch.setattr(rapor, "RAPOR_DIZINI", tmp_path / "rapor")
+    _, metin = rapor.haftalik(c, None, SIMDI)
+    assert "## Hat kıyası (Faz 18)" in metin and "Çizimli: **21.0** (2 ilan" in metin
+
+
 @pytest.fixture
 def gunluk_ortam(tmp_path, monkeypatch):
     """Günlük koşu: gerçek .env, ağ, Claude ve bildirim yok; dosyalar geçici dizinde."""
