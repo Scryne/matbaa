@@ -30,8 +30,20 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 16 | Yılbaşı süsü (Q4, K-30) | 🔄 Devam Ediyor | Uygun tasarımlara süs ilanı otomatik açılıyor (pencere 09-15 → 12-10); ilk süs Etsy'de aktif ve kurallara uygun; 10 Aralık'a kadar ≥ 20 süs canlı; 26 Aralık'tan sonra süs ilanları pasif; sezon sonu raporunda süs satışı ve neti |
 | 17 | TikTok (K-34) | 🔄 Devam Ediyor | Her yayındaki tasarıma kodla video hazırlanıyor; TikTok hesabı açık, bio'da "Search HobbyHeartPrints on Etsy" (link 1.000 takipçide); ilk 10 video günde bir paylaşıldı; ülke dağılımı ölçüldü ve karar kayda geçti (ABD payı yeterliyse sürer, değilse ücretli/alternatif yeniden değerlendirilir) |
 | 18 | Çizimli hat (K-37) | 🔄 Devam Ediyor | Trend kavramlarından yerel çizim + vektör yazı, IP kapısı, aday eleme ve seçim; ilk parti ~10 tasarım × 2 ürün canlı, her ilan 3 pinle Pinterest'te; 2 haftalık görüntülenme eski hattın ilan başı görüntülenmesinden yüksek (değilse yön yeniden açılır) |
+| 19 | Çok platformlu otomatik paylaşım (K-38) | 🔄 Devam Ediyor | Her aktif tasarımın videosu TikTok, Instagram, Facebook, YouTube ve Pinterest'e, her ilan pinle Pinterest'e insansız gidiyor (Zernio); ilk gönderiler platformlarda herkese açık görüldü; 2 hafta sonra Etsy "Traffic sources"ta platform başına ziyaret ölçüldü, ziyaret getirmeyen kanal kapandı |
 
 ## Faz Detayları
+
+### Faz 19: Çok platformlu otomatik paylaşım (K-38) 🔄 (2026-10-20)
+- **Neden:** Mağaza 7 günde 59 ilanla 9 görüntülenme. TikTok'ta 8 video 516 izlenme aldı ama Etsy'ye ~1 ziyaret taşıdı (link yok).
+  Scryne: "tüm ilanlar tüm platformlarda olmalı", her şey otomatik, tam yetki.
+- **Yapılan:** `paylasim.py` (gönderi kuyruğu, platform saatleri, kaçırılan saat kayar, çizimli/yazılı sırayla, 3 deneme + alarm,
+  zamanlı gönderi sonucunu yoklama), `entegrasyon/zernio.py` (TikTok, Instagram, Facebook, YouTube, Pinterest tek API), ilan pinleri
+  Zernio'da CSV'siz (`pinterest.zernio_gonder`, günde 4, CSV saatlerinden ayrı), günlük koşuda `paylasim` adımı, `matbaa paylas`,
+  haftalık raporda "Paylaşım". Video adımı çizimli ürünleri seçmiyordu (24 ilan videosuzdu): düzeltildi, 19 tasarımın 19'u videolu.
+  10-18'de sıradan çıkarılan 92 eski ilan pini yeniden sırada: 59 ilanın hepsi pinli ya da pin sırasında. 14 test.
+- **Bekleyen:** Scryne Instagram/Facebook/YouTube hesaplarını açar, Zernio'yu bağlar (`ZERNIO_API_KEY`). Bağlanınca günlük koşu
+  her platforma 7 gün ilerisini zamanlar.
 
 ### Faz 18: Çizimli hat (K-37) 🔄 (2026-10-18)
 - **Neden:** Scryne eski yazılı tasarımları satmaz buldu, bakiye −602,95 TL (ilan ücretleri). Harcama sıfırlandı (görev kapalı, tavan 0),

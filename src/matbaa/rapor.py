@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, date, datetime, timedelta
 
-from matbaa import db, siparis, tavan
+from matbaa import db, paylasim, siparis, tavan
 from matbaa.ayar import KOK
 
 RAPOR_DIZINI = KOK / "calisma" / "rapor"
@@ -184,7 +184,18 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
         "satanlar_30g": [{"nis": r[0], "ifade": " / ".join(json.loads(r[1])), "siparis": r[2]} for r in satanlar],
         "ilan_ucreti_usd": tavan.ilan_ucreti(c, bas),
         "ay": siparis.aylik(c, simdi.strftime("%Y-%m")),
-        "dikkat": {"gecikme": gecikme, "urun_hata": hatalar, "isimli": isimli},
+        "dikkat": {
+            "gecikme": gecikme,
+            "urun_hata": hatalar,
+            "isimli": isimli,
+            "paylasim": [  # K-38: üç denemede gönderilemeyen ya da platformun reddettiği video
+                f"{r[0]}: video {r[1]} gönderilemedi ({(r[2] or '')[:120]})"
+                for r in c.execute(
+                    "SELECT platform, video_id, hata FROM gonderi WHERE durum = 'hata' ORDER BY platform, video_id"
+                )
+            ],
+        },
+        "paylasim": paylasim.ozet(c),
     }
     return veri, _metin(veri)
 
@@ -192,7 +203,7 @@ def haftalik(c=None, etsy=None, simdi: datetime | None = None) -> tuple[dict, st
 def _metin(v: dict) -> str:
     i, s, g, ay = v["ilan"], v["satis"], v["goruntulenme"], v["ay"]
     satirlar = [f"# Matbaa haftalık rapor — {v['hafta']}", ""]
-    dikkat = v["dikkat"]["gecikme"] + v["dikkat"]["urun_hata"] + v["dikkat"].get("isimli", [])
+    dikkat = v["dikkat"]["gecikme"] + v["dikkat"]["urun_hata"] + v["dikkat"].get("isimli", []) + v["dikkat"].get("paylasim", [])
     if dikkat:
         satirlar += ["## Dikkat", *[f"- {x}" for x in dikkat], ""]
     satirlar += [
@@ -211,6 +222,13 @@ def _metin(v: dict) -> str:
         ]
     if v.get("hat_kiyasi"):
         satirlar += ["", "## Hat kıyası (Faz 18)", *kiyas_metni(v["hat_kiyasi"])]
+    if v.get("paylasim"):
+        satirlar += ["", "## Paylaşım (K-38)"]
+        for p, d in sorted(v["paylasim"].items()):
+            satirlar.append(
+                f"- {p}: {d.get('yayinda', 0) + d.get('elle', 0)} yayında, {d.get('zamanlandi', 0)} zamanlı, "
+                f"{d.get('bekliyor', 0)} sırada, {d.get('hata', 0)} hata"
+            )
     satirlar += [
         "",
         "## Satış",

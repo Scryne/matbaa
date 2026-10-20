@@ -132,6 +132,21 @@ def test_gunluk_adim_video_uretir_tekrar_uretmez_takvim_ve_pano(c):
     assert pano["paylasilan"] == 1 and [h["tasarim_id"] for h in pano["hazir"]] == [2]
 
 
+def test_yalniz_cizimli_urunu_olan_tasarim_da_video_alir(c):
+    """K-37 çizimli ürünler (`tisort_cizim`, `sweatshirt_cizim`) ayrı ürün anahtarı: 2026-10-20'ye kadar günlük adım onları
+    seçmiyordu, 24 çizimli ilan videosuz kaldı."""
+    c.execute("DELETE FROM urun")
+    for k, u in enumerate(("tisort_cizim", "sweatshirt_cizim")):
+        c.execute(
+            "INSERT INTO urun (tasarim_id, urun, durum, etsy_listing_id, guncelleme) VALUES (1, ?, 'aktif', ?, '2026-10-19')",
+            (u, str(500 + k)),
+        )
+    c.commit()
+    indir = lambda url: _mockup("#f3dfa2")  # noqa: E731
+    assert tiktok.hazirla(c, SahteEtsy(), sinir=5, yazdir=lambda *_: None, indir=indir, yazar=_yazar) == {"hazir": 1, "hata": 0}
+    assert c.execute("SELECT tasarim_id FROM tiktok_video").fetchone()[0] == 1
+
+
 def test_takvim_gunde_iki_saat_aksam_gecince_ertesi_gun_ve_dolu_saat_atlanir(c):
     gec = datetime(2026, 10, 20, 23, 30, tzinfo=UTC)  # ABD 19:30: bugünkü iki saat de geçti
     assert tiktok.plan(c, 1, gec)[0].isoformat() == "2026-10-21T16:00:00+00:00"

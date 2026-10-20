@@ -11,7 +11,7 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-from matbaa import db, isimli, pinterest, tavan, tiktok
+from matbaa import db, isimli, paylasim, pinterest, tavan, tiktok
 from matbaa.ayar import KOK
 from matbaa.fiyat import tasarim_urunleri, urunler
 from matbaa.ifade import uret as ifade_uret
@@ -433,6 +433,9 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             _adim(rapor, "mevsim_kapat", lambda: yayin.mevsim_kapat(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "pinterest", lambda: pinterest.kuyruga_ekle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "tiktok", lambda: tiktok.hazirla(c, e, yazdir=yazdir), yazdir)  # K-34: yeni yayındaki tasarıma video
+            # K-38: videolar bütün platformlara, ilan pinleri Pinterest'e (Zernio); bağlı değilse adım kendini atlar
+            s = _adim(rapor, "paylasim", lambda: paylasim.gunluk_adim(c, yazdir=yazdir), yazdir)
+            alarmlar += (s or {}).get("alarm", [])
             # K-35: insan üstünde video (yerel ComfyUI, ~20 dk GPU); kurulu değilse adım kendini atlar
             if yayin.ayar().get("giyim_videosu", True):
                 _adim(rapor, "giyim", lambda: __import__("matbaa.giyim", fromlist=["giyim"]).hazirla(c, yazdir=yazdir), yazdir)
@@ -555,6 +558,8 @@ def main(argv: list[str] | None = None) -> None:
     tk = alt.add_parser("tiktok", help="TikTok videosu üret (calisma/tiktok/): verilen tasarıma ya da videosu olmayanlara")
     tk.add_argument("--tasarim", type=int, help="yalnız bu tasarım (varsa yeniden üretir)")
     tk.add_argument("--sinir", type=int, default=tiktok.GUNLUK)
+    py = alt.add_parser("paylas", help="K-38: videoları bağlı platformlara, ilan pinlerini Pinterest'e şimdi gönder (Zernio)")
+    py.add_argument("--durum", action="store_true", help="göndermeden platform başına kuyruk özeti")
     alt.add_parser("isimli", help="isimli süs siparişlerini şimdi işle (panelden isim düzeltmesinden sonra)")
     cz = alt.add_parser("cizim", help="çizimli tasarım (K-37, yerel ComfyUI): config/cizim.toml kavramları → kalite_ok")
     cz.add_argument("--kavram", action="append", help="kavram adı (tekrarlanabilir); verilmezse tasarımı olmayan hepsi")
@@ -619,6 +624,11 @@ def main(argv: list[str] | None = None) -> None:
             print(json.dumps(tiktok.uret(c, Etsy(), a.tasarim), ensure_ascii=False))
         else:
             print(json.dumps(tiktok.hazirla(c, Etsy(), sinir=a.sinir), ensure_ascii=False))
+    elif a.komut == "paylas":
+        if a.durum:
+            print(json.dumps(paylasim.ozet(db.baglan()), ensure_ascii=False, indent=1))
+        else:
+            print(json.dumps(_tek_kosuda(lambda: paylasim.gunluk_adim(db.baglan())), ensure_ascii=False, indent=1))
     elif a.komut == "isimli":
         from matbaa.entegrasyon.etsy import Etsy
         from matbaa.entegrasyon.printify import Printify

@@ -47,6 +47,9 @@ ABD, TR = ZoneInfo("America/New_York"), ZoneInfo("Europe/Istanbul")
 # ABD doğu yakası öğle arası ve akşamı (alıcıların çoğu doğu/orta saat diliminde). Günde iki: her tasarım iki video verir
 # (ürün + giyilmiş, K-35); tek saatle sıra her gün büyürdü.
 PAYLASIM_SAATLERI = (time(12, 0), time(19, 0))
+# Videonun ilk ürünü bu sırayla seçilir. Çizimli ürünler (K-37) ayrı ürün anahtarı taşır: 2026-10-20'ye kadar listede yoktu, 24
+# çizimli ilanın hiçbiri video almadı.
+GIYSILER = ("tisort", "tisort_cizim", "sweatshirt", "sweatshirt_cizim", "hoodie")
 
 
 # --- kare çizimi ---
@@ -266,7 +269,7 @@ def sahneler(
 ) -> list[Sahne]:
     """`fotolar`: ürün → o ilanın mockup'ları (ilki vitrin). Sıra: kanca, yakın plan, diğer renk/ürün, süs, kapanış."""
     ad = {u: p["etsy_turu"].lower() for u, p in urunler().items()}
-    sira = [u for u in ("tisort", "sweatshirt", "hoodie", "kupa", "susleme", "isimli_susleme") if fotolar.get(u)]
+    sira = [u for u in (*GIYSILER, "kupa", "susleme", "isimli_susleme") if fotolar.get(u)]
     if not sira:
         raise ValueError("videoya girecek mockup yok")
     ilk = sira[0]
@@ -344,7 +347,7 @@ def uret(c, etsy, tasarim_id: int, indir=None, yazar=None) -> dict:
     fotolar = {u: _mockuplar(etsy, int(lid), indir) for u, lid in urun_ilan.items()}
     dos = {k: KOK / v for k, v in json.loads(t["dosyalar"]).items()}
     yakin = None
-    ilk = next((u for u in ("tisort", "sweatshirt", "hoodie") if u in urun_ilan), None)
+    ilk = next((u for u in GIYSILER if u in urun_ilan), None)
     if ilk:
         u = urunler()[ilk]
         renk = next((r for r in u["renkler"] if r["ad"] == u.get("vitrin_rengi")), u["renkler"][0])
@@ -398,11 +401,11 @@ def hazirla(c, etsy, sinir: int = GUNLUK, yazdir=print, indir=None, yazar=None) 
     """Günlük adım: videosu olmayan yayındaki tasarımlar (en eski yayın önce), en çok `sinir` tanesi."""
     sayac = {"hazir": 0, "hata": 0}
     adaylar = c.execute(
-        """SELECT u.tasarim_id, min(u.guncelleme) AS ilk FROM urun u WHERE u.durum = 'aktif' AND u.etsy_listing_id IS NOT NULL
-             AND u.urun IN ('tisort', 'sweatshirt', 'hoodie')
+        f"""SELECT u.tasarim_id, min(u.guncelleme) AS ilk FROM urun u WHERE u.durum = 'aktif' AND u.etsy_listing_id IS NOT NULL
+             AND u.urun IN ({",".join("?" * len(GIYSILER))})
              AND NOT EXISTS (SELECT 1 FROM tiktok_video v WHERE v.tasarim_id = u.tasarim_id AND v.tur = 'urun')
            GROUP BY u.tasarim_id ORDER BY ilk LIMIT ?""",
-        (sinir,),
+        (*GIYSILER, sinir),
     ).fetchall()
     for r in adaylar:
         try:
@@ -435,18 +438,22 @@ def plan(c, n: int, simdi: datetime | None = None) -> list[datetime]:
     return sonuc
 
 
+# K-38: TikTok'a otomatik giden (kuyrukta `gonderi` satırı olan) video panoda "elle yükle" kartı olmaz.
+ELLE = "NOT EXISTS (SELECT 1 FROM gonderi g WHERE g.video_id = v.id AND g.platform = 'tiktok')"
+
+
 def _hazir_idler(c) -> list[int]:
-    return [r[0] for r in c.execute("SELECT id FROM tiktok_video WHERE durum = 'hazir' ORDER BY olusturma, id")]
+    return [r[0] for r in c.execute(f"SELECT id FROM tiktok_video v WHERE durum = 'hazir' AND {ELLE} ORDER BY olusturma, id")]
 
 
 def ozet(c, simdi: datetime | None = None) -> dict:
     hazir = [
         dict(r)
         for r in c.execute(
-            """SELECT v.id, v.tasarim_id, v.tur, v.ai, v.hook, v.aciklama, v.etiketler, v.sure, v.olusturma,
+            f"""SELECT v.id, v.tasarim_id, v.tur, v.ai, v.hook, v.aciklama, v.etiketler, v.sure, v.olusturma,
                       (SELECT group_concat(x, ' ') FROM (SELECT value AS x FROM json_each(i.satirlar))) AS slogan
                FROM tiktok_video v JOIN tasarim t ON t.id = v.tasarim_id JOIN ifade i ON i.id = t.ifade_id
-               WHERE v.durum = 'hazir' ORDER BY v.olusturma, v.id"""
+               WHERE v.durum = 'hazir' AND {ELLE} ORDER BY v.olusturma, v.id"""
         )
     ]
     for h, z in zip(hazir, plan(c, len(hazir), simdi), strict=True):

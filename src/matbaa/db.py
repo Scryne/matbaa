@@ -119,6 +119,17 @@ CREATE TABLE IF NOT EXISTS tiktok_video (     -- TikTok videoları (tiktok.py K-
     plan TEXT,                        -- paylaşım saati (UTC): günde iki, ABD doğu 12:00 ve 19:00
     UNIQUE (tasarim_id, tur)
 );
+CREATE TABLE IF NOT EXISTS gonderi (          -- K-38: her video her platforma bir kez (paylasim.py); tiktok_video bütün platformların videosu
+    id INTEGER PRIMARY KEY,
+    video_id INTEGER NOT NULL REFERENCES tiktok_video(id),
+    platform TEXT NOT NULL,           -- tiktok | instagram | facebook | youtube
+    durum TEXT NOT NULL,              -- bekliyor | zamanlandi (platformda/aracıda zamanlı) | yayinda | hata | elle (Scryne elle paylaştı)
+    plan TEXT,                        -- yayın saati (UTC)
+    dis_id TEXT, url TEXT, hata TEXT,
+    deneme INTEGER NOT NULL DEFAULT 0,
+    guncelleme TEXT,
+    UNIQUE (video_id, platform)
+);
 CREATE TABLE IF NOT EXISTS olay (
     id INTEGER PRIMARY KEY,
     zaman TEXT NOT NULL,

@@ -286,6 +286,25 @@ iade kararı.
   5): ilan ücreti tasarım başına ~24 TL. **İlk parti kuralı:** ~10 tasarım × 2 = ~20 ilan (~240 TL); her ilan Pinterest'e 3 pin;
   2 hafta görüntülenme ölçülür, tutmazsa parti büyümez. Etsy ilan açıklamasında çizim için ayrı AI beyanı.
 
+- **K-38 Çok platformlu otomatik paylaşım, Zernio (2026-10-20):** Scryne: "tüm ilanlar tüm platformlarda olmalı", her şey otomatik,
+  "hiçbir sınır tanımıyorum". **Veri:** 7 günde 59 ilan 9 görüntülenme; TikTok'ta 8 video 516 izlenme, 49 takipçi; erişim 4. videodan
+  sonra açıldı (2-7 → 77-217 izlenme), ama en çok izlenen 4 videonun tasarımları Etsy'de 1 görüntülenme aldı (link 1.000 takipçide).
+  Ülke dağılımı TikTok'ta görünmüyor: kanallar Etsy "Traffic sources"la ölçülür. **Araştırma (`docs/arastirma/08`):** TikTok ve
+  Pinterest kendi denetimsiz uygulamamızın gönderisini yalnız sahibine gösteriyor; Instagram/Facebook/YouTube'un resmî API'si kendi
+  hesaba açık ama Meta ve Google geliştirici uygulaması, token yenileme ve IG için zamanlama yok (bilgisayar o saatte açık olmalı).
+  Apify/RapidAPI/GitHub'daki resmî olmayan yükleyiciler şifre ya da çerez istiyor, platform kurallarına aykırı, kırılgan (en çok
+  kullanılan TikTok aracı %79 başarı, instagrapi'de Ekim 2026 askıya alma vakası): **elendi**, hesaplar tek trafik kaynağımız.
+  **Seçilen:** Zernio (eski Late) beş platformu tek API'yle, kendi denetlenmiş uygulamasıyla ve sunucu tarafı zamanlamayla veriyor;
+  ilk 2 hesap ücretsiz, sonrası hesap başı 6 $/ay (beş hesap 18 $/ay). **Kurallar:** video tasarım başına bir (bütün ilanlarını
+  gösterir; aynı tasarımın beş benzer videosu tekrar içerik), ilanların kendisi Pinterest'te linkli pin. Her platform günde iki video,
+  ABD doğu saatleriyle (`config/paylasim.toml`), 7 gün ileri zamanlı (Zernio medyayı 7 gün tutar). Çizimli ve yazılı tasarım sırayla
+  (tanıtım tek hatta yığılıp Faz 18 kıyasını bozmasın). TikTok: herkese açık, yorum/duet/stitch açık, ticari içerik "brand_organic"
+  (kendi ürünümüz), AI insanlı video `video_made_with_ai`; AI insanlı video yalnız TikTok'a. Açıklama platformun link kuralına göre:
+  TikTok'ta link yok, Instagram "link in bio", Facebook/YouTube ilan adresi, Pinterest pinin kendisi. Gönderilemeyen 3 kez denenir,
+  sonra alarm; zamanlı gönderinin sonucu ertesi koşuda yoklanır. 10-18'de (K-37) sıradan çıkarılan 92 eski ilan pini yeniden sırada.
+  **Ölçüm:** bağlantıdan 2 hafta sonra Etsy "Traffic sources"ta platform başına ziyaret; ziyaret getirmeyen kanal kapanır (hesabı
+  Zernio'dan çıkarılır, ücreti düşer).
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.

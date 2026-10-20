@@ -157,6 +157,70 @@ def _yaz(satirlar: list) -> bytes:
     return b.getvalue().encode("utf-8")
 
 
+def _olu_atla(c) -> None:
+    """Kuyruktayken yayından kalkan ilan (mevsim bitti, Etsy kaldırdı) pine girmez: pin ölü sayfaya gider, hesabın güvenini yer."""
+    c.execute(
+        """UPDATE pin SET durum = 'atlandi' WHERE durum = 'bekliyor' AND NOT EXISTS (
+             SELECT 1 FROM urun u WHERE u.etsy_listing_id = pin.etsy_listing_id AND u.durum = 'aktif')"""
+    )
+
+
+# K-38 (2026-10-20): Zernio bağlıysa ilan pinleri CSV yerine API'yle zamanlanır, Scryne'ın elle yüklemesi kalkar. Saatler CSV'ninkinden
+# ayrı (UTC, ABD doğu sabah 9 → akşam 9): 10-18'de verilen CSV 11-01'e kadar `SAATLER`ı dolduruyor, bekleyen eski ilanlar onu
+# beklemesin. Günde 4 + CSV'nin 6'sı 11-01'e kadar; Zernio'nun Pinterest tavanı günde 25.
+ZERNIO_SAATLER = (time(13, 0), time(17, 0), time(21, 0), time(1, 0))
+ZERNIO_UFUK = timedelta(days=7)  # Zernio en çok 7 gün ileri (paylasim.toml ile aynı gerekçe)
+
+
+def zernio_slotlari(dolu: set[datetime], simdi: datetime) -> list[datetime]:
+    esik, son = simdi + timedelta(minutes=20), simdi + ZERNIO_UFUK
+    sonuc, gun = [], simdi.date()
+    while gun <= son.date():
+        for s in sorted(ZERNIO_SAATLER):
+            z = datetime.combine(gun, s, UTC)
+            if esik < z <= son and z not in dolu:
+                sonuc.append(z)
+        gun += timedelta(days=1)
+    return sonuc
+
+
+def zernio_gonder(c, z, simdi: datetime | None = None, yazdir=print) -> dict:
+    """Bekleyen ilan pinleri Zernio'da zamanlı. Görsel Etsy'nin herkese açık adresi (yükleme yok), pin ilana gider. Gönderilemeyen
+    pin `bekliyor` kalır, ertesi koşu yeniden dener (`Idempotency-Key` aynı: mükerrer pin olmaz)."""
+    simdi = simdi or datetime.now(UTC)
+    _olu_atla(c)
+    dolu = {
+        datetime.fromisoformat(r[0]).replace(tzinfo=UTC) for r in c.execute("SELECT yayin FROM pin WHERE dosya LIKE 'zernio:%'")
+    }
+    slot = zernio_slotlari(dolu, simdi)
+    pinler = _sirala([dict(r) for r in c.execute("SELECT * FROM pin WHERE durum = 'bekliyor' ORDER BY gorsel_sira, id")])
+    sayac = {"zamanlandi": 0, "hata": 0}
+    for p, s in zip(pinler, slot, strict=False):
+        try:
+            post = z.gonder(
+                "pinterest",
+                p["aciklama"] or "",
+                [{"type": "image", "url": p["gorsel_url"]}],
+                s,
+                {"boardId": z.pano(p["pano"]), "title": p["baslik"], "link": ILAN_URL.format(p["etsy_listing_id"])},
+                f"matbaa-pin-{p['id']}",
+            )
+        except Exception as e:
+            sayac["hata"] += 1
+            yazdir(f"  pin hata {p['id']}: {type(e).__name__}: {str(e)[:150]}")
+            continue
+        c.execute(
+            "UPDATE pin SET durum = 'verildi', yayin = ?, dosya = ? WHERE id = ?",
+            (s.strftime("%Y-%m-%dT%H:%M:%S"), f"zernio:{post.get('_id') or post.get('id') or ''}", p["id"]),
+        )
+        c.commit()
+        sayac["zamanlandi"] += 1
+    if sayac["zamanlandi"]:
+        db.olay(c, "pin", None, None, "zernio", f"{sayac['zamanlandi']} pin zamanlandı")
+        c.commit()
+    return sayac
+
+
 def bekleyen(c) -> int:
     return c.execute("SELECT count(*) FROM pin WHERE durum = 'bekliyor'").fetchone()[0]
 
@@ -165,11 +229,7 @@ def csv_uret(c, simdi: datetime | None = None) -> tuple[str, bytes, int]:
     """Bekleyen pinlerden en çok `GUNLUK × GUN` tanesine yarından başlayan yayın saatleri verir ve onları `verildi` sayar.
     Önceki dosyanın son saatinden sonrasına eklenir: iki indirme aynı saate iki pin koymaz."""
     simdi = simdi or datetime.now(UTC)
-    # Kuyruktayken yayından kalkan ilan (mevsim bitti, Etsy kaldırdı) pine girmez: pin ölü sayfaya gider, hesabın güvenini yer.
-    c.execute(
-        """UPDATE pin SET durum = 'atlandi' WHERE durum = 'bekliyor' AND NOT EXISTS (
-             SELECT 1 FROM urun u WHERE u.etsy_listing_id = pin.etsy_listing_id AND u.durum = 'aktif')"""
-    )
+    _olu_atla(c)
     yarin = simdi.date() + timedelta(days=1)
     son = c.execute("SELECT max(yayin) FROM pin WHERE durum = 'verildi'").fetchone()[0]
     dolu = datetime.fromisoformat(son).date() + timedelta(days=1) if son else yarin
