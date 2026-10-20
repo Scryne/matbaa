@@ -304,6 +304,8 @@ iade kararı.
   sonra alarm; zamanlı gönderinin sonucu ertesi koşuda yoklanır. 10-18'de (K-37) sıradan çıkarılan 92 eski ilan pini yeniden sırada.
   **Ölçüm:** bağlantıdan 2 hafta sonra Etsy "Traffic sources"ta platform başına ziyaret; ziyaret getirmeyen kanal kapanır (hesabı
   Zernio'dan çıkarılır, ücreti düşer).
+  **Aynı gün:** Scryne YouTube kanalı açmıyor; kapsam TikTok, Instagram, Facebook, Pinterest (4 hesap, 12 $/ay). Kod bağlı
+  hesaplara gönderdiği için değişiklik gerekmedi; kanal açılırsa Zernio'ya bağlamak yeter.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
