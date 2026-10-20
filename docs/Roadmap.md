@@ -42,8 +42,9 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   Zernio'da CSV'siz (`pinterest.zernio_gonder`, günde 4, CSV saatlerinden ayrı), günlük koşuda `paylasim` adımı, `matbaa paylas`,
   haftalık raporda "Paylaşım". Video adımı çizimli ürünleri seçmiyordu (24 ilan videosuzdu): düzeltildi, 19 tasarımın 19'u videolu.
   10-18'de sıradan çıkarılan 92 eski ilan pini yeniden sırada: 59 ilanın hepsi pinli ya da pin sırasında. 14 test.
-- **Bekleyen:** Instagram ve Facebook Sayfası açıldı (10-20); YouTube açılmıyor (Scryne). Scryne Zernio'yu bağlar (4 hesap,
-  `ZERNIO_API_KEY`). Bağlanınca günlük koşu her platforma 7 gün ilerisini zamanlar.
+- **Bağlandı (10-20):** iki Zernio hesabı (ücretsiz katman hesap başı 2 bağlantı): TikTok + Instagram, Facebook + Pinterest.
+  YouTube açılmıyor (Scryne). İlk koşu: 54 video ve 28 ilan pini zamanlandı, 0 hata; ilk yayın 10-20 21:30 UTC (Pinterest).
+- **Bekleyen:** ilk gönderilerin platformlarda herkese açık görüldüğü (günlük koşunun yoklaması adres yazar); 2 hafta sonra ölçüm.
 
 ### Faz 18: Çizimli hat (K-37) 🔄 (2026-10-18)
 - **Neden:** Scryne eski yazılı tasarımları satmaz buldu, bakiye −602,95 TL (ilan ücretleri). Harcama sıfırlandı (görev kapalı, tavan 0),
