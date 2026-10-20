@@ -219,10 +219,45 @@ def test_ilan_pinleri_zernioda_ayri_saatlerde_eksik_pano_acilir(c, zs):
 
 def test_gunluk_adim_anahtarsiz_atlar_bagliyken_video_ve_pin_yollar(c, zs, monkeypatch):
     monkeypatch.delenv("ZERNIO_API_KEY", raising=False)
+    monkeypatch.delenv("ZERNIO_API_KEY_2", raising=False)
     assert "atlandi" in paylasim.gunluk_adim(c, SIMDI, yazdir=lambda *_: None)
     s, z = zs
     r = paylasim.gunluk_adim(c, SIMDI, yazdir=lambda *_: None, z=z)
     assert r["platform"] == ["pinterest", "tiktok"] and r["alarm"] == [] and "ilan_pini" in r
+
+
+def test_iki_zernio_hesabi_platformlar_bolunur_ilk_anahtar_oncelikli(c, monkeypatch):
+    """Ücretsiz katman hesap başı 2 bağlantı: TikTok + Instagram bir hesapta, Facebook + Pinterest ötekinde (2026-10-20)."""
+    from matbaa.entegrasyon.zernio import Zernio
+
+    monkeypatch.setenv("ZERNIO_API_KEY", "sk_bir")
+    monkeypatch.setenv("ZERNIO_API_KEY_2", " ")
+    assert paylasim.anahtarlar() == ["sk_bir"]  # boş ikinci anahtar sayılmaz
+    monkeypatch.setenv("ZERNIO_API_KEY_2", "sk_iki")
+    assert paylasim.anahtarlar() == ["sk_bir", "sk_iki"]
+
+    birinci, ikinci = ZernioSahte(), ZernioSahte()
+    ikinci_hesaplar = {"accounts": [
+        {"_id": "fb1", "platform": "facebook"}, {"_id": "pn1", "platform": "pinterest"}, {"_id": "tt2", "platform": "tiktok"},
+    ]}  # fmt: skip
+    birinci_cagri = birinci.__call__
+    ikinci_cagri = ikinci.__call__
+    z1 = Zernio("sk_bir", http=httpx.Client(transport=httpx.MockTransport(
+        lambda r: httpx.Response(200, json={"accounts": [{"_id": "tt1", "platform": "tiktok"}, {"_id": "ig1", "platform": "instagram"}]})
+        if r.url.path.endswith("/accounts") else birinci_cagri(r)
+    )), bekle=lambda *_: None)  # fmt: skip
+    z2 = Zernio("sk_iki", http=httpx.Client(transport=httpx.MockTransport(
+        lambda r: httpx.Response(200, json=ikinci_hesaplar) if r.url.path.endswith("/accounts") else ikinci_cagri(r)
+    )), bekle=lambda *_: None)  # fmt: skip
+    ist = paylasim.istemciler([z1, z2])
+    assert sorted(ist) == ["facebook", "instagram", "pinterest", "tiktok"]
+    assert ist["tiktok"].z is z1 and ist["facebook"].z is z2 and ist["pinterest"].z is z2  # TikTok iki kez gitmez
+
+    r = paylasim.gunluk_adim(c, SIMDI, yazdir=lambda *_: None, z=[z1, z2])
+    assert r["platform"] == ["facebook", "instagram", "pinterest", "tiktok"] and "ilan_pini" in r
+    p1 = {g["platforms"][0]["platform"] for g in _govdeler(birinci)}
+    p2 = {g["platforms"][0]["platform"] for g in _govdeler(ikinci)}
+    assert p1 == {"tiktok", "instagram"} and p2 == {"facebook", "pinterest"}
 
 
 def test_durum_yoklama_yayinlanan_adres_alir_reddedilen_alarm(c):

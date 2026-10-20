@@ -331,21 +331,35 @@ class ZernioPlatform:
         return Sonuc("zamanlandi" if zamanli else "yayinda", str(post.get("_id") or post.get("id") or ""), platform_url(post))
 
 
-def istemciler(z=None) -> dict[str, Platform]:
-    """Zernio'da bağlı her platform için istemci. Anahtar yoksa boş: paylaşım adımı hiçbir şey yapmaz."""
+def anahtarlar() -> list[str]:
+    """`ZERNIO_API_KEY`, `ZERNIO_API_KEY_2`, ...: Zernio'nun ücretsiz katmanı hesap başı 2 bağlantı, Scryne ikinci hesap açtı
+    (TikTok + Instagram birinde, Facebook + Pinterest ötekinde, 2026-10-20)."""
     import os
 
+    adlar = ["ZERNIO_API_KEY"] + [f"ZERNIO_API_KEY_{i}" for i in range(2, 6)]
+    return [a for a in (os.environ.get(ad, "").strip() for ad in adlar) if a]
+
+
+def istemciler(z=None) -> dict[str, Platform]:
+    """Zernio'da bağlı her platform için istemci, bütün anahtarlardan. Anahtar yoksa boş: paylaşım adımı hiçbir şey yapmaz.
+    Aynı platform iki hesapta bağlıysa ilk anahtarınki kullanılır (mükerrer gönderi olmasın)."""
     if z is None:
-        if not os.environ.get("ZERNIO_API_KEY"):
-            return {}
         from matbaa.entegrasyon.zernio import Zernio
 
-        z = Zernio()
-    return {p: ZernioPlatform(z, p) for p in z.hesaplar() if p in PLATFORMLAR}
+        zler = [Zernio(a) for a in anahtarlar()]
+    else:
+        zler = z if isinstance(z, list) else [z]
+    ist: dict[str, Platform] = {}
+    for zi in zler:
+        for p in zi.hesaplar():
+            if p in PLATFORMLAR and p not in ist:
+                ist[p] = ZernioPlatform(zi, p)
+    return ist
 
 
 def durum_yokla(c, z, simdi: datetime, yazdir=print) -> dict:
-    """Saati geçmiş zamanlı gönderiler yayınlandı mı: adres yazılır; platform reddettiyse `hata` ve alarm (sessiz kaybolmasın)."""
+    """Saati geçmiş zamanlı gönderiler yayınlandı mı: adres yazılır; platform reddettiyse `hata` ve alarm (sessiz kaybolmasın).
+    `z` tek istemci ya da platform → istemci (gönderi, platformun bağlı olduğu Zernio hesabında durur)."""
     from matbaa.entegrasyon.zernio import platform_url
 
     sayac = {"yayinda": 0, "hata": 0, "alarm": []}
@@ -353,8 +367,11 @@ def durum_yokla(c, z, simdi: datetime, yazdir=print) -> dict:
         "SELECT id, platform, video_id, dis_id FROM gonderi WHERE durum = 'zamanlandi' AND dis_id != '' AND plan < ?",
         ((simdi - timedelta(hours=1)).isoformat(timespec="minutes"),),
     ).fetchall():
+        zi = z.get(r["platform"]) if isinstance(z, dict) else z
+        if zi is None:
+            continue
         try:
-            post = z.gonderi(r["dis_id"])
+            post = zi.gonderi(r["dis_id"])
         except Exception as e:
             yazdir(f"  paylaşım durumu okunamadı {r['platform']} {r['dis_id']}: {type(e).__name__}")
             continue
@@ -387,14 +404,13 @@ def gunluk_adim(c, simdi: datetime | None = None, yazdir=print, z=None) -> dict:
     ist = istemciler(z)
     if not ist:
         return {"atlandi": "Zernio bağlı değil (ZERNIO_API_KEY yok ya da hesap bağlanmamış)", "alarm": []}
-    z = next(iter(ist.values())).z
     s = paylas(c, ist, simdi, yazdir)
     alarm = list(s.pop("alarm"))
-    y = durum_yokla(c, z, simdi, yazdir)
+    y = durum_yokla(c, {p: i.z for p, i in ist.items()}, simdi, yazdir)
     alarm += y.pop("alarm")
     s["yoklama"] = y
     if "pinterest" in ist:
-        s["ilan_pini"] = pinterest.zernio_gonder(c, z, simdi, yazdir)
+        s["ilan_pini"] = pinterest.zernio_gonder(c, ist["pinterest"].z, simdi, yazdir)
     return s | {"alarm": alarm}
 
 
