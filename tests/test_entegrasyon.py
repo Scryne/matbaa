@@ -744,10 +744,15 @@ class SahteSusPrintify(SahtePrintify):
         return SUS_VARYANTLAR if bp == 1632 else VARYANTLAR
 
 
-def _sus_ilan(s, n, u):
+def _sus_ilan(s, n, u, cizim=None):
     from matbaa.ilan.metin import Ilan
 
+    _sus_ilan.cizimler.append(cizim)
+
     return Ilan("Fishing Christmas Ornament 2026", [f"fishing ornament {i}" for i in range(13)], "a", "alt")
+
+
+_sus_ilan.cizimler = []
 
 
 def test_mevsimlik_ac_uygun_tasarimlara_bir_kez_acar(sus_ortam):
@@ -761,6 +766,27 @@ def test_mevsimlik_ac_uygun_tasarimlara_bir_kez_acar(sus_ortam):
         assert n == 2
     assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 10, 14), yazdir=sessiz)["acilan"] == 0
     assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 12, 20), yazdir=sessiz)["acilan"] == 0
+
+
+def test_mevsimlik_ac_cizimli_tasarima_cizim_konusunu_verir(sus_ortam, monkeypatch):
+    # Çizimli tasarımın ek ürün metni çizimin konusuyla (başlık + çizim AI beyanı) yazılır. Süs config'te çizimli
+    # tasarıma kapalı (K-40), burada `cizimli_de` ile açılır.
+    from datetime import date
+
+    katalog = {k: dict(v) for k, v in fiyat.urunler().items()}
+    for u in ("susleme", "isimli_susleme"):
+        katalog[u]["cizimli_de"] = True
+        katalog[u]["kosul"] = {**katalog[u]["kosul"], "nisler": ["cozy_christmas"]}
+    monkeypatch.setattr(fiyat, "urunler", lambda: katalog)
+    monkeypatch.setattr(yayin, "urunler", lambda: katalog)
+    sus_ortam.execute(
+        "UPDATE ifade SET nis = 'cozy_christmas', yapi = ? WHERE id = 1", (json.dumps({"cizim": "A snowman with iced coffee"}),)
+    )
+    sus_ortam.execute("UPDATE ifade SET nis = 'bowling' WHERE id IN (2, 3)")
+    sus_ortam.commit()
+    _sus_ilan.cizimler.clear()
+    assert yayin.mevsimlik_ac(sus_ortam, _sus_ilan, gun=date(2026, 10, 23), yazdir=lambda *_: None)["acilan"] == 2
+    assert _sus_ilan.cizimler == ["A snowman with iced coffee"] * 2
 
 
 def test_susu_olan_tasarim_once_ve_yayindakine_ek_urun_siniri_yemez(sus_ortam):

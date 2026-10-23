@@ -57,7 +57,7 @@ def on_png(dosyalar: dict, isim: str, yil: int, hedef: Path) -> Path:
 
     koyu = KOK / dosyalar["koyu_png"]
     svg = KOK / dosyalar.get("koyu_svg", str(Path(dosyalar["koyu_png"]).with_suffix(".svg")))
-    vurgu = susleme.vurgu_rengi(svg) if svg.exists() else susleme.KOYU_MUREKKEP
+    vurgu = susleme.tasarim_vurgu(koyu, svg)
     hedef.parent.mkdir(parents=True, exist_ok=True)
     susleme.on_yuz(koyu, vurgu, yil, isim).save(hedef, dpi=(600, 600), optimize=True)
     return hedef

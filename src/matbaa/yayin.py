@@ -202,7 +202,7 @@ def mevsimlik_ac(c, ilan_yaz, gun=None, sinir: int = 12, yazdir=print) -> dict:
         if not p_.get("kosul"):
             continue
         for r in c.execute(
-            f"""SELECT t.id, i.satirlar, i.nis FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
+            f"""SELECT t.id, i.satirlar, i.nis, i.yapi FROM tasarim t JOIN ifade i ON i.id = t.ifade_id
                 WHERE t.durum IN ({",".join("?" * len(MEVSIMLIK_DURUMLAR))})
                 AND NOT EXISTS (SELECT 1 FROM urun u WHERE u.tasarim_id = t.id AND u.urun = ?)
                 ORDER BY t.durum = 'yayinda' DESC, t.durum = 'onaylandi' DESC, t.durum_zamani""",
@@ -214,8 +214,10 @@ def mevsimlik_ac(c, ilan_yaz, gun=None, sinir: int = 12, yazdir=print) -> dict:
             if sayac["acilan"] + sayac["hata"] >= sinir:
                 sayac["kalan"] = sayac.get("kalan", 0) + 1
                 continue
+            # Çizimli tasarımda (K-37) çizimin konusu başlığa ve çizim AI beyanına girer: yazılı beyanla açılmaz.
+            cizim = json.loads(r["yapi"] or "{}").get("cizim")
             try:
-                ilan = ilan_yaz(satirlar, r["nis"], urun)
+                ilan = ilan_yaz(satirlar, r["nis"], urun, cizim)
             except Exception as e:  # claude -p zaman aşımı: ertesi koşu yeniden dener
                 sayac["hata"] += 1
                 yazdir(f"  {urun} ilanı yazılamadı ({r['id']}): {type(e).__name__}: {str(e)[:150]}")

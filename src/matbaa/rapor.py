@@ -8,6 +8,7 @@ Rapor `calisma/rapor/<yıl>-H<hafta>.md` dosyasına yazılır; günlük koşu ha
 from __future__ import annotations
 
 import json
+import math
 from datetime import UTC, date, datetime, timedelta
 
 from matbaa import db, paylasim, siparis, tavan
@@ -69,6 +70,14 @@ def _goruntulenme(c, simdi: datetime) -> dict:
 
 
 KIYAS_GUN = 14  # Faz 18 bitti kriteri: çizimli hattın 2 haftalık ilan başı görüntülenmesi, yazılı hattınkiyle
+# K-39 (2026-10-23): iki hattın toplam görüntülenmesi bunun altındaysa karar yok (10. günde 59 ilan 11 görüntülenme: 1'e 4 gürültü).
+KIYAS_ASGARI = 20
+KIYAS_P = 0.10  # tek yönlü Poisson (koşullu binom) testi: hat farkı bu olasılığın altında şansla açıklanmıyorsa karar
+
+
+def _binom_kuyruk(k: int, n: int, q: float) -> float:
+    """P(X >= k), X ~ Binom(n, q)."""
+    return sum(math.comb(n, i) * q**i * (1 - q) ** (n - i) for i in range(k, n + 1))
 
 
 def _gun(tarih: str) -> date:
@@ -86,7 +95,11 @@ def hat_kiyasi(c, gun: int = KIYAS_GUN) -> dict | None:
     doğumundan `pencere` gün sonraki (ya da öncesindeki en yakın) görüntüsüyle sayılır. `pencere` = min(gun, en genç aktif
     ilanın yaşı): eski ilanlar daha uzun süredir açık diye toplamda kayırılmaz. Karar yalnız pencere `gun`e ulaşınca verilir.
     Görüntü olmayan günlerde (10-16/17 duraklama) açılan ilanların doğumu geç yazılır: yaşları olduğundan küçük görünür,
-    bu da yazılı hattın lehinedir (çizimli hat için temkinli yön)."""
+    bu da yazılı hattın lehinedir (çizimli hat için temkinli yön).
+
+    K-39: pencere yalnız kıyaslanan iki giyim hattından hesaplanır; sonradan açılan süsler kararı ertelemez, pencereden
+    genç süs ilanı süsleme grubuna girmez. Hat ilan sayısıyla orantılı görüntülenme beklenir (eşit oran); çizimlinin payı
+    tek yönlü testte `KIYAS_P`'nin altında kalmıyorsa "fark yok"."""
     son = c.execute("SELECT max(tarih) FROM goruntulenme").fetchone()[0]
     if not son:
         return None
@@ -98,9 +111,13 @@ def hat_kiyasi(c, gun: int = KIYAS_GUN) -> dict | None:
             (son,),
         ).fetchall()
     )
-    pencere = min(gun, min((_gun(son) - _gun(d)).days for d in dogum.values()))
+    yas = {ilan: (_gun(son) - _gun(d)).days for ilan, d in dogum.items()}
+    giyim = [a for ilan, a in yas.items() if _hat(urunler.get(ilan)) != "susleme"]
+    pencere = min(gun, min(giyim or yas.values()))
     hatlar: dict[str, dict] = {}
     for ilan, d in dogum.items():
+        if yas[ilan] < pencere:  # yalnız süs olabilir: kendi penceresini doldurmadı
+            continue
         sinir = (_gun(d) + timedelta(days=pencere)).isoformat()
         views, favori = c.execute(
             "SELECT views, favori FROM goruntulenme WHERE etsy_listing_id = ? AND tarih <= ? ORDER BY tarih DESC LIMIT 1",
@@ -117,10 +134,21 @@ def hat_kiyasi(c, gun: int = KIYAS_GUN) -> dict | None:
         karar = "kıyas yok (iki hattan biri aktif değil)"
     elif pencere < gun:
         karar = f"erken: pencere {pencere}/{gun} gün, en genç ilan {gun} günlük olunca karar"
-    elif c_["ilan_basi"] > y["ilan_basi"]:
-        karar = "çizimli yüksek: parti büyür (yeni kavramlar config/cizim.toml, trend ölçümüyle)"
+    elif (n := c_["goruntu"] + y["goruntu"]) < KIYAS_ASGARI:
+        karar = (
+            f"yetersiz veri: iki hatta {n} görüntülenme (< {KIYAS_ASGARI}); hat kararı yok, darboğaz trafik "
+            "(K-39: giyim partisi büyümez, süsler ve trafik kanalları sürer)"
+        )
     else:
-        karar = "çizimli yüksek değil: yön yeniden açılır"
+        q = c_["ilan"] / (c_["ilan"] + y["ilan"])
+        p_yuksek = _binom_kuyruk(c_["goruntu"], n, q)
+        p_dusuk = 1 - _binom_kuyruk(c_["goruntu"] + 1, n, q)
+        if p_yuksek <= KIYAS_P:
+            karar = f"çizimli yüksek (p={p_yuksek:.3f}): parti büyür (yeni kavramlar config/cizim.toml, trend ölçümüyle)"
+        elif p_dusuk <= KIYAS_P:
+            karar = f"çizimli düşük (p={p_dusuk:.3f}): yön yeniden açılır"
+        else:
+            karar = f"fark yok (p={min(p_yuksek, p_dusuk):.2f}): çizimli hat kalır, büyümez (K-39)"
     return {"pencere_gun": pencere, "hedef_gun": gun, "tarih": son, "hatlar": hatlar, "karar": karar}
 
 

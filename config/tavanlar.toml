@@ -10,8 +10,10 @@
 # K-37 (2026-10-18): bakiye −602,95 TL (ilan başı $0.20 + %20 KDV = ~11,9 TL). Yeni tasarım dili hazır olana kadar yeni ilan
 # ücreti yok: 0 iken tavan süs/isimli ek ürünler dahil her ilan açılışını durdurur. Önceki değer 60.0.
 # İlk çizimli parti (12 tasarım × 2 = 24 ilan, $4.80): bu ay $7 harcanmıştı, tavan $12 en çok 25 ilana izin verir.
-aylik_ilan_ucreti_usd = 12.0
-yeniden_yatirim_orani = 0.5
+# K-40 (2026-10-23): Scryne "ilan vermiycez artık, sakın ilan verme, paramız eksi, dondurmuştuk". Yeni ilan yok: tavan 0 ve
+# satış neti de yeni ilana dönmez (oran 0). Süs/isimli süs dahil her açılış durur; Kasım ayı başında da açılmaz.
+aylik_ilan_ucreti_usd = 0.0
+yeniden_yatirim_orani = 0.0
 
 # TypeSafe/Jev (IP kapısının anlamsal katmanı): günde en çok bu kadar ifade denetlenir (ifade başına 1–2 çağrı).
 # Günlük koşu talebe bağlı en çok 2 niş × 12 ifade üretir; tavan ani bir döngü hatasına karşı.

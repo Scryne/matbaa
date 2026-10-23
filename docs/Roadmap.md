@@ -18,21 +18,34 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 4 | İlan metni | ✅ Tamamlandı | Başlık, 13 etiket (≤ 20 karakter), açıklama (AI beyanı + üretim ortağı + beden/bakım), öznitelikler; Etsy kural doğrulayıcı testli; 30 ilan metni doğrulayıcıdan geçiyor |
 | 5 | Onay paneli | ✅ Tamamlandı | Yerel panel: tasarım önizleme (koyu/açık kumaş), ifade, kapı nedenleri, ilan metni; onayla/reddet/düzelt durum makinesine yazıyor; 30 tasarımlık kuyruk 10 dakikada bitirilebiliyor (Scryne'ın ilk kullanımı) |
 | 6 | Printify entegrasyonu | ✅ Tamamlandı | Faz 0 sonrası: görsel yükle → 1717/18000 ürün (kilitli sağlayıcı, renkler, varyant fiyatları) → mockup; Etsy'ye publish; 429/hata yeniden denemesi; gerçek hesapta 3 ürün oluşturuldu ve Etsy'de taslak göründü |
-| 7 | Etsy entegrasyonu | 🔄 Devam Ediyor | Seller App OAuth (refresh token yenileme); `production_partner_ids` + `state=active`; günde ≤ 5 tavanı; receipts + takip okuma; gerçek mağazada 3 ilan aktif ve kurallara uygun |
-| 8 | Fiyat ve kâr defteri | 🔄 Devam Ediyor | Fiyatlar `config/`'te; sipariş başına gerçek net (Etsy TR ücretleri + Printify maliyeti + kur) hesaplanıyor; aylık özet; harcama tavanları kodla korunuyor |
-| 9 | Zamanlama ve izleme | 🔄 Devam Ediyor | Günlük Windows görevi uçtan uca koşuyor; takip numarası 5 iş gününde düşmeyen sipariş için alarm; haftalık rapor (ilan, görüntülenme, satış, net); USPTO aylık yenileme görevi |
-| 10 | Gerçek kullanım (v1) | ⏳ Bekliyor | 30 ilan Scryne onayıyla canlı; ilk gerçek siparişte Etsy → Printify → takip zinciri elle dokunulmadan çalıştı (ya da 4 hafta dolup v1 "30 ilan canlı" ile kapandı); bulgular roadmap'e işlendi |
+| 7 | Etsy entegrasyonu | ✅ Tamamlandı | Seller App OAuth (refresh token yenileme); `production_partner_ids` + `state=active`; günde ≤ 5 tavanı; receipts + takip okuma; gerçek mağazada 3 ilan aktif ve kurallara uygun |
+| 8 | Fiyat ve kâr defteri | ✅ Tamamlandı | Fiyatlar `config/`'te; sipariş başına gerçek net (Etsy TR ücretleri + Printify maliyeti + kur) hesaplanıyor; aylık özet; harcama tavanları kodla korunuyor |
+| 9 | Zamanlama ve izleme | ✅ Tamamlandı | Günlük Windows görevi uçtan uca koşuyor; takip numarası 5 iş gününde düşmeyen sipariş için alarm; haftalık rapor (ilan, görüntülenme, satış, net); USPTO aylık yenileme görevi |
+| 10 | Gerçek kullanım (v1) | 🔄 Devam Ediyor | 30 ilan Scryne onayıyla canlı; ilk gerçek siparişte Etsy → Printify → takip zinciri elle dokunulmadan çalıştı (ya da 4 hafta dolup v1 "30 ilan canlı" ile kapandı); bulgular roadmap'e işlendi |
 | 11 | Kişiselleştirme — isimli süs (K-31), Class of 2027 Ocak'ta | 🔄 Devam Ediyor | İsimli süs ilanları uygun tasarımlara otomatik açılıyor; ilk gerçek isimli sipariş insansız açıldı, doğru isim ve varyantla basıldı (alıcı şikâyeti yok), takip Etsy'ye yazıldı; Class of 2027 Ocak'ta aynı altyapıyla (K-20: test siparişi yok, ilk gerçek sipariş doğrular) |
 | 12 | Shopify (koşullu) | ⏳ Bekliyor | Etsy'de ≥ 30 satış ve TR ödeme yolu (iyzico ya da LLC) netleştiyse: aynı Printify kataloğu Shopify'a; ilk sipariş zinciri çalıştı |
-| 13 | Performansa göre üretim | 🔄 Devam Ediyor | Günlük üretim niş seçimini görüntülenme/favori/satış verisinden yapıyor (ölü niş kısılır, satan niş büyür); satan ifadenin benzerleri üretiliyor; fiyat testi satış verisiyle; mağaza açılmadan sahte veriyle testli, açıldıktan 30 gün sonra raporda niş dağılımı veriyle değişmiş |
+| 13 | Performansa göre üretim | ⛔ Engelli | Günlük üretim niş seçimini görüntülenme/favori/satış verisinden yapıyor (ölü niş kısılır, satan niş büyür); satan ifadenin benzerleri üretiliyor; fiyat testi satış verisiyle; mağaza açılmadan sahte veriyle testli, açıldıktan 30 gün sonra raporda niş dağılımı veriyle değişmiş |
 | 14 | Kupa (ikinci ürün ailesi, koşullu) | ⏳ Bekliyor | İlk 30 gün verisinde ≥ 1 satış: tasarım motoru yatay kupa yerleşimi üretiyor (kapılardan geçiyor), satan tasarımlar önce kupaya da açılıyor; net > 0 fiyatla |
-| 15 | Niş radarı (koşullu) | 🔄 Devam Ediyor | Faz 13 çalışınca: Etsy arama önerileri + mevsim takviminden yükselen hobi/meslek nişleri aday listesi; marka kapısından geçen niş kartı otomatik taslaklanıyor, ilk 2 yeni niş canlı |
+| 15 | Niş radarı (koşullu) | ⛔ Engelli | Faz 13 çalışınca: Etsy arama önerileri + mevsim takviminden yükselen hobi/meslek nişleri aday listesi; marka kapısından geçen niş kartı otomatik taslaklanıyor, ilk 2 yeni niş canlı |
 | 16 | Yılbaşı süsü (Q4, K-30) | 🔄 Devam Ediyor | Uygun tasarımlara süs ilanı otomatik açılıyor (pencere 09-15 → 12-10); ilk süs Etsy'de aktif ve kurallara uygun; 10 Aralık'a kadar ≥ 20 süs canlı; 26 Aralık'tan sonra süs ilanları pasif; sezon sonu raporunda süs satışı ve neti |
-| 17 | TikTok (K-34) | 🔄 Devam Ediyor | Her yayındaki tasarıma kodla video hazırlanıyor; TikTok hesabı açık, bio'da "Search HobbyHeartPrints on Etsy" (link 1.000 takipçide); ilk 10 video günde bir paylaşıldı; ülke dağılımı ölçüldü ve karar kayda geçti (ABD payı yeterliyse sürer, değilse ücretli/alternatif yeniden değerlendirilir) |
-| 18 | Çizimli hat (K-37) | 🔄 Devam Ediyor | Trend kavramlarından yerel çizim + vektör yazı, IP kapısı, aday eleme ve seçim; ilk parti ~10 tasarım × 2 ürün canlı, her ilan 3 pinle Pinterest'te; 2 haftalık görüntülenme eski hattın ilan başı görüntülenmesinden yüksek (değilse yön yeniden açılır) |
+| 17 | TikTok (K-34) | ✅ Tamamlandı | Her yayındaki tasarıma kodla video hazırlanıyor; TikTok hesabı açık, bio'da "Search HobbyHeartPrints on Etsy" (link 1.000 takipçide); ilk 10 video günde bir paylaşıldı; ülke dağılımı ölçüldü ve karar kayda geçti (ABD payı yeterliyse sürer, değilse ücretli/alternatif yeniden değerlendirilir) |
+| 18 | Çizimli hat (K-37) | 🔄 Devam Ediyor | Trend kavramlarından yerel çizim + vektör yazı, IP kapısı, aday eleme ve seçim; ilk parti ~10 tasarım × 2 ürün canlı, her ilan 3 pinle Pinterest'te; 2 haftalık görüntülenme eski hattın ilan başı görüntülenmesinden yüksek (değilse yön yeniden açılır; K-39: fark tek yönlü Poisson testiyle, iki hatta < 20 görüntülenmede "yetersiz veri") |
 | 19 | Çok platformlu otomatik paylaşım (K-38) | 🔄 Devam Ediyor | Her aktif tasarımın videosu TikTok, Instagram, Facebook ve Pinterest'e, her ilan pinle Pinterest'e insansız gidiyor (Zernio); ilk gönderiler platformlarda herkese açık görüldü; 2 hafta sonra Etsy "Traffic sources"ta platform başına ziyaret ölçüldü, ziyaret getirmeyen kanal kapandı |
 
 ## Faz Detayları
+
+### Durum notu (2026-10-23, roadmap ayıklaması, K-39)
+- **Kapanan:** Faz 7, 8, 9 kodda ve gerçek mağazada bitti (OAuth + yenileme, ilanlar API'yle aktif ve denetli, günlük koşu
+  10-14'ten beri API modunda uçtan uca, haftalık rapor, USPTO yenilemesi). Üçünün de kalan tek parçası ilk gerçek siparişti
+  (makbuz + takip okuma, netin ekstreyle tutması); o parça zaten Faz 10'un bitti kriteri, orada kapanır. Faz 17: elle TikTok
+  yüklemesi K-38 ile Faz 19'un otomatik paylaşımına geçti, kriterdeki ülke dağılımı kararı K-38'de kayıtlı (TikTok'ta
+  görünmüyor, kanallar Etsy Traffic sources'la ölçülür).
+- **Engelli (K-37):** Faz 13 ve 15 yazılı (tipografik) üretimin niş seçimiyle çalışıyordu; 10-18'den beri yazılı üretim kapalı,
+  çizimli hat kavram listesinden üretiyor. 11-02 kararı yazılı hattı geri açarsa ikisi de kaldığı yerden sürer.
+- **Harcama donduruldu (K-40):** yeni ilan yok, ilan tavanı 0. Süren her şey ücretsiz: 59 canlı ilan, Zernio paylaşımı,
+  günlük okuma.
+- **Sırada:** Faz 10 (11-10'da mağaza 4 haftalık: sipariş yoksa v1 "30 ilan canlı" ile kapanır), Faz 18/19 ölçümleri
+  11-02 / 11-03 (karar tablosu Final-Dokuman K-39; hiçbir sonuç ilan açtırmaz).
 
 ### Faz 19: Çok platformlu otomatik paylaşım (K-38) 🔄 (2026-10-20)
 - **Neden:** Mağaza 7 günde 59 ilanla 9 görüntülenme. TikTok'ta 8 video 516 izlenme aldı ama Etsy'ye ~1 ziyaret taşıdı (link yok).
@@ -155,6 +168,8 @@ favori); 10-28'de Etsy Ads $2/gün. **Ölçüm:** haftalık raporda görüntüle
   12 canlı ilan yeniden kuruldu: #2 ve #21 süsleri 13 görsel (çift yüzlü basıldıkları için "both sides" kartıyla), #2 sweatshirt'te
   çift yakın plan silindi ve eksik renk kartı eklendi. #31 süsü (2026-10-15 koşusu) tek yüzlü, $4.93 maliyetle canlı.
 - **Kalan:** ilk süs siparişinde baskının tek yüz ve doğru konumda geldiğini (müşteri yorumu/şikâyet) ve netin ekstreyle tuttuğunu görmek.
+- **2026-10-23 (K-40):** yeni ilan yok (Scryne). 14 süs canlı (7 düz, 7 isimli); çizimli tasarımlara süs planı açılmadan
+  geri alındı. Kriterdeki "≥ 20 süs" bu sezon karşılanmayacak; faz sezon sonu raporuyla (12-26 sonrası) kapanır.
 
 ### Faz 13: Performansa göre üretim 🔄 (kod 2026-10-13)
 - **Yapılan:** `performans.py`: niş puanı = ilan başına beklenen satış (görüntülenme × yumuşatılmış dönüşüm, önsel %2, favori 0,1 satış),

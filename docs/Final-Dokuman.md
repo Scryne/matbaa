@@ -311,6 +311,37 @@ iade kararı.
   hesabı sebepsiz askıya alabilir. Karar: iki hesapla devam. Hesap kapanırsa geri dönüş tek hesapta 3. ve 4. bağlantı (12 $/ay); kod
   anahtar sayısından bağımsız. Aynı videonun platformlara gitmesi Zernio'nun asıl kullanımı, açıklamalar zaten platforma göre ayrışıyor.
 
+- **K-39 11-02 kıyas kuralı önceden yazıldı (2026-10-23):** **Veri (10. gün):** 59 ilan, toplam 11 görüntülenme, 0 favori,
+  0 sipariş. `matbaa kiyas` (4/14 gün) ilan başına çizimli 0.04, süsleme 0.14, yazılı 0.19: sayılar 1, 2 ve 4 görüntülenme.
+  Bu büyüklükte fark gürültüdür. Darboğaz katalog değil, trafik.
+  **Kıyas kuralı (Faz 18 kriterinin uygulanışı):** (1) Pencere yalnız kıyaslanan iki giyim hattından hesaplanır; sonradan
+  açılan bir süs kararı ertelemez, pencereden genç süs ilanı süsleme grubuna girmez. (2) İki hattın toplamı 20 görüntülenmenin
+  altındaysa karar "yetersiz veri" olur. (3) Hat, ilan sayısıyla orantılı görüntülenme alır (eşit oran varsayımı); çizimlinin
+  payına tek yönlü Poisson (koşullu binom) testi uygulanır, eşik p ≤ 0,10. "İlan başı yüksek" tek başına yetmez: 21'e 20 şansla
+  açıklanır.
+  **Kod düzeltmeleri (ilan açmaz):** `mevsimlik_ac` sonradan eklenen ürünün metnine çizimin konusunu geçmiyordu (çizimli
+  tasarımın ek ürünü yazılı AI beyanıyla yazılırdı); süs baskısı çizimli tasarımda yay rengini çizimin dış çizgisinden alır
+  (`susleme.tasarim_vurgu`), `cizimli_de` bayrağı bir ürünü iki hatta açabilir. Bayrak hiçbir üründe açık değil (K-40).
+  **11-02 karar tablosu (K-40'tan sonra: hiçbir sonuç ilan açtırmaz):**
+  | Sonuç | Yapılan |
+  |---|---|
+  | çizimli yüksek | Ücretsiz paylaşım sırası çizimli tasarımlara ağırlık verir (Zernio, `config/paylasim.toml`) |
+  | fark yok / yetersiz veri | Bir şey değişmez; kanallar sürer |
+  | çizimli düşük | Paylaşım sırası yazılı tasarımlara ağırlık verir |
+  | herhangi bir satış | Scryne'a bildirilir; yeni ilan yine Scryne'ın açık kararı olmadan açılmaz |
+  **Aynı dönemin diğer tarihleri:** 11-03 kanal ölçümü (Faz 19, Etsy Stats → Traffic sources; Open API'de yok, Shop
+  Manager'dan okunur). 11-10 mağaza 4 haftalık: sipariş yoksa v1 "30 ilan canlı" ile kapanır (Faz 10; 59 ilan canlı).
+
+- **K-40 Yeni ilan yok, harcama donduruldu (Scryne, 2026-10-23):** "ilan vermiycez artık", "sakın ilan verme", "zaten paramız
+  eksi", "dondurmuştuk". K-39 taslağındaki 24 süs ilanı (12 çizimli tasarım × düz + isimli, $4.80) açılmadan geri alındı:
+  metni yazılmış 8 süs satırı silindi, Printify/Etsy'ye hiçbir şey gitmedi. `tavanlar.toml`: `aylik_ilan_ucreti_usd = 0`,
+  `yeniden_yatirim_orani = 0` (satış gelse de net yeni ilana dönmez); süs ve isimli süs dahil her açılış durur, Kasım ve
+  Aralık başında da kapalı (`tavan.ilan_kontrol` ile doğrulandı). 10-18'de "harcama sıfırlandı" denmişti, tavan ise $12'de
+  bırakılmıştı; bu oturumda o $12 ilan açılabilir sanıldı. Tek doğru değer 0'dır. Sürenler (para harcamaz): 59 canlı ilan,
+  ücretsiz Zernio paylaşımı, günlük sipariş/görüntülenme okuma. Etsy Ads (K-36, 10-28) açılmaz.
+  **Açık:** canlı ilanların otomatik yenilemesi (`should_auto_renew`, 4 ayda bir $0.20) Şubat 2027'de ücret keser; Scryne'a
+  soruldu. Süsler 12-26'da zaten pasife alınır (K-30).
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.

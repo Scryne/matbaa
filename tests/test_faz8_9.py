@@ -124,7 +124,7 @@ def test_hat_kiyasi_ilanlari_ayni_yasta_sayar(c, tmp_path, monkeypatch):
     c.execute("INSERT INTO tasarim (id, ifade_id, sablon, fontlar, durum_zamani) VALUES (1, 1, 's', '[]', '')")
     c.executemany(
         "INSERT INTO urun (tasarim_id, urun, etsy_listing_id) VALUES (1, ?, ?)",
-        [("tisort", "y"), ("tisort_cizim", "c1"), ("sweatshirt_cizim", "c2"), ("susleme", "s")],
+        [("tisort", "y"), ("tisort_cizim", "c1"), ("sweatshirt_cizim", "c2"), ("susleme", "s"), ("isimli_susleme", "s2")],
     )
     gun0 = SIMDI - timedelta(days=20)
 
@@ -140,15 +140,25 @@ def test_hat_kiyasi_ilanlari_ayni_yasta_sayar(c, tmp_path, monkeypatch):
     assert k["pencere_gun"] == 4 and k["karar"].startswith("erken")  # en genç ilan 4 günlük
     assert k["hatlar"]["yazili"]["ilan_basi"] == 0  # 4. günde yazılının görüntüsü yok: en yakın önceki (0. gün)
     assert k["hatlar"]["cizimli"] == {"ilan": 2, "goruntu": 8, "favori": 0, "ilan_basi": 4.0}
-    goruntu(20, {"y": 40, "s": 3, "c1": 30, "c2": 10})  # çizimliler 14 günlük: yazılının 14. günü 10. gün görüntüsü
+
+    def karar(c1: int, c2: int) -> str:
+        goruntu(20, {"y": 40, "s": 3, "s2": 0, "c1": c1, "c2": c2})
+        return rapor.hat_kiyasi(c)["karar"]
+
+    # 20. gün: çizimliler 14 günlük (yazılının 14. günü = 10. gün görüntüsü, 20). Süs s2 bugün açıldı: pencereyi kısaltmaz.
+    assert karar(30, 10).startswith("fark yok")  # ilan başı 20'ye 20
     k = rapor.hat_kiyasi(c)
-    assert k["pencere_gun"] == 14 and k["hatlar"]["yazili"]["ilan_basi"] == 20 and k["hatlar"]["cizimli"]["ilan_basi"] == 20
-    assert k["karar"].startswith("çizimli yüksek değil")  # eşitlik yetmez: kriter "yüksek"
-    goruntu(20, {"y": 40, "s": 3, "c1": 32, "c2": 10})
-    assert rapor.hat_kiyasi(c)["karar"].startswith("çizimli yüksek:")
+    assert k["pencere_gun"] == 14 and k["hatlar"]["susleme"]["ilan"] == 1  # genç süs gruba girmez
+    assert k["hatlar"]["yazili"]["ilan_basi"] == 20 and k["hatlar"]["cizimli"]["ilan_basi"] == 20
+    assert karar(32, 10).startswith("fark yok")  # 21'e 20 ilan başı "yüksek" ama şansla açıklanır
+    assert karar(60, 40).startswith("çizimli yüksek (p=")  # 50'ye 20
+    assert karar(3, 2).startswith("çizimli düşük (p=")  # 2.5'e 20
+    goruntu(10, {"y": 4, "s": 2, "c1": 0, "c2": 0})
+    goruntu(20, {"y": 9, "s": 3, "s2": 0, "c1": 1, "c2": 0})
+    assert rapor.hat_kiyasi(c)["karar"].startswith("yetersiz veri: iki hatta 5 görüntülenme")
     monkeypatch.setattr(rapor, "RAPOR_DIZINI", tmp_path / "rapor")
     _, metin = rapor.haftalik(c, None, SIMDI)
-    assert "## Hat kıyası (Faz 18)" in metin and "Çizimli: **21.0** (2 ilan" in metin
+    assert "## Hat kıyası (Faz 18)" in metin and "Çizimli: **0.5** (2 ilan" in metin
 
 
 @pytest.fixture

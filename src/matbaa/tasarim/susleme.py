@@ -41,6 +41,16 @@ def vurgu_rengi(svg_yolu: str | Path) -> str:
     return diger[0] if diger else KOYU_MUREKKEP
 
 
+def tasarim_vurgu(koyu_png: Path, svg: Path) -> str:
+    """Yay ve yıldızların rengi: yazılı tasarımda SVG'nin vurgusu; çizimli tasarımda (SVG yok, K-37) çizimin dış çizgi
+    rengi, yazı da o renkle kontürlü olduğu için süs aynı elden çıkmış görünür."""
+    if svg.exists():
+        return vurgu_rengi(svg)
+    from matbaa.cizim import koyu_renk
+
+    return koyu_renk(Image.open(koyu_png).convert("RGBA"))
+
+
 def _png(parcalar: list[str]) -> Image.Image:
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{KENAR}" height="{KENAR}" viewBox="0 0 {KENAR} {KENAR}">{"".join(parcalar)}</svg>'
     return Image.open(
@@ -157,7 +167,7 @@ def kaydet(dosyalar: dict, fontlar: list[str], nis: str, yil: int, kok: Path) ->
     if all(p.exists() for p in hedef.values()):
         return hedef
     svg = kok / dosyalar.get("koyu_svg", str(Path(dosyalar["koyu_png"]).with_suffix(".svg")))
-    vurgu = vurgu_rengi(svg) if svg.exists() else KOYU_MUREKKEP
+    vurgu = tasarim_vurgu(koyu, svg)
     ikon_adi = (ikonlar.NIS_IKONLARI.get(nis) or [None])[0]
     on_yuz(koyu, vurgu, yil).save(hedef["on"], dpi=(600, 600), optimize=True)
     ana = fontlar[0] if fontlar else YIL_FONT_YEDEK

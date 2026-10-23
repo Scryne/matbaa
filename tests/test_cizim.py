@@ -59,11 +59,23 @@ def test_birlestir_baski_kapisindan_gecer():
     assert cizim.koyu_renk(cizim.dekupe(_cizim())).startswith("#4")  # yazının kontürü çizimin çizgi rengi
 
 
-def test_urun_kumesi_cizimli_nise_yalniz_cizim_urunleri():
+def test_urun_kumesi_cizimli_nise_yalniz_cizim_urunleri(monkeypatch):
     assert fiyat.tasarim_urunleri("cozy_christmas", ["MERRY", "WOOFMAS"], gun=date(2026, 11, 1)) == [
         "tisort_cizim",
         "sweatshirt_cizim",
     ]
+    # `cizimli_de` (K-39) bir ürünü iki hatta açar; config'te kapalı (K-40: yeni ilan yok), burada açılıp sınanır.
+    katalog = {k: dict(v) for k, v in fiyat.urunler().items()}
+    katalog["susleme"]["cizimli_de"] = True
+    katalog["susleme"]["kosul"] = {**katalog["susleme"]["kosul"], "nisler": ["cozy_christmas"]}
+    monkeypatch.setattr(fiyat, "urunler", lambda: katalog)
+    assert fiyat.tasarim_urunleri("cozy_christmas", ["COLD OUTSIDE", "ICED COFFEE INSIDE"], gun=date(2026, 11, 1)) == [
+        "susleme",
+        "tisort_cizim",
+        "sweatshirt_cizim",
+    ]
+    assert "susleme" not in fiyat.tasarim_urunleri("cozy_christmas", ["COLD OUTSIDE"], gun=date(2027, 1, 15))  # pencere dışı
+    monkeypatch.undo()
     eski = fiyat.tasarim_urunleri("fishing", ["CHRISTMAS CREW"], gun=date(2026, 11, 1))
     assert "tisort_cizim" not in eski and "tisort" in eski and "susleme" in eski
     assert all(u["murekkep"] == "koyu" for k in ("tisort_cizim", "sweatshirt_cizim") for u in fiyat.urunler()[k]["renkler"])
@@ -172,3 +184,14 @@ def test_baski_dosyasi_printify_sinirinin_altinda_ve_kirpmada_paletli_kalir(tmp_
     assert len(tam.getvalue()) * 4 / 3 > BASE64_MAKS  # paletsiz hali sınırı aşar (sınamanın anlamı)
     veri, _, tuval = kirp(cizim.baski_kaydet(img, tmp_path / "cizim.png"))
     assert Image.open(io.BytesIO(veri)).mode == "P" and len(veri) * 4 / 3 < BASE64_MAKS and tuval == (4500, 5400)
+
+
+def test_cizimli_susun_yay_rengi_cizimin_cizgisi(tmp_path):
+    from matbaa.tasarim import susleme
+
+    baski = tmp_path / "cizim.png"
+    cizim.birlestir(cizim.dekupe(_cizim()), KAVRAM).save(baski)
+    renk = susleme.tasarim_vurgu(baski, tmp_path / "cizim.svg")  # SVG yok: çizimli tasarım
+    assert renk == cizim.koyu_renk(Image.open(baski).convert("RGBA")) and renk != susleme.KOYU_MUREKKEP
+    on = susleme.on_yuz(baski, renk, 2026)
+    assert on.size == (susleme.KENAR, susleme.KENAR) and on.getchannel("A").getbbox()
