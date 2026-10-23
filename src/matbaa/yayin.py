@@ -25,6 +25,30 @@ def ayar() -> dict:
     return tomllib.loads((CONFIG / "yayin.toml").read_text(encoding="utf-8"))
 
 
+def otomatik_yenileme() -> str:
+    """Etsy `should_auto_renew` değeri (`yayin.toml` [etsy] `otomatik_yenileme`). K-40 (2026-10-23): kapalı; yenileme ilan başına
+    $0,20 keser, harcama donuk. Kapalıyken ilan 4 ayın sonunda sona erer."""
+    return "true" if ayar()["etsy"].get("otomatik_yenileme", True) else "false"
+
+
+def yenileme_esitle(etsy, yazdir=print) -> dict:
+    """Etsy'deki her aktif ilanın otomatik yenilemesini ayara çeker (yalnız farklı olanları yazar). Kaynak Etsy'nin kendisi:
+    bizde kaydı olmayan ilan da kapsanır, `vitrin_esitle`in bir kez yazdığı eski değer kalmaz."""
+    hedef = otomatik_yenileme() == "true"
+    sayac = {"yazilan": 0, "hata": 0}
+    for ilan in etsy.aktif_ilanlar():
+        if bool(ilan.get("should_auto_renew")) == hedef:
+            continue
+        try:
+            etsy.ilan_guncelle(int(ilan["listing_id"]), should_auto_renew=otomatik_yenileme())
+        except Exception as e:  # ertesi koşu yeniden dener
+            sayac["hata"] += 1
+            yazdir(f"  yenileme hata {ilan['listing_id']}: {type(e).__name__}: {str(e)[:150]}")
+            continue
+        sayac["yazilan"] += 1
+    return sayac
+
+
 def magaza_yasi(c) -> int:
     ilk = c.execute("SELECT min(zaman) FROM olay WHERE varlik = 'urun' AND yeni LIKE '%:printify'").fetchone()[0]
     if not ilk:
@@ -392,7 +416,7 @@ def vitrin_esitle(c, etsy, sinir: int = 30, yazdir=print) -> dict:
                 continue  # yenileme zaten açık, bölüm hâlâ açılamıyor
             etsy.ilan_guncelle(
                 int(r["etsy_listing_id"]),
-                should_auto_renew="true",
+                should_auto_renew=otomatik_yenileme(),
                 **({"shop_section_id": bolum_id} if bolum_id else {}),
             )
         except Exception as e:  # ilan yine satışta; ertesi koşu yeniden dener
@@ -682,7 +706,7 @@ def etsy_esle(c, p: pf.Printify, etsy, yazdir=print, hata_dene: bool = True) -> 
                 "who_made": "i_did",
                 "when_made": "made_to_order",
                 "is_supply": "false",
-                "should_auto_renew": "true",  # Printify kapalı açıyor: 4 ayda ilan sona erer (vitrin_esitle eskileri düzeltir)
+                "should_auto_renew": otomatik_yenileme(),  # Printify kapalı açıyor; değer ayardan (K-40: kapalı)
             }
             if AI_BEYANI.split(":")[0] not in re.sub(r"<[^>]+>", " ", ilan.get("description", "")):
                 alanlar["description"] = c.execute(

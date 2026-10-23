@@ -217,7 +217,7 @@ def ilan_ac(c, etsy, p: pf.Printify, t, il, yazdir=print, indir=None, gorsel_ind
             "taxonomy_id": k["etsy_taksonomi"],
             "type": "physical",
             "tags": json.loads(il["etiketler"]),
-            "should_auto_renew": "true",
+            "should_auto_renew": yayin.otomatik_yenileme(),
             "production_partner_ids": [e_ayar["uretim_ortagi_id"]],
             "shipping_profile_id": e_ayar["kargo_profili_id"],
             **({"return_policy_id": rp} if (rp := e_ayar.get("iade_politikasi_id")) else {}),

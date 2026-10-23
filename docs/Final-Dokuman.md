@@ -339,8 +339,10 @@ iade kararı.
   Aralık başında da kapalı (`tavan.ilan_kontrol` ile doğrulandı). 10-18'de "harcama sıfırlandı" denmişti, tavan ise $12'de
   bırakılmıştı; bu oturumda o $12 ilan açılabilir sanıldı. Tek doğru değer 0'dır. Sürenler (para harcamaz): 59 canlı ilan,
   ücretsiz Zernio paylaşımı, günlük sipariş/görüntülenme okuma. Etsy Ads (K-36, 10-28) açılmaz.
-  **Açık:** canlı ilanların otomatik yenilemesi (`should_auto_renew`, 4 ayda bir $0.20) Şubat 2027'de ücret keser; Scryne'a
-  soruldu. Süsler 12-26'da zaten pasife alınır (K-30).
+  **Otomatik yenileme kapalı (Scryne "kapat", 2026-10-23):** `yayin.toml` [etsy] `otomatik_yenileme = false`; `vitrin_esitle`,
+  `etsy_esle` ve isimli ilan bu değeri yazar, günlük koşunun `yenileme` adımı Etsy'deki her aktif ilanı ayara çeker (kaynak Etsy,
+  bizde kaydı olmayan ilan da kapsanır). Canlıda 59/59 ilan kapatıldı ve geri okundu. İlanlar 2027-02-13 → 02-18 arasında sona
+  erer; o tarihten sonra mağazada ilan kalmaz (Faz 10'un "30 ilan canlı" kapanışı 11-10'da, bundan önce).
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.

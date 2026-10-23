@@ -430,6 +430,7 @@ def _gunluk(nis_sayisi: int, adet: int, yazdir) -> dict:
             _adim(rapor, "gorsel", lambda: yayin.gorselleri_tamamla(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "oznitelik", lambda: yayin.oznitelikleri_esitle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "vitrin", lambda: yayin.vitrin_esitle(c, e, yazdir=yazdir), yazdir)
+            _adim(rapor, "yenileme", lambda: yayin.yenileme_esitle(e, yazdir=yazdir), yazdir)
             _adim(rapor, "mevsim_kapat", lambda: yayin.mevsim_kapat(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "pinterest", lambda: pinterest.kuyruga_ekle(c, e, yazdir=yazdir), yazdir)
             _adim(rapor, "tiktok", lambda: tiktok.hazirla(c, e, yazdir=yazdir), yazdir)  # K-34: yeni yayındaki tasarıma video

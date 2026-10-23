@@ -29,6 +29,9 @@ sweatshirt_cizim = { blueprint_ara = "Gildan 18000", blueprint_id = 49, saglayic
 # K-27: "api" = kendi Etsy uygulamamızla eşleme (aşağıdaki iki kimlik); "elle" = API onayı gelmeden yedek yol: Printify yayınlar,
 # üretim ortağını kendisi bağlar, kargo profili Etsy'de elle kurulan "Free US shipping" (elle_kargo_hazir = true olunca yayın açılır).
 mod = "api"  # 2026-10-13 21:20: Etsy kişisel uygulama onaylandı, OAuth alındı
+# K-40 (2026-10-23, Scryne "kapat"): otomatik yenileme ilan başına $0,20 keser, harcama donuk. Günlük koşu (`yenileme` adımı) her
+# aktif ilanı bu değere çeker; kapalıyken ilan açılışından 4 ay sonra (ilk ilanlar 2027-02-13) sona erer.
+otomatik_yenileme = false
 elle_kargo_hazir = true  # 2026-10-13: Etsy'de "Free US shipping" (33014, yalnız ABD, ücretsiz) + "Made to order (3-5 days)" kuruldu
 uretim_ortagi_id = 5837094   # Etsy "Printify" üretim ortağı (vitrin başlığı "A print-on-demand print shop"); 0 iken yayın durur
 hazirlama_profili_id = 1523987889533   # Etsy işlem süresi "Made to order, 3-5 days"; Printify ilanı kendi "2-5 days" (1522739069412) profiline bağlar, eşlemede düzeltilir. 0 iken dokunulmaz

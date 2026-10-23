@@ -166,8 +166,8 @@ def test_vitrin_nis_bolumu_ve_otomatik_yenileme_bir_kez(tmp_path, monkeypatch):
     c, e = _aktif(tmp_path, monkeypatch), SahteEtsyVitrin()
     assert yayin.vitrin_esitle(c, e, yazdir=lambda *_: None) == {"yazilan": 2, "hata": 0}
     assert e.guncellenen == [
-        (100, {"shop_section_id": 1, "should_auto_renew": "true"}),
-        (101, {"shop_section_id": 2, "should_auto_renew": "true"}),
+        (100, {"shop_section_id": 1, "should_auto_renew": "false"}),
+        (101, {"shop_section_id": 2, "should_auto_renew": "false"}),
     ]
     assert yayin.vitrin_esitle(c, e, yazdir=lambda *_: None)["yazilan"] == 0 and len(e.guncellenen) == 2
 
@@ -194,10 +194,32 @@ def test_vitrin_bolum_yetkisi_yoksa_yalniz_yenileme_sonra_bolum(tmp_path, monkey
     s = yayin.vitrin_esitle(c, e, yazdir=lambda *_: None)
     assert s["yazilan"] == 2 and s["hata"] == 0 and "shops_w" in s["bolum_yok"]
     assert e.guncellenen == [
-        (100, {"should_auto_renew": "true", "shop_section_id": 1}),
-        (101, {"should_auto_renew": "true"}),  # yenileme bölümü beklemez
+        (100, {"should_auto_renew": "false", "shop_section_id": 1}),
+        (101, {"should_auto_renew": "false"}),  # yenileme bölümü beklemez
     ]
     assert yayin.vitrin_esitle(c, e, yazdir=lambda *_: None)["yazilan"] == 0 and len(e.guncellenen) == 2  # yinelenmez
     e.bolumler["Knitting & Crochet"] = 2  # yetki geldi ya da bölüm elle açıldı
     assert yayin.vitrin_esitle(c, e, yazdir=lambda *_: None)["yazilan"] == 1
-    assert e.guncellenen[-1] == (101, {"should_auto_renew": "true", "shop_section_id": 2})
+    assert e.guncellenen[-1] == (101, {"should_auto_renew": "false", "shop_section_id": 2})
+
+
+def test_yenileme_esitle_yalniz_farkli_ilanlari_ayara_ceker(monkeypatch):
+    # K-40: ayar kapalı (config/yayin.toml). Etsy'de açık olan kapanır, zaten kapalıya istek gitmez; ayar açılırsa tersi.
+    class Sahte(SahteEtsyVitrin):
+        def aktif_ilanlar(self):
+            return [
+                {"listing_id": 100, "should_auto_renew": True},
+                {"listing_id": 101, "should_auto_renew": False},
+            ]
+
+    e = Sahte()
+    assert yayin.otomatik_yenileme() == "false"
+    assert yayin.yenileme_esitle(e, yazdir=lambda *_: None) == {"yazilan": 1, "hata": 0}
+    assert e.guncellenen == [(100, {"should_auto_renew": "false"})]
+    cfg = yayin.ayar()
+    cfg["etsy"]["otomatik_yenileme"] = True
+    monkeypatch.setattr(yayin, "ayar", lambda: cfg)
+    e.guncellenen.clear()
+    assert yayin.yenileme_esitle(e, yazdir=lambda *_: None)["yazilan"] == 1 and e.guncellenen == [
+        (101, {"should_auto_renew": "true"})
+    ]
