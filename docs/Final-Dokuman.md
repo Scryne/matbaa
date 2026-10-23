@@ -306,6 +306,10 @@ iade kararı.
   Zernio'dan çıkarılır, ücreti düşer).
   **Aynı gün:** Scryne YouTube kanalı açmıyor; kapsam TikTok, Instagram, Facebook, Pinterest (4 hesap, 12 $/ay). Kod bağlı
   hesaplara gönderdiği için değişiklik gerekmedi; kanal açılırsa Zernio'ya bağlamak yeter.
+  **İki Zernio hesabı (10-20, şartlar 10-23 okundu):** ücretsiz katman "ilk 2 bağlı hesap"; iki hesap (`ZERNIO_API_KEY_2`) ile 4 bağlantı
+  0 $. Şartlarda (zernio.com/tos ve /content-guidelines, 2026-10-09) çoklu hesap ya da ücretsiz katmanı bölme maddesi yok, ama Zernio
+  hesabı sebepsiz askıya alabilir. Karar: iki hesapla devam. Hesap kapanırsa geri dönüş tek hesapta 3. ve 4. bağlantı (12 $/ay); kod
+  anahtar sayısından bağımsız. Aynı videonun platformlara gitmesi Zernio'nun asıl kullanımı, açıklamalar zaten platforma göre ayrışıyor.
 
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
