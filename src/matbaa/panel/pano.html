@@ -388,7 +388,7 @@ function siradaki(d) {
   d.siparisler.isimli.filter(x => x.durum === "hata" || x.durum === "elle").forEach(x => g.push({ tur: "kotu", ikon: "uyari",
     metin: `İsimli sipariş ${esc(x.etsy_receipt_id)} ${x.durum === "elle" ? "elle bakılmalı" : "açılamadı"}`, alt: isimliNeden(x),
     ek: x.durum === "hata" ? isimliForm(x) : "",
-    eylem: `<button class="btn sade" type="button" onclick="isimliKapat('${esc(x.etsy_receipt_id)}', this)">Elle hallettim</button>` }));
+    eylem: `<button class="btn sade" type="button" data-makbuz="${esc(x.etsy_receipt_id)}" onclick="isimliKapat(this.dataset.makbuz, this)">Elle hallettim</button>` }));
   const tt = d.tiktok.hazir;
   if (tt.length) g.push({ ikon: "video", metin: `${tt.length} TikTok videosu paylaşılmayı bekliyor`,
     alt: `Sıradaki: ${ttZaman(tt[0].plan_tr)}. TikTok Studio'da zamanla`, eylem: `<a class="btn" href="#tiktok-bolum">Videolar</a>` });
