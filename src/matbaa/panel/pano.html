@@ -171,7 +171,8 @@
   .zaman-cizelgesi { list-style: none; margin: 0; padding: 0; }
   .gun-bas { font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--metin-3); padding: 14px 0 4px; }
   .gun-bas:first-child { padding-top: 0; }
-  .olay { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; padding: 6px 0; font-size: 14px; align-items: baseline; }
+  .olay { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; padding: 6px 0; font-size: 14px; align-items: baseline; }
+  .olay > span { overflow-wrap: anywhere; }  /* boşluksuz uzun hata metni (yol, URL) dar ekranda satırı taşırmasın */
   .olay::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cizgi-2); transform: translateY(-1px); }
   .olay.iyi::before { background: var(--yesil); } .olay.kotu::before { background: var(--kirmizi); }
   .olay b { font-weight: 600; }
