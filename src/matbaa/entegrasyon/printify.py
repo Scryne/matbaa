@@ -111,7 +111,8 @@ class Printify:
     def gorsel_yukle(self, png: Path, ad: str) -> tuple[str, tuple[int, int, int, int], tuple[int, int]]:
         veri, kutu, tuval = kirp(png)
         if len(veri) * 4 / 3 > BASE64_MAKS:
-            raise ValueError(f"{png}: base64 {len(veri) * 4 / 3 / 1e6:.1f} MB > 5 MB (Printify sınırı)")
+            # Yalnız dosya adı + üst klasör (tasarım no): tam yerel yol olay akışına ve panoya sızıyordu.
+            raise ValueError(f"{png.parent.name}/{png.name}: base64 {len(veri) * 4 / 3 / 1e6:.1f} MB > 5 MB (Printify sınırı)")
         r = self._i("POST", "/uploads/images.json", json={"file_name": ad, "contents": base64.b64encode(veri).decode()})
         return r["id"], kutu, tuval
 

@@ -148,3 +148,53 @@ def test_eski_pin_tablosu_tasinir(tmp_path):
     c.execute(
         "INSERT INTO pin (etsy_listing_id, gorsel_sira, gorsel_url, baslik, pano, durum) VALUES ('7', 1, 'u', 'b', 'p', 'x')"
     )
+
+
+def test_ozet_zernio_pinlerini_dosya_saymaz_ve_zernio_durumunu_verir(c, monkeypatch):
+    """K-38 sonrası: Zernio her pini ayrı `zernio:<id>` adıyla yazar. Pano bunları "son dosya" sanıp gelecek tarihli 1 pinlik
+    dosyayı yeniden indirmeye/yüklemeye çağırıyordu (2026-11-01 denetimi)."""
+    pinterest.kuyruga_ekle(c, SahteEtsy(), yazdir=lambda *_: None)
+    monkeypatch.setattr(pinterest, "GUN", 2)
+    monkeypatch.setattr(pinterest, "GUNLUK", 2)
+    _, veri, n = pinterest.csv_uret(c, SIMDI)  # gerçek bir CSV dosyası (4 pin), 14 pin bekliyor
+    ids = [r[0] for r in c.execute("SELECT id FROM pin WHERE durum = 'bekliyor' ORDER BY id LIMIT 3")]
+    for k, (pid, yayin) in enumerate(
+        zip(ids, ["2026-10-19T13:00:00", "2026-10-25T17:00:00", "2026-11-08T01:00:00"], strict=True)
+    ):
+        c.execute("UPDATE pin SET durum = 'verildi', yayin = ?, dosya = ? WHERE id = ?", (yayin, f"zernio:z{k}", pid))
+    c.commit()
+    o = pinterest.ozet(c, SIMDI)
+    assert o["son_dosya"]["dosya"].startswith("pinterest-") and o["son_dosya"]["adet"] == n
+    assert pinterest.son_csv(c)[1] == veri  # yeniden indirme Zernio pinini değil CSV'yi verir
+    assert o["zernio"] == {"aktif": True, "zamanli": 2, "son": "2026-11-08T01:00:00", "gunluk": 4}
+    assert o["bekleyen"] == pinterest.bekleyen(c)
+
+
+def test_ozet_zernio_yokken_pasif(c):
+    o = pinterest.ozet(c, SIMDI)
+    assert o["zernio"]["aktif"] is False and o["zernio"]["zamanli"] == 0 and o["son_dosya"] is None
+
+
+def test_olay_akisi_zernio_ve_gonderi_olaylarini_gosterir():
+    from matbaa.panel.pano import _olay_metni
+
+    def olay(varlik, yeni, aciklama):
+        return {"varlik": varlik, "yeni": yeni, "aciklama": aciklama}
+
+    assert _olay_metni(olay("pin", "zernio", "4 pin zamanlandı"))[0] == "Pinterest: 4 pin zamanlandı"
+    assert _olay_metni(olay("gonderi", "zamanlandi", "instagram video 21 2026-10-30T00:00+00:00"))[0] == (
+        "Instagram gönderisi zamanlandı"
+    )
+    assert _olay_metni(olay("siparis", "izlendi", "")) is None  # eşitleme kaydı gürültü olarak kalır
+
+
+def test_olay_akisi_hata_metninde_yerel_yol_kirpilir():
+    from matbaa.panel.pano import _olay_metni
+
+    o = {
+        "varlik": "urun",
+        "yeni": "tisort_cizim:hata",
+        "aciklama": r"ValueError: C:\Users\x\Projeler\Matbaa\uretim\00088\cizim.png: base64 8.0 MB > 5 MB (Printify sınırı)",
+    }
+    metin = _olay_metni(o)[0]
+    assert "Users" not in metin and "00088\cizim.png: base64 8.0 MB" in metin

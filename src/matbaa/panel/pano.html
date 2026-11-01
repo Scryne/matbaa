@@ -323,7 +323,7 @@
 </main>
 
 <script>
-const URUN = { tisort: "Tişört", sweatshirt: "Sweatshirt", hoodie: "Hoodie", susleme: "Süs", isimli_susleme: "İsimli süs", kupa: "Kupa" };
+const URUN = { tisort: "Tişört", sweatshirt: "Sweatshirt", hoodie: "Hoodie", susleme: "Süs", isimli_susleme: "İsimli süs", kupa: "Kupa", tisort_cizim: "Çizimli tişört", sweatshirt_cizim: "Çizimli sweatshirt" };
 const URUN_SIRA = ["tisort", "sweatshirt", "hoodie", "susleme", "isimli_susleme", "kupa"];
 const URUN_DURUM = { printify: "Printify'da", etsy_taslak: "taslak", olusturuldu: "hazırlanıyor", hata: "hata" };
 const ISIMLI = { yeni: "Yeni", acildi: "Printify'da", uretimde: "Üretimde", takip_yazildi: "Kargoda", iptal: "İptal", hata: "Hata", elle: "Elle bakılmalı", kapandi: "Elle kapatıldı" };
@@ -396,11 +396,13 @@ function siradaki(d) {
   const onay = d.hat.tasarim.onay_bekliyor || 0;
   if (onay) g.push({ ikon: "onay", metin: `${onay} tasarım onayını bekliyor`, alt: "Onaylananlar yayın sırasına girer", eylem: `<a class="btn" href="/onay">Onay masası</a>` });
   const p = d.pinterest;
-  if (p.bekleyen) g.push({ ikon: "raptiye", metin: p.verilen ? `${p.bekleyen} yeni pin hazır` : `İlk ${p.bekleyen} pin hazır`,
+  // Zernio açıkken pinler kendiliğinden zamanlanır: elle CSV istemek aynı pini iki kanaldan verir.
+  const zAktif = !!(p.zernio && p.zernio.aktif);
+  if (p.bekleyen && !zAktif) g.push({ ikon: "raptiye", metin: p.verilen ? `${p.bekleyen} yeni pin hazır` : `İlk ${p.bekleyen} pin hazır`,
     alt: p.verilen ? "CSV'yi indirip Pinterest'e yükle" : "Pinterest işletme hesabı aç, CSV'yi yükle",
     eylem: `<form method="post" action="/pinterest/indir"><button class="btn ana" type="submit">${ik("indir")}CSV indir</button></form>` });
   // İndirilen dosya "Yükledim" denene kadar burada kalır: tarayıcı indirmeyi sessizce düşürse de pinler kaybolmaz.
-  if (p.son_dosya && !gizli.includes("pin-" + p.son_dosya.dosya))
+  if (p.son_dosya && !zAktif && !gizli.includes("pin-" + p.son_dosya.dosya))
     g.push({ ikon: "raptiye", metin: `${p.son_dosya.adet} pinlik dosya Pinterest'e yüklenmeyi bekliyor`,
       alt: "Pinterest: Ayarlar, İçeriği içe aktar, .csv yükle",
       eylem: `<a class="btn" href="/pinterest/son" download="${esc(p.son_dosya.dosya)}">${ik("indir")}İndir</a> <button class="btn sade" type="button" onclick="gizle('pin-${esc(p.son_dosya.dosya)}')">Yükledim</button>` });
@@ -502,7 +504,7 @@ function paraKart(d) {
       <li><span>Sipariş</span><span class="sayi">${sayi(ay.siparis)}</span></li>
       <li><span>Ciro</span><span class="sayi">${para(ay.brut_usd)}</span></li>
       <li><span>Siparişlerin neti <span class="soluk">(Etsy ücretleri ve üretim düşülmüş)</span></span><span class="sayi">${para(ay.siparis_net_usd)}</span></li>
-      <li><span>İlan ücreti</span><span class="sayi">${para(-ay.ilan_ucreti_usd)}</span></li>
+      <li><span>İlan ücreti <span class="soluk">(bu ay açılan ilanlar, $0,20/ilan)</span></span><span class="sayi">${para(-ay.ilan_ucreti_usd)}</span></li>
       <li class="toplam"><span>Net</span><span class="sayi">${para(ay.net_usd)}</span></li>
     </ul>
     <div style="margin-top:18px"><div class="ust-etiket">İlan bütçesi</div>
@@ -518,10 +520,12 @@ function grafik(d) {
   const adim = Math.ceil(maks / 4), tepe = adim * 4, y = v => ust + (H - alt - ust) * (1 - v / tepe);
   const gw = (W - sol) / Math.max(s.length, 7), bw = Math.max(8, Math.min(34, gw * .6));
   const izgara = [0, 1, 2, 3, 4].map(i => `<line x1="${sol}" x2="${W}" y1="${y(i * adim)}" y2="${y(i * adim)}" stroke="var(--cizgi)" ${i ? 'stroke-dasharray="2 5"' : ""}/><text x="${sol - 8}" y="${y(i * adim) + 4}" text-anchor="end">${i * adim}</text>`).join("");
+  // Etiket aralığı: etiket ~44 px; dar sütunlarda her n'inci gün yazılır (son gün hep yazılır).
+  const her = Math.max(1, Math.ceil(44 / gw));
   const bar = s.map((x, i) => {
     const v = x.artis || 0, cx = sol + gw * i + (gw - bw) / 2, h = Math.max(v ? 3 : 2, H - alt - y(v));
     return `<rect x="${cx.toFixed(1)}" y="${(H - alt - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${v ? "var(--yesil)" : "var(--cizgi-2)"}"><title>${kisaTarih(tarihOku(x.tarih + "T00:00"))}: ${v} yeni görüntülenme</title></rect>`
-      + `<text x="${(cx + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle">${kisaTarih(tarihOku(x.tarih + "T00:00"))}</text>`;
+      + ((s.length - 1 - i) % her === 0 ? `<text x="${(cx + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle">${kisaTarih(tarihOku(x.tarih + "T00:00"))}</text>` : "");
   }).join("");
   const toplam = s.reduce((a, x) => a + (x.artis || 0), 0);
   $("grafik").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Son ${s.length} günde ${toplam} yeni görüntülenme">${izgara}${bar}</svg>
@@ -533,12 +537,20 @@ function hat(d) {
   const satir = (ad, v, sinif) => `<div class="huni-satir ${sinif}"><span>${ad}</span><span class="bar"><i style="width:${(100 * v / maks).toFixed(1)}%"></i></span><span class="sayi" style="text-align:right">${sayi(v)}</span></div>`;
   $("hat-not").textContent = `${sayi(t.ret)} ret`;
   $("hat").innerHTML = `<div class="huni">${satir("Onay bekliyor", n[0], "onay")}${satir("Sırada", n[1], "")}${satir("Yayında", n[2], "yayin")}</div>
-    <p class="not">Günde ${d.hat.gunluk_sinir} tasarım yayına girer${d.hat.kuyruk_gun != null ? `; sıra bu hızla ~${Math.round(d.hat.kuyruk_gun)} gün yeter` : ""}. Hız mağaza yaşlandıkça artar.</p>`;
+    <p class="not">${d.hat.gunluk_sinir
+      ? `Günde ${d.hat.gunluk_sinir} tasarım yayına girer${d.hat.kuyruk_gun != null ? `; sıra bu hızla ~${Math.round(d.hat.kuyruk_gun)} gün yeter` : ""}. Hız mağaza yaşlandıkça artar.`
+      : "Yeni tasarım yayını durduruldu (K-37): onaylı sıra bekliyor, yeni tasarım dili gelince açılır. Ayar: config/yayin.toml, isinma."}</p>`;
 }
 
 function pinKart(d) {
-  const p = d.pinterest, s = p.son_dosya;
-  $("pin-not").textContent = "günde 3 pin";
+  const p = d.pinterest, s = p.son_dosya, z = p.zernio || {};
+  if (z.aktif) {
+    $("pin-not").textContent = `Zernio, günde ${z.gunluk} pin`;
+    $("pinterest").innerHTML = `<div class="buyuk">${sayi(z.zamanli)}</div><div class="soluk" style="font-size:13px;margin-top:6px">pin Zernio'da zamanlı${z.son ? `, son ${kisaTarih(tarihOku(z.son))}` : ""}</div>
+      <p class="not">${p.bekleyen ? `${sayi(p.bekleyen)} pin sırada; Zernio'nun 7 günlük ufkunda yer açıldıkça her gün kendiliğinden zamanlanır.` : "Sırada pin yok."} Elle bir şey yapman gerekmiyor.</p>`;
+    return;
+  }
+  $("pin-not").textContent = `günde ${p.gunluk_csv || 6} pin`;
   $("pinterest").innerHTML = `<div class="buyuk">${sayi(p.bekleyen)}</div><div class="soluk" style="font-size:13px;margin-top:6px">pin yüklenmeyi bekliyor</div>
     ${p.bekleyen ? `<form method="post" action="/pinterest/indir" style="margin-top:16px"><button class="btn ana" type="submit">${ik("indir")}CSV indir</button></form>` : ""}
     ${s ? `<p class="not">Son dosya: ${sayi(s.adet)} pin, ${kisaTarih(tarihOku(s.ilk))} ile ${kisaTarih(tarihOku(s.son))} arası. <a href="/pinterest/son">Yeniden indir</a></p>` : ""}

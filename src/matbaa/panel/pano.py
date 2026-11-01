@@ -196,13 +196,19 @@ URUN_ADIM = {"aktif": ("yayına girdi", "iyi"), "bekliyor": ("ilan metni yazıld
 TASARIM_ADIM = {"onay_bekliyor": ("onaya geldi", ""), "onaylandi": ("onaylandı", "iyi"), "ret": ("reddedildi", "kotu")}
 
 
+# Sürücü harfiyle başlayan Windows yolu; yakalanan grup son iki parça (tasarım klasörü + dosya adı).
+YEREL_YOL = re.compile(r"[A-Za-z]:[\\/](?:[^\\/:\s]+[\\/])*([^\\/:\s]+[\\/][^\\/:\s]+)")
+
+
 def _olay_metni(o) -> tuple[str, str, str | None] | None:
     """Olay → (metin, tür, ürün) ya da None (ara adım/eşitleme kaydı: akışta gürültü)."""
     yeni = o["yeni"] or ""
     if o["varlik"] == "urun" and ":" in yeni:
         urun, adim = yeni.split(":", 1)
         if adim == "hata":
-            return f"hata: {(o['aciklama'] or '')[:90]}", "kotu", URUN_AD.get(urun, urun)
+            # Eski kayıtlar tam yerel yolu taşıyor (C:\Users\...\uretim\00088\cizim.png): son iki parça yeter.
+            metin = YEREL_YOL.sub(lambda m: m.group(1), o["aciklama"] or "")
+            return f"hata: {metin[:90]}", "kotu", URUN_AD.get(urun, urun)
         if adim in URUN_ADIM:
             return (*URUN_ADIM[adim], URUN_AD.get(urun, urun))
         return None
@@ -210,6 +216,11 @@ def _olay_metni(o) -> tuple[str, str, str | None] | None:
         return (*TASARIM_ADIM[yeni], None)
     if o["varlik"] == "pin" and yeni == "csv":
         return f"Pinterest dosyası indirildi ({(o['aciklama'] or '').split(': ', 1)[-1]})", "", None
+    if o["varlik"] == "pin" and yeni == "zernio":
+        return f"Pinterest: {o['aciklama'] or 'pin zamanlandı'}", "", None
+    if o["varlik"] == "gonderi" and yeni == "zamanlandi":
+        platform = (o["aciklama"] or "").split(" ", 1)[0]
+        return f"{platform.capitalize() or 'Sosyal'} gönderisi zamanlandı", "", None
     if o["varlik"] == "siparis" and yeni != "izlendi":
         return f"sipariş: {yeni}", "iyi", None
     return None

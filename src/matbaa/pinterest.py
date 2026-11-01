@@ -250,20 +250,37 @@ def csv_uret(c, simdi: datetime | None = None) -> tuple[str, bytes, int]:
 
 def son_csv(c) -> tuple[str, bytes, int] | None:
     """Son indirilen dosyanın aynısı (yükleme yarıda kaldıysa yeniden indirmek için; tarihler değişmez)."""
-    r = c.execute("SELECT dosya FROM pin WHERE durum = 'verildi' ORDER BY yayin DESC LIMIT 1").fetchone()
+    # Zernio her pini ayrı `zernio:<id>` adıyla yazar: onlar indirilecek dosya değil (K-38).
+    r = c.execute(
+        "SELECT dosya FROM pin WHERE durum = 'verildi' AND dosya NOT LIKE 'zernio:%' ORDER BY yayin DESC LIMIT 1"
+    ).fetchone()
     if not r:
         return None
     pinler = [dict(x) for x in c.execute("SELECT * FROM pin WHERE dosya = ? ORDER BY yayin", (r[0],))]
     return r[0], _yaz(pinler), len(pinler)
 
 
-def ozet(c) -> dict:
+def ozet(c, simdi: datetime | None = None) -> dict:
+    """Pano kartı. Zernio açıkken (son 14 günde Zernio pini var) bekleyen pinler kendiliğinden zamanlanır: elle CSV
+    gerekmez, indirmek aynı pinleri ikinci kanaldan da verir. `son_dosya` yalnız gerçek CSV dosyalarıdır."""
+    simdi = simdi or datetime.now(UTC)
+    an = simdi.strftime("%Y-%m-%dT%H:%M:%S")
     son = c.execute(
-        "SELECT dosya, count(*), min(yayin), max(yayin) FROM pin WHERE durum = 'verildi' GROUP BY dosya ORDER BY max(yayin) DESC LIMIT 1"
+        "SELECT dosya, count(*), min(yayin), max(yayin) FROM pin WHERE durum = 'verildi' AND dosya NOT LIKE 'zernio:%'"
+        " GROUP BY dosya ORDER BY max(yayin) DESC LIMIT 1"
     ).fetchone()
+    z_zamanli, z_son = c.execute(
+        "SELECT count(*), max(yayin) FROM pin WHERE dosya LIKE 'zernio:%' AND yayin > ?", (an,)
+    ).fetchone()
+    z_yakin = c.execute(
+        "SELECT count(*) FROM pin WHERE dosya LIKE 'zernio:%' AND yayin > ?",
+        ((simdi - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%S"),),
+    ).fetchone()[0]
     return {
         "bekleyen": bekleyen(c),
         "verilen": c.execute("SELECT count(*) FROM pin WHERE durum = 'verildi'").fetchone()[0],
         "son_dosya": dict(zip(("dosya", "adet", "ilk", "son"), son, strict=True)) if son else None,
         "kapasite": GUNLUK * GUN,
+        "gunluk_csv": GUNLUK,
+        "zernio": {"aktif": z_yakin > 0, "zamanli": z_zamanli, "son": z_son, "gunluk": len(ZERNIO_SAATLER)},
     }
