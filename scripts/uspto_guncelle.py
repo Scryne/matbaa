@@ -30,7 +30,7 @@ def main() -> None:
       FROM '{B}/data/case_file/*.parquet' cf JOIN s25 USING (serial_no) JOIN durum d ON d.code = cf.status_cd
       WHERE d.live_dead_indicator LIKE 'Live%' AND cf.mark_id_char IS NOT NULL
     ) TO '{gecici.as_posix()}' (FORMAT parquet, COMPRESSION zstd)""")
-    n = c.sql(f"SELECT count(*) FROM read_parquet('{gecici.as_posix()}')").fetchone()[0]
+    n = c.sql(f"SELECT count(*) FROM read_parquet('{gecici.as_posix()}')").fetchall()[0][0]  # DuckDB 2: relation fetchone() yok
     c.close()
     if n < 100_000:  # sınıf 25'te ~400 bin canlı marka var (2026-10); çok azı kaynağın bozulduğunu gösterir
         gecici.unlink()

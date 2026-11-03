@@ -83,3 +83,20 @@ def test_temiz_ifade(d):
 
 def test_noktalama_ve_ve_isareti(d):
     assert not d.kontrol("MAMA-BEAR!").temiz
+
+
+def test_parquet_dosyasindan_okur_ve_veri_tarihini_verir(tmp_path):
+    """DuckDB yolu gerçek bir parquet ile: `dosyadan` ve `veri_tarihi` (DuckDB 2'de relation `fetchone()` kalktı)."""
+    from datetime import date
+
+    import duckdb
+
+    from matbaa.ip import marka
+
+    dosya = tmp_path / "uspto.parquet"
+    duckdb.sql(
+        "SELECT * FROM (VALUES ('MAMA BEAR', '2', DATE '2026-09-30'), ('GIRL DAD', '3', DATE '2026-10-12')) t(marka, serial_no, filing_dt)"
+    ).write_parquet(dosya.as_posix())
+    assert not marka.MarkaDizini.dosyadan(dosya).kontrol("Mama Bear").temiz
+    assert marka.veri_tarihi(dosya) == date(2026, 10, 12)
+    assert marka.veri_tarihi(tmp_path / "yok.parquet") is None
