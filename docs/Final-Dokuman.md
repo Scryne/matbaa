@@ -356,6 +356,27 @@ iade kararı.
   kendiliğinden sona erer. Etsy ve Printify hesaplarını kapatmak Scryne'ın işidir. Tek satış gelirse karar yeniden açılır; yeni ilan
   yine Scryne'ın açık kararına bağlıdır (K-40).
 
+- **K-42 Kanal ölçümü (2026-11-03, Etsy Stats, tüm zamanlar: 10-13 → 11-03):** 17 ziyaret, 0 sipariş, 0 favori, 1 mağaza takipçisi.
+  | Kaynak | Ziyaret |
+  |---|---|
+  | Etsy uygulaması ve sayfaları | 6 |
+  | Etsy Search | 0 |
+  | Doğrudan ve yönlendirme | 6 |
+  | Facebook | 3 |
+  | Instagram | 1 |
+  | Pinterest | 0 |
+  | Diğer | 1 |
+  Raporda TikTok satırı yok; ziyareti varsa doğrudan ya da diğer içindedir, ayrı ölçülemez. Ziyaretlerin 4'ü Zernio'dan önce (10-17,
+  10-19). Rapor Scryne'ın kendi ziyaretlerini ayırmıyorsa sosyal sayıları daha da düşüktür. Aynı raporda 13 ilan görüntülenmesi var,
+  API toplamı 20; fark açıklanmadı, kaynaklar karıştırılmaz.
+  **Okuma:** 77 video gönderisi ve 167 sıraya verilmiş pin 4 ziyaret getirdi. Etsy Search'ten 3 haftada 0 ziyaret; "Etsy search
+  visibility" sayfası mağaza ve ilan tarafında kusur göstermiyor, teknik düzeltilecek bir madde yok.
+  **Karar:** (1) Yeni video üretilmez: ölçüm, üretimin ziyarete dönmediğini gösteriyor. (2) Pinterest 0 ziyaretle K-38 kuralına göre
+  kapanmalıydı, ama kuralın gerekçesi ücretti ve kanal ücretsiz: zamanlı pinler 11-10'a kadar biter, hesap bağlı kalır, kanallar
+  12-15'te topluca durur. (3) Ücretsiz kaldıraç arayışı K-41 tarihini değiştirmez.
+  **Ekim dökümü doğrulandı:** net −888,07 TL = ilan ücreti 583,88 + KDV 304,19. Satış 0, Marketing 0,00 (Etsy Ads ve Offsite Ads yok).
+  Tek seferlik 937,00 TL kurulum ücreti aynı tutarda kredi ile sıfırlanmış, KDV'si ücrete dahil.
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.
