@@ -344,6 +344,18 @@ iade kararı.
   bizde kaydı olmayan ilan da kapsanır). Canlıda 59/59 ilan kapatıldı ve geri okundu. İlanlar 2027-02-13 → 02-18 arasında sona
   erer; o tarihten sonra mağazada ilan kalmaz (Faz 10'un "30 ilan canlı" kapanışı 11-10'da, bundan önce).
 
+- **K-41 Kıyas sonucu ve karar günü (2026-11-03):** Scryne: "her şeyi sana bırakıyorum". **Kıyas (Faz 18, 14 gün):** ilan başına
+  çizimli 0.25 (24 ilan, 6 görüntülenme), yazılı 0.48 (21 ilan, 10), süsleme 0.14 (14 ilan, 2), 0 favori. İki hatta 16 görüntülenme
+  < 20: **yetersiz veri**. Sonuç kalıcıdır: `hat_kiyasi` her ilanı doğumundan 14 gün sonraki görüntüsüyle sayar, sonradan gelen
+  görüntülenme bu toplamı artırmaz. K-39 tablosuna göre bir şey değişmez; hat kararı verilmedi, darboğaz trafik.
+  **Bulgu:** video kuyruğu boş. 19 tasarımın videoları platformlara gitti, son video planı 10-30, `bekliyor` gönderi yok. Süren tek
+  gönderi ilan pinleri (son zamanlı 11-10, sırada 10 pin). Yeni video kanal ölçümünden önce üretilmez: hangi kanalın ziyaret getirdiği
+  bilinmeden üretim anlamsız.
+  **Karar günü 2026-12-15 (Noel kargo son günleri):** o güne kadar satış yoksa proje "denendi, trafik çıkmadı" diye kapanır: günlük
+  görev ve Zernio paylaşımı durur, aşama `tamamlandi` olur. Kapanış para çıkarmaz: ilanlar yenilenmez, 2027-02-13 → 02-18 arasında
+  kendiliğinden sona erer. Etsy ve Printify hesaplarını kapatmak Scryne'ın işidir. Tek satış gelirse karar yeniden açılır; yeni ilan
+  yine Scryne'ın açık kararına bağlıdır (K-40).
+
 ## Kapsam (v1)
 - **Süre tavanı:** ~4 hafta (kod tarafı); mağaza ve anahtarlar Scryne'ın Faz 0 işlerine bağlı.
 - **Bitti = kullanıldı:** Scryne'ın Etsy mağazası canlıyken hat en az 30 ilanı Scryne'ın onayıyla yayınlamış ve ilk gerçek siparişte Etsy → Printify → üretim → takip numarası zinciri elle dokunulmadan çalışmıştır.

@@ -29,10 +29,17 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 15 | Niş radarı (koşullu) | ⛔ Engelli | Faz 13 çalışınca: Etsy arama önerileri + mevsim takviminden yükselen hobi/meslek nişleri aday listesi; marka kapısından geçen niş kartı otomatik taslaklanıyor, ilk 2 yeni niş canlı |
 | 16 | Yılbaşı süsü (Q4, K-30) | 🔄 Devam Ediyor | Uygun tasarımlara süs ilanı otomatik açılıyor (pencere 09-15 → 12-10); ilk süs Etsy'de aktif ve kurallara uygun; 10 Aralık'a kadar ≥ 20 süs canlı; 26 Aralık'tan sonra süs ilanları pasif; sezon sonu raporunda süs satışı ve neti |
 | 17 | TikTok (K-34) | ✅ Tamamlandı | Her yayındaki tasarıma kodla video hazırlanıyor; TikTok hesabı açık, bio'da "Search HobbyHeartPrints on Etsy" (link 1.000 takipçide); ilk 10 video günde bir paylaşıldı; ülke dağılımı ölçüldü ve karar kayda geçti (ABD payı yeterliyse sürer, değilse ücretli/alternatif yeniden değerlendirilir) |
-| 18 | Çizimli hat (K-37) | 🔄 Devam Ediyor | Trend kavramlarından yerel çizim + vektör yazı, IP kapısı, aday eleme ve seçim; ilk parti ~10 tasarım × 2 ürün canlı, her ilan 3 pinle Pinterest'te; 2 haftalık görüntülenme eski hattın ilan başı görüntülenmesinden yüksek (değilse yön yeniden açılır; K-39: fark tek yönlü Poisson testiyle, iki hatta < 20 görüntülenmede "yetersiz veri") |
+| 18 | Çizimli hat (K-37) | ⛔ Engelli | Trend kavramlarından yerel çizim + vektör yazı, IP kapısı, aday eleme ve seçim; ilk parti ~10 tasarım × 2 ürün canlı, her ilan 3 pinle Pinterest'te; 2 haftalık görüntülenme eski hattın ilan başı görüntülenmesinden yüksek (değilse yön yeniden açılır; K-39: fark tek yönlü Poisson testiyle, iki hatta < 20 görüntülenmede "yetersiz veri") |
 | 19 | Çok platformlu otomatik paylaşım (K-38) | 🔄 Devam Ediyor | Her aktif tasarımın videosu TikTok, Instagram, Facebook ve Pinterest'e, her ilan pinle Pinterest'e insansız gidiyor (Zernio); ilk gönderiler platformlarda herkese açık görüldü; 2 hafta sonra Etsy "Traffic sources"ta platform başına ziyaret ölçüldü, ziyaret getirmeyen kanal kapandı |
 
 ## Faz Detayları
+
+### Durum notu (2026-11-03, K-41)
+- **Faz 18 ⛔:** 14 günlük kıyas "yetersiz veri" (çizimli 0.25, yazılı 0.48, süsleme 0.14; iki hatta 16 < 20) ve sonuç kalıcı: pencere
+  doldu, toplam artmaz. Bitti kriteri kanıtlanamadı; K-40 parti büyütmeyi de kapattığı için faz trafik ya da satış gelmeden ilerlemez.
+- **Faz 19:** video kuyruğu 10-30'da bitti (19 tasarım, `bekliyor` gönderi yok); ilan pinleri 11-10'a kadar zamanlı. Etsy "Traffic
+  sources" ölçümü Shop Manager girişi istiyor, henüz yapılmadı.
+- **Tarihler:** 11-10 sipariş yoksa Faz 10 "30 ilan canlı" ile kapanır; 12-15 satış yoksa proje kapanır (K-41).
 
 ### Durum notu (2026-10-23, roadmap ayıklaması, K-39)
 - **Kapanan:** Faz 7, 8, 9 kodda ve gerçek mağazada bitti (OAuth + yenileme, ilanlar API'yle aktif ve denetli, günlük koşu
