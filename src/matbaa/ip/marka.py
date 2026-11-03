@@ -159,4 +159,4 @@ def veri_tarihi(dosya: Path = DOSYA):
     """Verideki en yeni başvuru tarihi (`date`): verinin gerçek tazeliği. Dosya yoksa None."""
     if not dosya.exists():
         return None
-    return duckdb.sql(f"SELECT max(filing_dt) FROM '{dosya.as_posix()}'").fetchone()[0]
+    return duckdb.sql(f"SELECT max(filing_dt) FROM '{dosya.as_posix()}'").fetchall()[0][0]  # DuckDB 2: relation fetchone() yok
