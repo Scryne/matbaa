@@ -34,6 +34,12 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 
 ## Faz Detayları
 
+### Durum notu (2026-11-13, bakım)
+- **Günlük koşu DuckDB 2.0 sonrası sağlam:** 11-04, 07, 08, 09, 10, 12 koşuları hatasız ve alarmsız (`calisma/gunluk/`).
+  11-05, 06 ve 11 günlerinde koşu kaydı yok (görev o gün tetiklenmedi; ertesi koşu kaldığı yerden sürdü). USPTO yenilemesi (dosya 30 günü geçince hat içinden) DuckDB 2.0 ile
+  geçici klasörde uçtan uca koşturuldu; kaynağın yeni çift satırları ayıklanıyor (408.155 başvuru, en yeni 2026-10-30).
+- **Panel:** tarayıcıda 404 sayfası, sayaç rozeti AA kontrastı, "Neler oldu" ilk altı kayıt + katlanır geçmiş.
+
 ### Durum notu (2026-11-03, K-41)
 - **Faz 18 ⛔:** 14 günlük kıyas "yetersiz veri" (çizimli 0.25, yazılı 0.48, süsleme 0.14; iki hatta 16 < 20) ve sonuç kalıcı: pencere
   doldu, toplam artmaz. Bitti kriteri kanıtlanamadı; K-40 parti büyütmeyi de kapattığı için faz trafik ya da satış gelmeden ilerlemez.
