@@ -105,6 +105,18 @@ def test_eksik_baski_dosyasi_404(istemci):
     assert istemci.get("/onizleme/1/acik").status_code == 404
 
 
+def test_bilinmeyen_adres_tarayicida_404_sayfasi_apide_json(istemci):
+    html = {"Accept": "text/html,application/xhtml+xml"}
+    r = istemci.get("/boyle-bir-sayfa-yok", headers=html)
+    assert r.status_code == 404 and r.headers["content-type"].startswith("text/html")
+    assert "Bu sayfa basılmamış" in r.text and 'href="/onay"' in r.text
+    api = istemci.get("/api/yok", headers=html)
+    assert api.status_code == 404 and api.json() == {"detail": "Not Found"}
+    dosya = istemci.get("/tam/1/koyu", headers=html)  # ucun kendi 404'ü: sayfa `detail`'i okur
+    assert dosya.status_code == 404 and dosya.json()["detail"] == "baskı dosyası yok"
+    assert istemci.get("/boyle-bir-sayfa-yok").json() == {"detail": "Not Found"}  # Accept'siz (curl, betik)
+
+
 def test_ilan_duzeltilir_kurala_ve_markaya_uymayan_kaydedilmez(istemci, monkeypatch):
     from matbaa.ilan.metin import AI_BEYANI, URETIM_ORTAGI
     from matbaa.ip import marka

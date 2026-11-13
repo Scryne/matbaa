@@ -10,6 +10,7 @@ colors:
   metin-ikincil: "#a3a19a"
   primary: "#e0483e"
   onay-yesil: "#3fb46b"
+  onay-yazi: "#0d1f13"
   uyari-sari: "#e2b23c"
   odak: "#8fb3ff"
   kagit: "#f3efe6"
@@ -20,6 +21,7 @@ colors:
   murekkep-ikincil: "#605b52"
   kagit-kirmizi: "#c2392a"
   kagit-yesil: "#2a7f51"
+  dolgu-yazi: "#ffffff"
 typography:
   pano-baslik:
     fontFamily: "'DM Serif Display', Georgia, serif"
@@ -91,5 +93,8 @@ Açılış sayfası (`/`) Scryne'ın her sabah oturum açınca gördüğü dükk
 - **Farklılaştırıcı detay:** "Sıradaki" kartının köşelerinde baskı kesim işaretleri, tarih satırında kayıt işareti (crosshair).
 - **Düzen sırası:** asimetrik giriş (tek cümlelik durum manşeti + sıradaki iş/senden beklenenler) → tam genişlik vitrin bandı
   (gerçek ürün fotoğrafları) → bento (para ve görüntülenme geniş, hat/Pinterest/koşu dar) → siparişler + yol haritası / etkinlik.
+- **Sayaç rozeti** (menüde onay bekleyen sayısı): iki temada da `kagit-kirmizi` dolgu + `dolgu-yazi` (5,4:1). Koyu temanın
+  `primary`'si beyazla 4,1:1 kalıyor, 11 px rozet için AA altı.
+- **404:** panelin bilinmeyen adresi kâğıt kartında "Bu sayfa basılmamış." + Pano / Onay masası; API 404'ü JSON kalır.
 - **Yapma:** emoji, renkli sol kenar şeridi, her kutuya gölge; olay akışına eşitleme kayıtlarını (öznitelik, vitrin, galeri) dökme.
 

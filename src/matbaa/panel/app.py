@@ -17,20 +17,33 @@ from typing import Annotated
 from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from PIL import Image
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from matbaa import db, fiyat, siparis
 from matbaa.ayar import KOK
 
 SAYFA = Path(__file__).with_name("index.html")  # onay masası
 PANO = Path(__file__).with_name("pano.html")  # takip panosu (açılış sayfası)
+YOK = Path(__file__).with_name("yok.html")  # tarayıcıdaki bilinmeyen adres (404)
 RET_NEDENLERI = ["okunmuyor", "espri zayıf", "marka şüphesi", "tekrar / benzer", "niş dışı", "tasarım çirkin"]
 
 YEREL = {"127.0.0.1", "localhost"}
 
 app = FastAPI(title="Matbaa onay paneli", docs_url=None, redoc_url=None, openapi_url=None)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def sayfa_yok(istek: Request, hata: StarletteHTTPException):
+    """Tarayıcıda yanlış adres çıplak `{"detail":"Not Found"}` yerine panelin diliyle 404 sayfası görür. API ve dosya
+    uçlarının 404'ü (ör. "baskı dosyası yok") JSON kalır: sayfa onları `detail` alanından okur."""
+    html_ister = "text/html" in istek.headers.get("accept", "")
+    if hata.status_code == 404 and html_ister and hata.detail == "Not Found" and not istek.url.path.startswith("/api/"):
+        return HTMLResponse(YOK.read_text(encoding="utf-8"), status_code=404)
+    return await http_exception_handler(istek, hata)
 
 
 @app.middleware("http")
