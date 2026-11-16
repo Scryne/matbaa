@@ -21,7 +21,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 | 7 | Etsy entegrasyonu | ✅ Tamamlandı | Seller App OAuth (refresh token yenileme); `production_partner_ids` + `state=active`; günde ≤ 5 tavanı; receipts + takip okuma; gerçek mağazada 3 ilan aktif ve kurallara uygun |
 | 8 | Fiyat ve kâr defteri | ✅ Tamamlandı | Fiyatlar `config/`'te; sipariş başına gerçek net (Etsy TR ücretleri + Printify maliyeti + kur) hesaplanıyor; aylık özet; harcama tavanları kodla korunuyor |
 | 9 | Zamanlama ve izleme | ✅ Tamamlandı | Günlük Windows görevi uçtan uca koşuyor; takip numarası 5 iş gününde düşmeyen sipariş için alarm; haftalık rapor (ilan, görüntülenme, satış, net); USPTO aylık yenileme görevi |
-| 10 | Gerçek kullanım (v1) | 🔄 Devam Ediyor | 30 ilan Scryne onayıyla canlı; ilk gerçek siparişte Etsy → Printify → takip zinciri elle dokunulmadan çalıştı (ya da 4 hafta dolup v1 "30 ilan canlı" ile kapandı); bulgular roadmap'e işlendi |
+| 10 | Gerçek kullanım (v1) | ✅ Tamamlandı | 30 ilan Scryne onayıyla canlı; ilk gerçek siparişte Etsy → Printify → takip zinciri elle dokunulmadan çalıştı (ya da 4 hafta dolup v1 "30 ilan canlı" ile kapandı); bulgular roadmap'e işlendi |
 | 11 | Kişiselleştirme — isimli süs (K-31), Class of 2027 Ocak'ta | 🔄 Devam Ediyor | İsimli süs ilanları uygun tasarımlara otomatik açılıyor; ilk gerçek isimli sipariş insansız açıldı, doğru isim ve varyantla basıldı (alıcı şikâyeti yok), takip Etsy'ye yazıldı; Class of 2027 Ocak'ta aynı altyapıyla (K-20: test siparişi yok, ilk gerçek sipariş doğrular) |
 | 12 | Shopify (koşullu) | ⏳ Bekliyor | Etsy'de ≥ 30 satış ve TR ödeme yolu (iyzico ya da LLC) netleştiyse: aynı Printify kataloğu Shopify'a; ilk sipariş zinciri çalıştı |
 | 13 | Performansa göre üretim | ⛔ Engelli | Günlük üretim niş seçimini görüntülenme/favori/satış verisinden yapıyor (ölü niş kısılır, satan niş büyür); satan ifadenin benzerleri üretiliyor; fiyat testi satış verisiyle; mağaza açılmadan sahte veriyle testli, açıldıktan 30 gün sonra raporda niş dağılımı veriyle değişmiş |
@@ -39,6 +39,13 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
   11-05, 06 ve 11 günlerinde koşu kaydı yok (görev o gün tetiklenmedi; ertesi koşu kaldığı yerden sürdü). USPTO yenilemesi (dosya 30 günü geçince hat içinden) DuckDB 2.0 ile
   geçici klasörde uçtan uca koşturuldu; kaynağın yeni çift satırları ayıklanıyor (408.155 başvuru, en yeni 2026-10-30).
 - **Panel:** tarayıcıda 404 sayfası, sayaç rozeti AA kontrastı, "Neler oldu" ilk altı kayıt + katlanır geçmiş.
+
+### Durum notu (2026-11-16)
+- **Faz 10 ✅ (K-41 kuralı):** mağaza 11-10'da 4 haftayı doldurdu, sipariş 0 (`siparis` tablosu boş; günlük izleme
+  11-16 09:26'da "0 yeni"). Bitti kriterinin ikinci kolu ("4 hafta dolup v1 30 ilan canlı ile kapandı") sağlandı:
+  59 ilan canlı. Sipariş zinciri (Etsy → Printify → takip) gerçek siparişle hâlâ doğrulanmadı; ilk sipariş gelirse
+  Faz 11'in insansız sipariş kriteriyle birlikte sınanır.
+- **Sırada:** K-41 karar günü 12-15 (satış yoksa proje kapanır).
 
 ### Durum notu (2026-11-03, K-41)
 - **Faz 18 ⛔:** 14 günlük kıyas "yetersiz veri" (çizimli 0.25, yazılı 0.48, süsleme 0.14; iki hatta 16 < 20) ve sonuç kalıcı: pencere
@@ -61,7 +68,7 @@ Durum sütunu session-start hook'u tarafından otomatik okunur — format bozulm
 - **Sırada:** Faz 10 (11-10'da mağaza 4 haftalık: sipariş yoksa v1 "30 ilan canlı" ile kapanır), Faz 18/19 ölçümleri
   11-02 / 11-03 (karar tablosu Final-Dokuman K-39; hiçbir sonuç ilan açtırmaz).
 
-### Faz 19: Çok platformlu otomatik paylaşım (K-38) 🔄 (2026-10-20)
+### Faz 19: Çok platformlu otomatik paylaşım (K-38) ✅ (2026-11-03, K-42)
 - **Neden:** Mağaza 7 günde 59 ilanla 9 görüntülenme. TikTok'ta 8 video 516 izlenme aldı ama Etsy'ye ~1 ziyaret taşıdı (link yok).
   Scryne: "tüm ilanlar tüm platformlarda olmalı", her şey otomatik, tam yetki.
 - **Yapılan:** `paylasim.py` (gönderi kuyruğu, platform saatleri, kaçırılan saat kayar, çizimli/yazılı sırayla, 3 deneme + alarm,
